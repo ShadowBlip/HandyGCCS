@@ -248,6 +248,13 @@ async def capture_keyboard_events(device):
         new_device.syn()
 
 
+# Captures the controller_device events and passes them through.
+async def capture_controller_events(device):
+    async for event in device.async_read_loop():
+        new_device.write_event(event)
+        new_device.syn()
+
+
 # Gracefull shutdown.
 async def restore(loop):
 
