@@ -12,7 +12,6 @@ import signal
 import sys
 import dbus
 
-from BMI160_i2c import Driver
 from evdev import InputDevice, InputEvent, UInput, ecodes as e, categorize, list_devices, RelEvent
 from pathlib import PurePath as p
 from shutil import move
