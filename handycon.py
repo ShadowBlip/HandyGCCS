@@ -162,75 +162,50 @@ async def capture_keyboard_events(device):
         event2 = None # optional second button (i.e. home + select or super + p)
         if active != []:
             print(active, system_type)
-        match system_type:
 
-            case "GEN1": # 2021 Models and previous.
-                # TODO: shortcut changes from MODE+SELECT to MODE+NORTH when running
-                # export STEAMCMD="steam -gamepadui -steampal -steamos3 -steamdeck"
-                # in the user session. We will need to detect this somehow so it works.
-                # on any install and session.
+        # Open OSK
+        if active == [24, 97, 125] and not kb_pressed and event1.value == 1:
+            event1 = InputEvent(event.sec, event.usec, e.EV_KEY, e.BTN_MODE, 1)
+            event2 = InputEvent(event.sec, event.usec, e.EV_KEY, e.BTN_NORTH, 1)
+            kb_pressed = True
+        elif active == [97] and kb_pressed and event1.value == 0:
+            event1 = InputEvent(event.sec, event.usec, e.EV_KEY, e.BTN_MODE, 0)
+            event2 = InputEvent(event.sec, event.usec, e.EV_KEY, e.BTN_NORTH, 0)
+            kb_pressed = False
 
-                # KB BUTTON. Open OSK. Works in-game in BPM but globally in gamepadui
-                if active == [24, 97, 125] and not kb_pressed and event1.value == 1:
-                    event1 = InputEvent(event.sec, event.usec, e.EV_KEY, e.BTN_MODE, 1)
-                    event2 = InputEvent(event.sec, event.usec, e.EV_KEY, e.BTN_NORTH, 1)
-                    kb_pressed = True
-                elif active == [97] and kb_pressed and event1.value == 0:
-                    event1 = InputEvent(event.sec, event.usec, e.EV_KEY, e.BTN_MODE, 0)
-                    event2 = InputEvent(event.sec, event.usec, e.EV_KEY, e.BTN_NORTH, 0)
-                    kb_pressed = False
+        # WIN BUTTON.
+        elif not win_pressed and event1.value in [1,2] and (active == [125] or (active == [24, 97, 125] and kb_pressed)):
+            #ev1 = InputEvent(event.sec, event.usec, e.EV_KEY, e.KEY_LEFTMETA, 1)
+            #ev2 = InputEvent(event.sec, event.usec, e.EV_KEY, e.KEY_D, 1)
+            win_pressed = True
+        elif (active in [[], [24, 97]] and win_pressed) or (active == [125] and event1.code == 125 and win_pressed and event1.value == 0):
+            #ev1 = InputEvent(event.sec, event.usec, e.EV_KEY, e.KEY_LEFTMETA, 0)
+            #ev2 = InputEvent(event.sec, event.usec, e.EV_KEY, e.KEY_D, 0)
+            win_pressed = False
 
-                # WIN BUTTON. Map to all detected screens for docking. Not working
-                # TODO: Get this working. Tried SUPER+P and SUPER+D.
-                # The extra conditions handle pressing WIN while pressing KB since
-                # both use code 125. Letting go of KB first still clears win_pressed
-                # as key 125 is released at the system level.
-                elif not win_pressed and event1.value in [1,2] and (active == [125] or (active == [24, 97, 125] and kb_pressed)):
-                    #ev1 = InputEvent(event.sec, event.usec, e.EV_KEY, e.KEY_LEFTMETA, 1)
-                    #ev2 = InputEvent(event.sec, event.usec, e.EV_KEY, e.KEY_D, 1)
-                    win_pressed = True
-                elif (active in [[], [24, 97]] and win_pressed) or (active == [125] and event1.code == 125 and win_pressed and event1.value == 0):
-                    #ev1 = InputEvent(event.sec, event.usec, e.EV_KEY, e.KEY_LEFTMETA, 0)
-                    #ev2 = InputEvent(event.sec, event.usec, e.EV_KEY, e.KEY_D, 0)
-                    win_pressed = False
+        # ESC BUTTON. Unused. Passing so it functions as an "ESC" key for now.
+        elif event1.code == 1 and not esc_pressed and event1.value == 1:
+            esc_pressed = True
+        elif event1.code == 1 and esc_pressed and event1.value == 0:
+            esc_pressed = False
 
-                # ESC BUTTON. Unused. Passing so it functions as an "ESC" key for now.
-                # Add 1 to below list if changed.
-                elif event1.code == 1 and not esc_pressed and event1.value == 1:
-                    esc_pressed = True
-                elif event1.code == 1 and esc_pressed and event1.value == 0:
-                    esc_pressed = False
+        # Quick Action Menu
+        elif active in [[97, 100, 111], [40, 133], [32, 125]] and not tm_pressed and event1.value == 1:
+            event1 = InputEvent(event.sec, event.usec, e.EV_KEY, e.KEY_LEFTCTRL, 1)
+            event2 = InputEvent(event.sec, event.usec, e.EV_KEY, e.KEY_2, 1)
+            tm_pressed = True
+        elif event1.code in [32, 40, 100, 111] and tm_pressed and event1.value == 0:
+            event1 = InputEvent(event.sec, event.usec, e.EV_KEY, e.KEY_LEFTCTRL, 0)
+            event2 = InputEvent(event.sec, event.usec, e.EV_KEY, e.KEY_2, 0)
+            tm_pressed = False
 
-                # TM BUTTON. Quick Action Menu
-                elif active == [97, 100, 111] and not tm_pressed and event1.value == 1:
-                    event1 = InputEvent(event.sec, event.usec, e.EV_KEY, e.KEY_LEFTCTRL, 1)
-                    event2 = InputEvent(event.sec, event.usec, e.EV_KEY, e.KEY_2, 1)
-                    tm_pressed = True
-                elif event1.code in [97, 100, 111] and tm_pressed and event1.value == 0:
-                    event1 = InputEvent(event.sec, event.usec, e.EV_KEY, e.KEY_LEFTCTRL, 0)
-                    event2 = InputEvent(event.sec, event.usec, e.EV_KEY, e.KEY_2, 0)
-                    tm_pressed = False
-
-            case "GEN2": # NEXT Model and beyond.
-                # AYA SPACE BUTTON. -> Home Button
-                if active in [[96, 105, 133], [97, 125, 88], [88, 97, 125]] and not home_pressed and event1.value == 1:
-                    event1 = InputEvent(event.sec, event.usec, e.EV_KEY, e.BTN_MODE, 1)
-                    home_pressed = True
-                elif event1.code in [88, 96, 97, 105, 133] and home_pressed and event1.value == 0:
-                    event1 = InputEvent(event.sec, event.usec, e.EV_KEY, e.BTN_MODE, 0)
-                    home_pressed = False
-
-                # CONFIGURABLE BUTTON. -> Quick Action Menu.
-                # NOTE: Some NEXT models use SUPER+D, Aya may be trying to use this as fullscreen docking.
-                # TODO: Investigate if configuring in AYA SPACE changes these keycodes in firmware.
-                elif active in [[40, 133], [32, 125]] and not tm_pressed and event1.value == 1:
-                    event1 = InputEvent(event.sec, event.usec, e.EV_KEY, e.KEY_LEFTCTRL, 1)
-                    event2 = InputEvent(event.sec, event.usec, e.EV_KEY, e.KEY_2, 1)
-                    tm_pressed = True
-                elif event1.code in [40, 133, 32] and tm_pressed and event1.value == 0:
-                    event1 = InputEvent(event.sec, event.usec, e.EV_KEY, e.KEY_LEFTCTRL, 0)
-                    event2 = InputEvent(event.sec, event.usec, e.EV_KEY, e.KEY_2, 0)
-                    tm_pressed = False
+        # Home Button
+        elif active in [[96, 105, 133], [97, 125, 88], [88, 97, 125]] and not home_pressed and event1.value == 1:
+            event1 = InputEvent(event.sec, event.usec, e.EV_KEY, e.BTN_MODE, 1)
+            home_pressed = True
+        elif event1.code in [88, 96, 105] and home_pressed and event1.value == 0:
+            event1 = InputEvent(event.sec, event.usec, e.EV_KEY, e.BTN_MODE, 0)
+            home_pressed = False
 
         # Kill events that we override. Keeps output clean.
         if event1.code in [4, 24, 32, 40, 88, 96, 97, 100, 105, 111, 133] and event1.type in [e.EV_MSC, e.EV_KEY]:
