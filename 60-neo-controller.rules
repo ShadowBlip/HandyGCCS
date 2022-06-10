@@ -1,2 +1,0 @@
-# Aya Neo Fixes Controller
-KERNEL=="event*", SUBSYSTEM=="input", ATTRS{name}=="Aya Neo Controller", MODE="0660", TAG+="uaccess", ENV{ID_INPUT_JOYSTICK}="1"

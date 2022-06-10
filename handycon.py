@@ -1,5 +1,5 @@
 #!/sbin/python3
-# Aya Neo Controller
+# HandyGCCS HandyCon
 # Copyright 2022 Derek J. Clark <derekjohn dot clark at gmail dot com>
 # This will create a virtual UInput device and pull data from the built-in
 # controller and "keyboard". Right side buttons are keyboard buttons that
@@ -12,14 +12,15 @@ import signal
 import sys
 import dbus
 
-from evdev import InputDevice, InputEvent, UInput, ecodes as e, categorize, list_devices
+from BMI160_i2c import Driver
+from evdev import InputDevice, InputEvent, UInput, ecodes as e, categorize, list_devices, RelEvent
 from pathlib import PurePath as p
 from shutil import move
 from time import sleep
 
 # Declare global variables
 # Supported system type
-sys_type = None # 2021 or NEXT supported
+system_type = None # 2021 or NEXT supported
 
 # Track button on/off (prevents spam presses)
 esc_pressed = False # ESC button (GEN1)
@@ -29,34 +30,36 @@ tm_pressed = False # Quick Aciton Menu button (GEN1, GEN2)
 win_pressed = False # Dock Button (GEN1)
 
 # Devices
-keybd = None
-ui = None
-xb360 = None
+keyboard_device = None
+new_device = None
+controller_device = None
 
 # Paths
 hide_path = "/dev/input/.hidden/"
-kb_event = None
-kb_path = None
-xb_event = None
-xb_path = None
+keyboard_event = None
+keyboard_path = None
+controller_event = None
+controller_path = None
 
 def __init__():
 
-    global kb_event
-    global kb_path
-    global keybd
-    global sys_type
-    global xb360
-    global xb_event
-    global xb_path
-    global ui
+    global keyboard_event
+    global keyboard_path
+    global keyboard_device
+    global new_device
+    global system_type
+    global controller_device
+    global controller_event
+    global controller_path
+
+    xb360_capabilities = None
 
     # Identify the current device type. Kill script if not compatible.
-    sys_id = open("/sys/devices/virtual/dmi/id/product_name", "r").read().strip()
+    system_id = open("/sys/devices/virtual/dmi/id/product_name", "r").read().strip()
 
     # All devices from Founders edition through 2021 Pro Retro Power use the same 
     # input hardware and keycodes.
-    if sys_id in ["AYANEO 2021 Pro Retro Power",
+    if system_id in ["AYANEO 2021 Pro Retro Power",
             "AYA NEO 2021 Pro Retro Power",
             "AYANEO 2021 Pro",
             "AYA NEO 2021 Pro",
@@ -67,19 +70,19 @@ def __init__():
             "AYANEO FOUNDER",
             "AYA NEO FOUNDER",
             ]:
-        sys_type = "GEN1"
+        system_type = "GEN1"
 
     # NEXT uses new keycodes and has fewer buttons.
-    elif sys_id in ["NEXT",
+    elif system_id in ["NEXT",
             "Next Pro",
             "AYA NEO NEXT Pro",
             "AYANEO NEXT Pro",
             ]:
-        sys_type = "GEN2"
+        system_type = "GEN2"
 
     # Block devices that aren't supported as this could cause issues.
     else:
-        print(sys_id, "is not currently supported by this tool. Open an issue on \
+        print(system_id, "is not currently supported by this tool. Open an issue on \
 GitHub at https://github.com/ShadowBlip/aya-neo-fixes if this is a bug. If possible, \
 please run the capture-system.py utility found on the GitHub repository and upload \
 that file with your issue.")
@@ -89,56 +92,56 @@ that file with your issue.")
     attempts = 0
     while attempts < 3:
         try:
-            devices_orig = [InputDevice(path) for path in list_devices()]
+            devices_original = [InputDevice(path) for path in list_devices()]
         # Some funky stuff happens sometimes when booting. Give it another shot.
         except OSError:
             attempts += 1
             sleep(1)
             continue
 
-        for device in devices_orig:
+        # Grab the built-in devices. This will give us exclusive acces to the devices and their capabilities.
+        for device in devices_original:
 
             # Xbox 360 Controller
             if device.name == 'Microsoft X-Box 360 pad' and device.phys == 'usb-0000:03:00.3-4/input0':
-                xb_path = device.path
+                controller_path = device.path
+                controller_device = InputDevice(controller_path)
+                controller_capabilities = controller_device.capabilities()
+                controller_device.grab()
 
             # Keyboard Device
             elif device.name == 'AT Translated Set 2 keyboard' and device.phys == 'isa0060/serio0/input0':
-                kb_path = device.path
+                keyboard_path = device.path
+                keyboard_device = InputDevice(keyboard_path)
+                keyboard_device.grab()
 
         # Sometimes the service loads before all input devices have full initialized. Try a few times.
-        if not xb_path or not kb_path:
+        if not controller_path or not keyboard_path:
             attempts += 1
             sleep(1)
         else:
             break
 
     # Catch if devices weren't found.
-    if not xb_path or not kb_path:
+    if not xb360_device or not keyboard_device:
         print("Keyboard and/or X-Box 360 controller not found.\n \
 If this service has previously been started, try rebooting.\n \
 Exiting...")
         exit(1)
 
-    # Grab the built-in devices. Prevents double input.
-    keybd = InputDevice(kb_path)
-    keybd.grab()
-    xb360 = InputDevice(xb_path)
-    xb360.grab()
-
     # Create the virtual controller.
-    ui = UInput.from_device(xb360, keybd, name='Aya Neo Controller', bustype=3, vendor=int('045e', base=16), product=int('028e', base=16), version=110)
+    new_device = UInput.from_device(xb360_device, keyboard_device, name='HGCCS-Controller', bustype=3, vendor=int('045e', base=16), product=int('028e', base=16), version=110)
 
     # Move the reference to the original controllers to hide them from the user/steam.
     os.makedirs(hide_path, exist_ok=True)
-    kb_event = p(kb_path).name
-    move(kb_path, hide_path+kb_event)
-    xb_event = p(xb_path).name
-    move(xb_path, hide_path+xb_event)
+    keyboard_event = p(keyboard_path).name
+    move(keyboard_path, hide_path+keyboard_event)
+    controller_event = p(controller_path).name
+    move(controller_path, hide_path+controller_event)
 
 
-# Captures physical dvice events and translates them to virtual device events.
-async def capture_events(device):
+# Captures keyboard events and translates them to virtual device events.
+async def capture_keyboard_events(device):
 
     # Get access to global variables. These are globalized because the funtion
     # is instanciated twice and need to persist accross both instances.
@@ -147,7 +150,7 @@ async def capture_events(device):
     global kb_pressed
     global tm_pressed
     global win_pressed
-    global sys_type
+    global system_type
 
     # Capture events for the given device.
     async for event in device.async_read_loop():
@@ -156,9 +159,11 @@ async def capture_events(device):
         # we don't want to trigger additional/different events when doing that
         active = device.active_keys()
 
-        ev1 = event # pass through the current event, override if needed
-        ev2 = None # optional second button (i.e. home + select or super + p)
-        match sys_type:
+        event1 = event # pass through the current event, override if needed.
+        event2 = None # optional second button (i.e. home + select or super + p)
+        if active != []:
+            print(active, system_type)
+        match system_type:
 
             case "GEN1": # 2021 Models and previous.
                 # TODO: shortcut changes from MODE+SELECT to MODE+NORTH when running
@@ -167,13 +172,13 @@ async def capture_events(device):
                 # on any install and session.
 
                 # KB BUTTON. Open OSK. Works in-game in BPM but globally in gamepadui
-                if active == [24, 97, 125] and not kb_pressed and ev1.value == 1:
-                    ev1 = InputEvent(event.sec, event.usec, e.EV_KEY, e.BTN_MODE, 1)
-                    ev2 = InputEvent(event.sec, event.usec, e.EV_KEY, e.BTN_NORTH, 1)
+                if active == [24, 97, 125] and not kb_pressed and event1.value == 1:
+                    event1 = InputEvent(event.sec, event.usec, e.EV_KEY, e.BTN_MODE, 1)
+                    event2 = InputEvent(event.sec, event.usec, e.EV_KEY, e.BTN_NORTH, 1)
                     kb_pressed = True
-                elif active == [97] and kb_pressed and ev1.value == 0:
-                    ev1 = InputEvent(event.sec, event.usec, e.EV_KEY, e.BTN_MODE, 0)
-                    ev2 = InputEvent(event.sec, event.usec, e.EV_KEY, e.BTN_NORTH, 0)
+                elif active == [97] and kb_pressed and event1.value == 0:
+                    event1 = InputEvent(event.sec, event.usec, e.EV_KEY, e.BTN_MODE, 0)
+                    event2 = InputEvent(event.sec, event.usec, e.EV_KEY, e.BTN_NORTH, 0)
                     kb_pressed = False
 
                 # WIN BUTTON. Map to all detected screens for docking. Not working
@@ -181,78 +186,80 @@ async def capture_events(device):
                 # The extra conditions handle pressing WIN while pressing KB since
                 # both use code 125. Letting go of KB first still clears win_pressed
                 # as key 125 is released at the system level.
-                elif not win_pressed and ev1.value in [1,2] and (active == [125] or (active == [24, 97, 125] and kb_pressed)):
+                elif not win_pressed and event1.value in [1,2] and (active == [125] or (active == [24, 97, 125] and kb_pressed)):
                     #ev1 = InputEvent(event.sec, event.usec, e.EV_KEY, e.KEY_LEFTMETA, 1)
                     #ev2 = InputEvent(event.sec, event.usec, e.EV_KEY, e.KEY_D, 1)
                     win_pressed = True
-                elif (active in [[], [24, 97]] and win_pressed) or (active == [125] and ev1.code == 125 and win_pressed and ev1.value == 0):
+                elif (active in [[], [24, 97]] and win_pressed) or (active == [125] and event1.code == 125 and win_pressed and event1.value == 0):
                     #ev1 = InputEvent(event.sec, event.usec, e.EV_KEY, e.KEY_LEFTMETA, 0)
                     #ev2 = InputEvent(event.sec, event.usec, e.EV_KEY, e.KEY_D, 0)
                     win_pressed = False
 
                 # ESC BUTTON. Unused. Passing so it functions as an "ESC" key for now.
                 # Add 1 to below list if changed.
-                elif ev1.code == 1 and not esc_pressed and ev1.value == 1:
+                elif event1.code == 1 and not esc_pressed and event1.value == 1:
                     esc_pressed = True
-                elif ev1.code == 1 and esc_pressed and ev1.value == 0:
+                elif event1.code == 1 and esc_pressed and event1.value == 0:
                     esc_pressed = False
 
                 # TM BUTTON. Quick Action Menu
-                elif active == [97, 100, 111] and not tm_pressed and ev1.value == 1:
-                    ev1 = InputEvent(event.sec, event.usec, e.EV_KEY, e.KEY_LEFTCTRL, 1)
-                    ev2 = InputEvent(event.sec, event.usec, e.EV_KEY, e.KEY_2, 1)
+                elif active == [97, 100, 111] and not tm_pressed and event1.value == 1:
+                    event1 = InputEvent(event.sec, event.usec, e.EV_KEY, e.KEY_LEFTCTRL, 1)
+                    event2 = InputEvent(event.sec, event.usec, e.EV_KEY, e.KEY_2, 1)
                     tm_pressed = True
-                elif ev1.code in [97, 100, 111] and tm_pressed and ev1.value == 0:
-                    ev1 = InputEvent(event.sec, event.usec, e.EV_KEY, e.KEY_LEFTCTRL, 0)
-                    ev2 = InputEvent(event.sec, event.usec, e.EV_KEY, e.KEY_2, 0)
+                elif event1.code in [97, 100, 111] and tm_pressed and event1.value == 0:
+                    event1 = InputEvent(event.sec, event.usec, e.EV_KEY, e.KEY_LEFTCTRL, 0)
+                    event2 = InputEvent(event.sec, event.usec, e.EV_KEY, e.KEY_2, 0)
                     tm_pressed = False
 
             case "GEN2": # NEXT Model and beyond.
                 # AYA SPACE BUTTON. -> Home Button
-                if active in [[96, 105, 133], [97, 125, 88], [88, 97, 125]] and not home_pressed and ev1.value == 1:
-                    ev1 = InputEvent(event.sec, event.usec, e.EV_KEY, e.BTN_MODE, 1)
+                if active in [[96, 105, 133], [97, 125, 88], [88, 97, 125]] and not home_pressed and event1.value == 1:
+                    event1 = InputEvent(event.sec, event.usec, e.EV_KEY, e.BTN_MODE, 1)
                     home_pressed = True
-                elif ev1.code in [88, 96, 97, 105, 133] and home_pressed and ev1.value == 0:
-                    ev1 = InputEvent(event.sec, event.usec, e.EV_KEY, e.BTN_MODE, 0)
+                elif event1.code in [88, 96, 97, 105, 133] and home_pressed and event1.value == 0:
+                    event1 = InputEvent(event.sec, event.usec, e.EV_KEY, e.BTN_MODE, 0)
                     home_pressed = False
 
                 # CONFIGURABLE BUTTON. -> Quick Action Menu.
                 # NOTE: Some NEXT models use SUPER+D, Aya may be trying to use this as fullscreen docking.
                 # TODO: Investigate if configuring in AYA SPACE changes these keycodes in firmware.
-                elif active in [[40, 133], [32, 125]] and not tm_pressed and ev1.value == 1:
-                    ev1 = InputEvent(event.sec, event.usec, e.EV_KEY, e.KEY_LEFTCTRL, 1)
-                    ev2 = InputEvent(event.sec, event.usec, e.EV_KEY, e.KEY_2, 1)
+                elif active in [[40, 133], [32, 125]] and not tm_pressed and event1.value == 1:
+                    event1 = InputEvent(event.sec, event.usec, e.EV_KEY, e.KEY_LEFTCTRL, 1)
+                    event2 = InputEvent(event.sec, event.usec, e.EV_KEY, e.KEY_2, 1)
                     tm_pressed = True
-                elif ev1.code in [40, 133, 32] and tm_pressed and ev1.value == 0:
-                    ev1 = InputEvent(event.sec, event.usec, e.EV_KEY, e.KEY_LEFTCTRL, 0)
-                    ev2 = InputEvent(event.sec, event.usec, e.EV_KEY, e.KEY_2, 0)
+                elif event1.code in [40, 133, 32] and tm_pressed and event1.value == 0:
+                    event1 = InputEvent(event.sec, event.usec, e.EV_KEY, e.KEY_LEFTCTRL, 0)
+                    event2 = InputEvent(event.sec, event.usec, e.EV_KEY, e.KEY_2, 0)
                     tm_pressed = False
 
         # Kill events that we override. Keeps output clean.
-        if ev1.code in [4, 24, 32, 40, 88, 96, 97, 100, 105, 111, 133] and ev1.type in [e.EV_MSC, e.EV_KEY]:
+        if event1.code in [4, 24, 32, 40, 88, 96, 97, 100, 105, 111, 133] and event1.type in [e.EV_MSC, e.EV_KEY]:
             continue # Add 1 to list if ESC used above
-        elif ev1.code in [125] and ev2 == None: # Only kill KEY_LEFTMETA if its not used as a key combo.
+        elif event1.code in [125] and event2 == None: # Only kill KEY_LEFTMETA if its not used as a key combo.
             continue
 
         # Push out all events. Includes all button/joy events from controller we dont override.
-        ui.write_event(ev1)
-        if ev2:
-            ui.write_event(ev2)
-        ui.syn()
+        new_device.write_event(event1)
+        print(event1)
+        if event2:
+            print(event2)
+            new_device.write_event(event2)
+        new_device.syn()
 
 
 # Gracefull shutdown.
-async def restore(signal, loop):
+async def restore(loop):
 
-    print('Receved exit signal: '+signal.name+'. Restoring Devices.')
+    print('Receved exit signal. Restoring Devices.')
 
     # Both devices threads will attempt this, so ignore if they have been moved.
     try:
-        move(hide_path+kb_event, kb_path)
+        move(hide_path+keyboard_event, keyboard_path)
     except FileNotFoundError:
         pass
     try:
-        move(hide_path+xb_event, xb_path)
+        move(hide_path+controller_event, controller_path)
     except FileNotFoundError:
         pass
 
@@ -272,23 +279,24 @@ async def restore(signal, loop):
 def main():
 
     # Run asyncio loop to capture all events.
-    # TODO: these are deprecated, research and ID new functions.
-    # NOTE: asyncio api will need update to fix. Maybe supress error for clean logs?
-    for device in xb360, keybd:
-        asyncio.ensure_future(capture_events(device))
-
     loop = asyncio.get_event_loop()
+    loop.create_future()
+
+    # Attach the event loop of each device to the asyncio loop.
+    asyncio.ensure_future(capture_controller_events(controller_device))
+    asyncio.ensure_future(capture_keyboard_events(keyboard_device))
 
     # Establish signaling to handle gracefull shutdown.
     signals = (signal.SIGHUP, signal.SIGTERM, signal.SIGINT, signal.SIGQUIT)
     for s in signals:
-        loop.add_signal_handler(s, lambda s=s: asyncio.create_task(restore(s, loop)))
+        loop.add_signal_handler(s, lambda s=s: asyncio.create_task(restore(loop)))
 
     try:
         loop.run_forever()
+    except Exception as e:
+        print("OBJECTION!\n", e)
     finally:
-        loop.close()
-
+        loop.stop()
 
 if __name__ == "__main__":
     __init__()
