@@ -18,27 +18,38 @@ from shutil import move
 from time import sleep
 
 # Declare global variables
-# Supported system type
-system_type = None # 2021 or NEXT supported
+
+# Constants
+EVENT_OSK = [[e.EV_KEY, e.BTN_MODE], [e.EV_KEY, e.BTN_NORTH]]
+EVENT_ESC = [[e.EV_MSC, e.MSC_SCAN], [e.EV_KEY, e.KEY_ESC]]
+EVENT_QAM = [[e.EV_KEY, e.KEY_LEFTCTRL], [e.EV_KEY, e.KEY_2]]
+EVENT_SCR = [[e.EV_KEY, e.BTN_MODE], [e.EV_KEY, e.BTN_TR]]
+EVENT_HOME = [[e.EV_KEY, e.BTN_MODE]]
 
 # Track button on/off (prevents spam presses)
-esc_pressed = False # ESC button (GEN1)
-home_pressed = False # Steam/xbox/playsation button (GEN2)
-kb_pressed = False # OSK Button (GEN1)
-tm_pressed = False # Quick Aciton Menu button (GEN1, GEN2)
-win_pressed = False # Dock Button (GEN1)
+event_queue = [] # Stores incoming button presses to block spam
 
 # Devices
+controller_device = None
 keyboard_device = None
 new_device = None
-controller_device = None
+system_type = None
 
 # Paths
+controller_event = None
+controller_path = None
 hide_path = "/dev/input/.hidden/"
 keyboard_event = None
 keyboard_path = None
-controller_event = None
-controller_path = None
+
+# Configuration
+button_map = {
+        "button1": EVENT_SCR,
+        "button2": EVENT_QAM,
+        "button3": EVENT_ESC,
+        "button4": EVENT_OSK,
+        "button5": EVENT_HOME,
+        }
 
 def __init__():
 
@@ -51,14 +62,15 @@ def __init__():
     global controller_event
     global controller_path
 
-    xb360_capabilities = None
+    controller_capabilities = None
 
     # Identify the current device type. Kill script if not compatible.
     system_id = open("/sys/devices/virtual/dmi/id/product_name", "r").read().strip()
 
     # All devices from Founders edition through 2021 Pro Retro Power use the same 
     # input hardware and keycodes.
-    if system_id in ["AYANEO 2021 Pro Retro Power",
+    if system_id in [
+            "AYANEO 2021 Pro Retro Power",
             "AYA NEO 2021 Pro Retro Power",
             "AYANEO 2021 Pro",
             "AYA NEO 2021 Pro",
@@ -69,15 +81,17 @@ def __init__():
             "AYANEO FOUNDER",
             "AYA NEO FOUNDER",
             ]:
-        system_type = "GEN1"
+        system_type = "AYA_GEN1"
 
     # NEXT uses new keycodes and has fewer buttons.
-    elif system_id in ["NEXT",
-            "Next Pro",
-            "AYA NEO NEXT Pro",
+    elif system_id in [
+            "NEXT",
+            "NEXT Pro",
+            "NEXT Advance",
             "AYANEO NEXT Pro",
+            "AYANEO NEXT Advance",
             ]:
-        system_type = "GEN2"
+        system_type = "AYA_GEN2"
 
     # Block devices that aren't supported as this could cause issues.
     else:
@@ -122,14 +136,14 @@ that file with your issue.")
             break
 
     # Catch if devices weren't found.
-    if not xb360_device or not keyboard_device:
+    if not controller_device or not keyboard_device:
         print("Keyboard and/or X-Box 360 controller not found.\n \
 If this service has previously been started, try rebooting.\n \
 Exiting...")
         exit(1)
 
     # Create the virtual controller.
-    new_device = UInput.from_device(xb360_device, keyboard_device, name='HGCCS-Controller', bustype=3, vendor=int('045e', base=16), product=int('028e', base=16), version=110)
+    new_device = UInput.from_device(controller_device, keyboard_device, name='HGCCS-Controller', bustype=3, vendor=int('045e', base=16), product=int('028e', base=16), version=110)
 
     # Move the reference to the original controllers to hide them from the user/steam.
     os.makedirs(hide_path, exist_ok=True)
@@ -142,91 +156,88 @@ Exiting...")
 # Captures keyboard events and translates them to virtual device events.
 async def capture_keyboard_events(device):
 
-    # Get access to global variables. These are globalized because the funtion
+    # Get access to global variables. These are globalized because the function
     # is instanciated twice and need to persist accross both instances.
-    global esc_pressed
-    global home_pressed
-    global kb_pressed
-    global tm_pressed
-    global win_pressed
-    global system_type
+    global event_queue
+    global button_map
+
+    # Button map shortcuts for easy reference.
+    button1 = button_map["button1"]
+    button2 = button_map["button2"]
+    button3 = button_map["button3"]
+    button4 = button_map["button4"]
+    button5 = button_map["button5"]
 
     # Capture events for the given device.
-    async for event in device.async_read_loop():
+    async for seed_event in device.async_read_loop():
 
-        # We use active keys instead of ev1.code as we will override ev1 and
-        # we don't want to trigger additional/different events when doing that
+        # Loop variables
         active = device.active_keys()
+        events = []
+        this_button = None
+        button_on = seed_event.value
 
-        event1 = event # pass through the current event, override if needed.
-        event2 = None # optional second button (i.e. home + select or super + p)
-        if active != []:
-            print(active, system_type)
+        # BUTTON 1
+        if active == [125] and button_on == 1 and button1 not in event_queue:
+            this_button = button1
+        elif active == [] and seed_event.code == 125 and button_on == 0 and button1 in event_queue:
+            this_button = button1
 
-        # Open OSK
-        if active == [24, 97, 125] and not kb_pressed and event1.value == 1:
-            event1 = InputEvent(event.sec, event.usec, e.EV_KEY, e.BTN_MODE, 1)
-            event2 = InputEvent(event.sec, event.usec, e.EV_KEY, e.BTN_NORTH, 1)
-            kb_pressed = True
-        elif active == [97] and kb_pressed and event1.value == 0:
-            event1 = InputEvent(event.sec, event.usec, e.EV_KEY, e.BTN_MODE, 0)
-            event2 = InputEvent(event.sec, event.usec, e.EV_KEY, e.BTN_NORTH, 0)
-            kb_pressed = False
+        # BUTTON 2
+        elif active in [[97, 100, 111], [40, 133], [32, 125]] and button2 not in event_queue:
+            this_button = button2
+        elif seed_event.code in [32, 40, 100, 111] and button2 in event_queue:
+            this_button = button2
 
-        # WIN BUTTON.
-        elif not win_pressed and event1.value in [1,2] and (active == [125] or (active == [24, 97, 125] and kb_pressed)):
-            #ev1 = InputEvent(event.sec, event.usec, e.EV_KEY, e.KEY_LEFTMETA, 1)
-            #ev2 = InputEvent(event.sec, event.usec, e.EV_KEY, e.KEY_D, 1)
-            win_pressed = True
-        elif (active in [[], [24, 97]] and win_pressed) or (active == [125] and event1.code == 125 and win_pressed and event1.value == 0):
-            #ev1 = InputEvent(event.sec, event.usec, e.EV_KEY, e.KEY_LEFTMETA, 0)
-            #ev2 = InputEvent(event.sec, event.usec, e.EV_KEY, e.KEY_D, 0)
-            win_pressed = False
+        # BUTTON 3
+        elif seed_event.code == 1 and button_on == 1 and button3 not in event_queue:
+            this_button = button3
+        elif active == [] and seed_event.code == 1 and button_on == 0 and button3 in event_queue:
+            this_button = button3
+        elif seed_event.code == 1 and button_on == 2 and button3 in event_queue:
+            this_button = button3
 
-        # ESC BUTTON. Unused. Passing so it functions as an "ESC" key for now.
-        elif event1.code == 1 and not esc_pressed and event1.value == 1:
-            esc_pressed = True
-        elif event1.code == 1 and esc_pressed and event1.value == 0:
-            esc_pressed = False
+        # BUTTON 4
+        elif active == [24, 97, 125] and button_on ==1 and button4 not in event_queue:
+            this_button = button4
+        elif active == [97] and button_on == 0 and button4 in event_queue:
+            this_button = button4
 
-        # Quick Action Menu
-        elif active in [[97, 100, 111], [40, 133], [32, 125]] and not tm_pressed and event1.value == 1:
-            event1 = InputEvent(event.sec, event.usec, e.EV_KEY, e.KEY_LEFTCTRL, 1)
-            event2 = InputEvent(event.sec, event.usec, e.EV_KEY, e.KEY_2, 1)
-            tm_pressed = True
-        elif event1.code in [32, 40, 100, 111] and tm_pressed and event1.value == 0:
-            event1 = InputEvent(event.sec, event.usec, e.EV_KEY, e.KEY_LEFTCTRL, 0)
-            event2 = InputEvent(event.sec, event.usec, e.EV_KEY, e.KEY_2, 0)
-            tm_pressed = False
+        # BUTTON 5
+        elif active in [[96, 105, 133], [97, 125, 88], [88, 97, 125]] and button_on == 1 and button5 not in event_queue:
+            this_button = button5
+        elif seed_event.code in [88, 96, 105] and button_on == 0 and button5 in event_queue:
+            this_button = button5
 
-        # Home Button
-        elif active in [[96, 105, 133], [97, 125, 88], [88, 97, 125]] and not home_pressed and event1.value == 1:
-            event1 = InputEvent(event.sec, event.usec, e.EV_KEY, e.BTN_MODE, 1)
-            home_pressed = True
-        elif event1.code in [88, 96, 105] and home_pressed and event1.value == 0:
-            event1 = InputEvent(event.sec, event.usec, e.EV_KEY, e.BTN_MODE, 0)
-            home_pressed = False
+        # Create list of events to fire.
+        if this_button:
+            if button_on == 1:
+                event_queue.append(this_button)
+            elif button_on == 0:
+                event_queue.remove(this_button)
 
-        # Kill events that we override. Keeps output clean.
-        if event1.code in [4, 24, 32, 40, 88, 96, 97, 100, 105, 111, 133] and event1.type in [e.EV_MSC, e.EV_KEY]:
-            continue # Add 1 to list if ESC used above
-        elif event1.code in [125] and event2 == None: # Only kill KEY_LEFTMETA if its not used as a key combo.
-            continue
+            for button_event in this_button:
+                event = InputEvent(seed_event.sec, seed_event.usec, button_event[0], button_event[1], button_on)
+                events.append(event)
 
-        # Push out all events. Includes all button/joy events from controller we dont override.
-        new_device.write_event(event1)
-        print(event1)
-        if event2:
-            print(event2)
-            new_device.write_event(event2)
-        new_device.syn()
+        # Push out all events.
+        if events != []:
+            await emit_events(events)
 
 
 # Captures the controller_device events and passes them through.
 async def capture_controller_events(device):
     async for event in device.async_read_loop():
-        new_device.write_event(event)
-        new_device.syn()
+        await emit_events([event])
+
+
+async def emit_events(events: list):
+    if events == []:
+        return
+    for event in events:
+        if event:
+            new_device.write_event(event)
+    new_device.syn()
 
 
 # Gracefull shutdown.
