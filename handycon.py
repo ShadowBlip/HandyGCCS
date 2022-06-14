@@ -167,6 +167,7 @@ async def capture_keyboard_events(device):
     button3 = button_map["button3"]
     button4 = button_map["button4"]
     button5 = button_map["button5"]
+    last_button = None
 
     # Capture events for the given device.
     async for seed_event in device.async_read_loop():
@@ -179,46 +180,62 @@ async def capture_keyboard_events(device):
 
         # BUTTON 1
         if active == [125] and button_on == 1 and button1 not in event_queue:
-            this_button = button1
+            event_queue.append(button1)
         elif active == [] and seed_event.code == 125 and button_on == 0 and button1 in event_queue:
             this_button = button1
 
         # BUTTON 2
-        elif active in [[97, 100, 111], [40, 133], [32, 125]] and button2 not in event_queue:
-            this_button = button2
+        elif active in [[97, 100, 111], [40, 133], [32, 125]] and button_on == 1and button2 not in event_queue:
+            event_queue.append(button2)
         elif seed_event.code in [32, 40, 100, 111] and button2 in event_queue:
             this_button = button2
 
         # BUTTON 3
         elif seed_event.code == 1 and button_on == 1 and button3 not in event_queue:
-            this_button = button3
+            event_queue.append(button3)
         elif active == [] and seed_event.code == 1 and button_on == 0 and button3 in event_queue:
             this_button = button3
+
+        # BUTTON 3 SECOND STATE OPTIONS
+        # Chose when to set this_button, either at 2 (While held) or at release.
         elif seed_event.code == 1 and button_on == 2 and button3 in event_queue:
-            this_button = button3
+            this_button = button4 # Comment this and uncomment elif below to enable on release version.
+            event_queue.remove(button3)
+            event_queue.append(button4)
+        #elif active == [] and seed_event.code == 1 and button_on == 0 and button4 in event_queue:
+            #this_button = button4
 
         # BUTTON 4
         elif active == [24, 97, 125] and button_on ==1 and button4 not in event_queue:
-            this_button = button4
+            event_queue.append(button4)
         elif active == [97] and button_on == 0 and button4 in event_queue:
             this_button = button4
 
         # BUTTON 5
         elif active in [[96, 105, 133], [97, 125, 88], [88, 97, 125]] and button_on == 1 and button5 not in event_queue:
-            this_button = button5
+            event_queue.append(button5)
         elif seed_event.code in [88, 96, 105] and button_on == 0 and button5 in event_queue:
             this_button = button5
 
         # Create list of events to fire.
-        if this_button:
-            if button_on == 1:
-                event_queue.append(this_button)
-            elif button_on == 0:
-                event_queue.remove(this_button)
+        if this_button:# and event_queue != []:
+            #if button_on == 1:
+            #    event_queue.append(this_button)
+            #elif button_on == 0:
+            #    event_queue.remove(this_button)
 
             for button_event in this_button:
-                event = InputEvent(seed_event.sec, seed_event.usec, button_event[0], button_event[1], button_on)
+                event = InputEvent(seed_event.sec, seed_event.usec, button_event[0], button_event[1], 1)
                 events.append(event)
+            event_queue.remove(this_button)
+            last_button = this_button
+
+        elif not this_button and last_button:
+            for button_event in last_button:
+                await asyncio.sleep(0.15)
+                event = InputEvent(seed_event.sec, seed_event.usec, button_event[0], button_event[1], 0)
+                events.append(event)
+            last_button = None
 
         # Push out all events.
         if events != []:
