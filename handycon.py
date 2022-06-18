@@ -11,6 +11,7 @@ import os
 import signal
 import sys
 import dbus
+import subprocess
 
 from evdev import InputDevice, InputEvent, UInput, ecodes as e, categorize, list_devices, RelEvent
 from pathlib import PurePath as p
@@ -66,6 +67,7 @@ def __init__():
 
     # Identify the current device type. Kill script if not compatible.
     system_id = open("/sys/devices/virtual/dmi/id/product_name", "r").read().strip()
+    system_cpu = subprocess.check_output("lscpu | grep \"Vendor ID\" | cut -d : -f 2 | xargs", shell=True, universal_newlines=True).strip()
 
     # All devices from Founders edition through 2021 Pro Retro Power use the same 
     # input hardware and keycodes.
@@ -92,7 +94,17 @@ def __init__():
             "AYANEO NEXT Advance",
             ]:
         system_type = "AYA_GEN2"
-
+        
+    # We're adding support for the ONE XPLAYER devices, they have incomplete DMI data so we will be using workarounds to attempt to identify products correctly.
+    elif system_id in [
+            "ONE XPLAYER",
+            ]:
+         if system_cpu in ["GenuineIntel"]:
+            system_type = "ONE XPLAYER Intel Variant"
+         elif system_cpu in ["AuthenticAMD"]:
+            system_type ="ONE XPLAYER AMD Variant"
+        
+        
     # Block devices that aren't supported as this could cause issues.
     else:
         print(system_id, "is not currently supported by this tool. Open an issue on \
@@ -177,6 +189,11 @@ async def capture_keyboard_events(device):
         events = []
         this_button = None
         button_on = seed_event.value
+        
+        # Debugging variables
+        
+        if active != []:
+           print("Active Keys:", device.active_keys(verbose=True), "Seed Value", seed_event.value, "Seed Code:", seed_event.code, "Seed Type:", seed_event.type, "Button pressed", button_on)
 
         # BUTTON 1
         if active == [125] and button_on == 1 and button1 not in event_queue:
