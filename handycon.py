@@ -69,6 +69,7 @@ def __init__():
     system_id = open("/sys/devices/virtual/dmi/id/product_name", "r").read().strip()
     system_cpu = subprocess.check_output("lscpu | grep \"Vendor ID\" | cut -d : -f 2 | xargs", shell=True, universal_newlines=True).strip()
 
+
     # All devices from Founders edition through 2021 Pro Retro Power use the same 
     # input hardware and keycodes.
     if system_id in [
@@ -101,7 +102,7 @@ def __init__():
             ]:
          if system_cpu in ["GenuineIntel"]:
             system_type = "ONE XPLAYER Intel Variant"
-         elif system_cpu in ["AuthenticAMD"]:
+         elif system_cpu in ["AuthenticAMD Advanced Micro Devices, Inc."]:
             system_type ="ONE XPLAYER AMD Variant"
         
         
@@ -113,6 +114,9 @@ please run the capture-system.py utility found on the GitHub repository and uplo
 that file with your issue.")
         exit(1)
 
+    # Print out the system information
+    print("System Type:", system_type)
+    
     # Identify system input event devices.
     attempts = 0
     while attempts < 3:
@@ -128,7 +132,7 @@ that file with your issue.")
         for device in devices_original:
 
             # Xbox 360 Controller
-            if device.name == 'Microsoft X-Box 360 pad' and device.phys == 'usb-0000:03:00.3-4/input0':
+            if device.name == 'Microsoft X-Box 360 pad' and device.phys == 'usb-0000:03:00.3-4/input0' or 'Generic X-Box pad' and device.phys == 'usb-0000:00:14.0-9/input0':
                 controller_path = device.path
                 controller_device = InputDevice(controller_path)
                 controller_capabilities = controller_device.capabilities()
@@ -225,6 +229,7 @@ async def capture_keyboard_events(device):
         # BUTTON 4
         elif active == [24, 97, 125] and button_on ==1 and button4 not in event_queue:
             event_queue.append(button4)
+            print("System Type", system_type)
         elif active == [97] and button_on == 0 and button4 in event_queue:
             this_button = button4
 
