@@ -199,25 +199,25 @@ async def capture_keyboard_events(device):
         if active != []:
            print("Active Keys:", device.active_keys(verbose=True), "Seed Value", seed_event.value, "Seed Code:", seed_event.code, "Seed Type:", seed_event.type, "Button pressed", button_on)
 
-        # BUTTON 1
-        if active == [125] and button_on == 1 and button1 not in event_queue:
+        # BUTTON 1 Screenshot
+        if ((active == [125] and system_type == "AYA_GEN1") or (active == [99, 125] and system_type == "ONE XPLAYER Intel Variant")) or (active == [99, 125] and system_type == "ONE XPLAYER AMD Variant") and button_on == 1 and button1 not in event_queue:
             event_queue.append(button1)
-        elif active == [] and seed_event.code == 125 and button_on == 0 and button1 in event_queue:
+        elif active == [] and seed_event.code in [99, 125] and button_on == 0 and button1 in event_queue:
             this_button = button1
 
-        # BUTTON 2
+        # BUTTON 2 QAM
         elif active in [[97, 100, 111], [40, 133], [32, 125]] and button_on == 1and button2 not in event_queue:
             event_queue.append(button2)
         elif seed_event.code in [32, 40, 100, 111] and button2 in event_queue:
             this_button = button2
 
-        # BUTTON 3
+        # BUTTON 3 ESC
         elif seed_event.code == 1 and button_on == 1 and button3 not in event_queue:
             event_queue.append(button3)
         elif active == [] and seed_event.code == 1 and button_on == 0 and button3 in event_queue:
             this_button = button3
 
-        # BUTTON 3 SECOND STATE OPTIONS
+        # SECOND STATE OPTIONS
         # Chose when to set this_button, either at 2 (While held) or at release.
         elif seed_event.code == 1 and button_on == 2 and button3 in event_queue:
             this_button = button4 # Comment this and uncomment elif below to enable on release version.
@@ -226,17 +226,16 @@ async def capture_keyboard_events(device):
         #elif active == [] and seed_event.code == 1 and button_on == 0 and button4 in event_queue:
             #this_button = button4
 
-        # BUTTON 4
+        # BUTTON 4 Keyboard
         elif active == [24, 97, 125] and button_on ==1 and button4 not in event_queue:
             event_queue.append(button4)
-            print("System Type", system_type)
         elif active == [97] and button_on == 0 and button4 in event_queue:
             this_button = button4
 
-        # BUTTON 5
-        elif active in [[96, 105, 133], [97, 125, 88], [88, 97, 125]] and button_on == 1 and button5 not in event_queue:
+        # BUTTON 5 Home
+        elif active in [[96, 105, 133], [97, 125, 88], [88, 97, 125], [34, 125]] and button_on == 1 and button5 not in event_queue:
             event_queue.append(button5)
-        elif seed_event.code in [88, 96, 105] and button_on == 0 and button5 in event_queue:
+        elif ((system_type != "ONE XPLAYER Intel Variant" or "ONE XPLAYER AMD Variant") and seed_event.code in [88, 96, 105]) or seed_event.code in [34] and button_on == 0 and button5 in event_queue:
             this_button = button5
 
         # Create list of events to fire.
