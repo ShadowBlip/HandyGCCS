@@ -200,7 +200,7 @@ async def capture_keyboard_events(device):
         #   print("Active Keys:", device.active_keys(verbose=True), "Seed Value", seed_event.value, "Seed Code:", seed_event.code, "Seed Type:", seed_event.type, "Button pressed", button_on)
 
         # BUTTON 1 (Default: Screenshot)
-        if ((active == [125] and system_type == "AYA_GEN1") or (active == [99, 125] and system_type in ["OXP_INTEL", "OXP_AMD"])) and button_on == 1 and button1 not in event_queue:
+        if ((active == [125] and system_type == "AYA_GEN1") or active == [99, 125] ) and button_on == 1 and button1 not in event_queue:
             event_queue.append(button1)
         elif active == [] and seed_event.code in [99, 125] and button_on == 0 and button1 in event_queue:
             this_button = button1
