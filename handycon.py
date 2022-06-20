@@ -11,6 +11,7 @@ import os
 import signal
 import sys
 import dbus
+import subprocess
 
 from evdev import InputDevice, InputEvent, UInput, ecodes as e, categorize, list_devices, RelEvent
 from pathlib import PurePath as p
@@ -66,32 +67,41 @@ def __init__():
 
     # Identify the current device type. Kill script if not compatible.
     system_id = open("/sys/devices/virtual/dmi/id/product_name", "r").read().strip()
+    system_cpu = subprocess.check_output("lscpu | grep \"Vendor ID\" | cut -d : -f 2 | xargs", shell=True, universal_newlines=True).strip()
 
-    # All devices from Founders edition through 2021 Pro Retro Power use the same 
+    # Aya Neo from Founders edition through 2021 Pro Retro Power use the same 
     # input hardware and keycodes.
     if system_id in [
-            "AYANEO 2021 Pro Retro Power",
-            "AYA NEO 2021 Pro Retro Power",
-            "AYANEO 2021 Pro",
-            "AYA NEO 2021 Pro",
-            "AYANEO 2021",
-            "AYA NEO 2021",
-            "AYANEO FOUNDERS",
-            "AYA NEO FOUNDERS",
-            "AYANEO FOUNDER",
             "AYA NEO FOUNDER",
+            "AYA NEO 2021",
+            "AYANEO 2021",
+            "AYANEO 2021 Pro",
+            "AYANEO 2021 Pro Retro Power",
             ]:
         system_type = "AYA_GEN1"
 
-    # NEXT uses new keycodes and has fewer buttons.
+    # Aya Neo NEXT and after use new keycodes and have fewer buttons.
     elif system_id in [
             "NEXT",
             "NEXT Pro",
             "NEXT Advance",
+            "AYANEO NEXT",
             "AYANEO NEXT Pro",
             "AYANEO NEXT Advance",
+            "AIR",
+            "AIR Pro",
             ]:
         system_type = "AYA_GEN2"
+
+    # ONE XPLAYER devices have incomplete DMI data so we need addtional information.
+    #TODO: FInd better data to ID systems as there may be some differences in buttons.
+    elif system_id in [
+            "ONE XPLAYER",
+            ]:
+         if system_cpu in ["GenuineIntel"]:
+            system_type = "OXP_INTEL"
+         elif system_cpu in ["AuthenticAMD Advanced Micro Devices, Inc.", "AuthenticAMD"]:
+            system_type ="OXP_AMD"
 
     # Block devices that aren't supported as this could cause issues.
     else:
@@ -116,7 +126,7 @@ that file with your issue.")
         for device in devices_original:
 
             # Xbox 360 Controller
-            if device.name == 'Microsoft X-Box 360 pad' and device.phys == 'usb-0000:03:00.3-4/input0':
+            if device.name in ['Microsoft X-Box 360 pad', 'Generic X-Box pad'] and device.phys in ['usb-0000:03:00.3-4/input0', 'usb-0000:00:14.0-9/input0']:
                 controller_path = device.path
                 controller_device = InputDevice(controller_path)
                 controller_capabilities = controller_device.capabilities()
@@ -143,7 +153,14 @@ Exiting...")
         exit(1)
 
     # Create the virtual controller.
-    new_device = UInput.from_device(controller_device, keyboard_device, name='HGCCS-Controller', bustype=3, vendor=int('045e', base=16), product=int('028e', base=16), version=110)
+    new_device = UInput.from_device(
+            controller_device,
+            keyboard_device,
+            name='Handheld Controller',
+            bustype=3,
+            vendor=int('045e', base=16),
+            product=int('028e', base=16),
+            version=110)
 
     # Move the reference to the original controllers to hide them from the user/steam.
     os.makedirs(hide_path, exist_ok=True)
@@ -177,52 +194,49 @@ async def capture_keyboard_events(device):
         events = []
         this_button = None
         button_on = seed_event.value
+        
+        # Debugging variables
+        #if active != []:
+        #   print("Active Keys:", device.active_keys(verbose=True), "Seed Value", seed_event.value, "Seed Code:", seed_event.code, "Seed Type:", seed_event.type, "Button pressed", button_on)
 
-        # BUTTON 1
-        if active == [125] and button_on == 1 and button1 not in event_queue:
+        # BUTTON 1 (Default: Screenshot)
+        if ((active == [125] and system_type == "AYA_GEN1") or active == [99, 125] ) and button_on == 1 and button1 not in event_queue:
             event_queue.append(button1)
-        elif active == [] and seed_event.code == 125 and button_on == 0 and button1 in event_queue:
+        elif active == [] and seed_event.code in [99, 125] and button_on == 0 and button1 in event_queue:
             this_button = button1
 
-        # BUTTON 2
-        elif active in [[97, 100, 111], [40, 133], [32, 125]] and button_on == 1and button2 not in event_queue:
+        # BUTTON 2 (Default: QAM)
+        elif active in [[97, 100, 111], [40, 133], [32, 125]] and button_on == 1 and button2 not in event_queue:
             event_queue.append(button2)
-        elif seed_event.code in [32, 40, 100, 111] and button2 in event_queue:
+        elif ((active == []) or (seed_event.code in [32, 40, 100, 111])) and button2 in event_queue:
             this_button = button2
 
-        # BUTTON 3
-        elif seed_event.code == 1 and button_on == 1 and button3 not in event_queue:
+        # BUTTON 3 (Default: ESC)
+        elif ((active == [97, 100, 111]) or (seed_event.code == 1)) and button_on == 1 and button3 not in event_queue:
             event_queue.append(button3)
-        elif active == [] and seed_event.code == 1 and button_on == 0 and button3 in event_queue:
+        elif active == [] and ((seed_event.code == 1) or (seed_event.code == 100)) and button_on == 0 and button3 in event_queue:
             this_button = button3
 
-        # BUTTON 3 SECOND STATE OPTIONS
-        # Chose when to set this_button, either at 2 (While held) or at release.
-        elif seed_event.code == 1 and button_on == 2 and button3 in event_queue:
-            this_button = button4 # Comment this and uncomment elif below to enable on release version.
-            event_queue.remove(button3)
-            event_queue.append(button4)
-        #elif active == [] and seed_event.code == 1 and button_on == 0 and button4 in event_queue:
-            #this_button = button4
+        # BITTON 3 SECOND STATE (Default: TBD)
+        #elif seed_event.code == 1 and button_on == 2 and button3 in event_queue:
+        #    this_button = button4
+        #    event_queue.remove(button3)
+        #    event_queue.append(button4)
 
-        # BUTTON 4
-        elif active == [24, 97, 125] and button_on ==1 and button4 not in event_queue:
+        # BUTTON 4 (Default: OSK)
+        elif active == [24, 97, 125] and button_on == 1 and button4 not in event_queue:
             event_queue.append(button4)
         elif active == [97] and button_on == 0 and button4 in event_queue:
             this_button = button4
 
-        # BUTTON 5
-        elif active in [[96, 105, 133], [97, 125, 88], [88, 97, 125]] and button_on == 1 and button5 not in event_queue:
+        # BUTTON 5 (Default: Home)
+        elif active in [[96, 105, 133], [97, 125, 88], [88, 97, 125], [34, 125]] and button_on == 1 and button5 not in event_queue:
             event_queue.append(button5)
-        elif seed_event.code in [88, 96, 105] and button_on == 0 and button5 in event_queue:
+        elif seed_event.code in [88, 96, 105, 34] and button_on == 0 and button5 in event_queue:
             this_button = button5
 
         # Create list of events to fire.
-        if this_button:# and event_queue != []:
-            #if button_on == 1:
-            #    event_queue.append(this_button)
-            #elif button_on == 0:
-            #    event_queue.remove(this_button)
+        if this_button:
 
             for button_event in this_button:
                 event = InputEvent(seed_event.sec, seed_event.usec, button_event[0], button_event[1], 1)
