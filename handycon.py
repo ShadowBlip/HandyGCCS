@@ -69,7 +69,6 @@ def __init__():
     system_id = open("/sys/devices/virtual/dmi/id/product_name", "r").read().strip()
     system_cpu = subprocess.check_output("lscpu | grep \"Vendor ID\" | cut -d : -f 2 | xargs", shell=True, universal_newlines=True).strip()
 
-
     # All devices from Founders edition through 2021 Pro Retro Power use the same 
     # input hardware and keycodes.
     if system_id in [
@@ -102,7 +101,7 @@ def __init__():
             ]:
          if system_cpu in ["GenuineIntel"]:
             system_type = "ONE XPLAYER Intel Variant"
-         elif system_cpu in ["AuthenticAMD Advanced Micro Devices, Inc."]:
+         elif system_cpu in ["AuthenticAMD Advanced Micro Devices, Inc.", "AuthenticAMD"]:
             system_type ="ONE XPLAYER AMD Variant"
         
         
@@ -206,15 +205,15 @@ async def capture_keyboard_events(device):
             this_button = button1
 
         # BUTTON 2 QAM
-        elif active in [[97, 100, 111], [40, 133], [32, 125]] and button_on == 1and button2 not in event_queue:
+        elif ((active in [[97, 100, 111], [40, 133], [32, 125]] and system_type != "ONE XPLAYER") or (active == [32, 125])) and button_on == 1 and button2 not in event_queue:
             event_queue.append(button2)
-        elif seed_event.code in [32, 40, 100, 111] and button2 in event_queue:
+        elif ((active == []) or (seed_event.code in [32, 40, 100, 111])) and button2 in event_queue:
             this_button = button2
 
         # BUTTON 3 ESC
-        elif seed_event.code == 1 and button_on == 1 and button3 not in event_queue:
+        elif ((active == [97, 100, 111]) or (seed_event.code == 1)) and button_on == 1 and button3 not in event_queue:
             event_queue.append(button3)
-        elif active == [] and seed_event.code == 1 and button_on == 0 and button3 in event_queue:
+        elif active == [] and ((seed_event.code == 1) or (seed_event.code == 100)) and button_on == 0 and button3 in event_queue:
             this_button = button3
 
         # SECOND STATE OPTIONS
@@ -235,7 +234,7 @@ async def capture_keyboard_events(device):
         # BUTTON 5 Home
         elif active in [[96, 105, 133], [97, 125, 88], [88, 97, 125], [34, 125]] and button_on == 1 and button5 not in event_queue:
             event_queue.append(button5)
-        elif ((system_type != "ONE XPLAYER Intel Variant" or "ONE XPLAYER AMD Variant") and seed_event.code in [88, 96, 105]) or seed_event.code in [34] and button_on == 0 and button5 in event_queue:
+        elif seed_event.code in [88, 96, 105, 34] and button_on == 0 and button5 in event_queue:
             this_button = button5
 
         # Create list of events to fire.
