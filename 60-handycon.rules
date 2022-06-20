@@ -1,2 +1,2 @@
 # Aya Neo Fixes Controller
-KERNEL=="event*", SUBSYSTEM=="input", ATTRS{name}=="HGCCS-Controller", MODE="0660", TAG+="uaccess", ENV{ID_INPUT_JOYSTICK}="1"
+KERNEL=="event*", SUBSYSTEM=="input", ATTRS{name}=="Handheld Controller", MODE="0660", TAG+="uaccess", ENV{ID_INPUT_JOYSTICK}="1"
