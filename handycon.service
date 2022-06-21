@@ -1,0 +1,9 @@
+[Unit]
+Description=Handheld Game Console Controller Service
+After=graphical-session.target
+
+[Service]
+ExecStart=/sbin/python3 /usr/local/bin/handycon.py
+
+[Install]
+WantedBy=multi-user.target
