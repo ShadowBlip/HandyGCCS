@@ -7,6 +7,7 @@ echo "Enabling controller functionality. NEXT users will need to configure the H
 cp -v handycon.py /usr/local/bin/
 cp -v handycon.service /etc/systemd/system/
 cp -v 60-handycon.rules /etc/udev/rules.d/
+udevadm control -R
 systemctl enable handycon && systemctl start handycon
 echo "Installation complete. You should now have additional controller functionality."
 exit 0
