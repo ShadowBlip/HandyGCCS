@@ -264,13 +264,15 @@ async def capture_controller_events(device):
 
 
 async def emit_events(events: list):
-    if events == []:
-        return
-    for event in events:
-        if event:
-            new_device.write_event(event)
-            new_device.syn()
-            await asyncio.sleep(0.08)
+    if len(events) == 1:
+        new_device.write_event(events[0])
+        new_device.syn()
+    elif len(events) > 1:
+        for event in events:
+            if event:
+                new_device.write_event(event)
+                new_device.syn()
+                await asyncio.sleep(0.08)
 
 
 # Gracefull shutdown.
