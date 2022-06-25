@@ -199,6 +199,10 @@ async def capture_keyboard_events(device):
         #if active != []:
         #   print("Active Keys:", device.active_keys(verbose=True), "Seed Value", seed_event.value, "Seed Code:", seed_event.code, "Seed Type:", seed_event.type, "Button pressed", button_on)
 
+        # Automatically pass default keycodes we dont intend to replace.
+        if seed_event.code in [e.KEY_VOLUMEDOWN, e.KEY_VOLUMEUP]:
+            events.append(seed_event)
+
         # BUTTON 1 (Default: Screenshot)
         if ((active == [125] and system_type == "AYA_GEN1") or active == [99, 125] ) and button_on == 1 and button1 not in event_queue:
             event_queue.append(button1)
