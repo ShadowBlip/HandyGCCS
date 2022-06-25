@@ -23,9 +23,7 @@ from time import sleep
 # Constants
 EVENT_OSK = [[e.EV_KEY, e.BTN_MODE], [e.EV_KEY, e.BTN_NORTH]]
 EVENT_ESC = [[e.EV_MSC, e.MSC_SCAN], [e.EV_KEY, e.KEY_ESC]]
-EVENT_QAM = [[e.EV_KEY, e.BTN_MODE]]
-EVENT_QAM2 = [[e.EV_KEY, e.BTN_SOUTH]]
-#EVENT_QAM = [[e.EV_KEY, e.KEY_LEFTCTRL], [e.EV_KEY, e.KEY_2]]
+EVENT_QAM = [[e.EV_KEY, e.KEY_LEFTCTRL], [e.EV_KEY, e.KEY_2]]
 EVENT_SCR = [[e.EV_KEY, e.BTN_MODE], [e.EV_KEY, e.BTN_TR]]
 EVENT_HOME = [[e.EV_KEY, e.BTN_MODE]]
 
@@ -236,11 +234,6 @@ async def capture_keyboard_events(device):
             event_queue.append(button5)
         elif seed_event.code in [88, 96, 105, 34] and button_on == 0 and button5 in event_queue:
             this_button = button5
-
-        # Steam needs 1 frame to block input, otherwize the "A" button will get through and click on whatever is selected.
-        if last_button == EVENT_QAM:
-            event_queue.append(EVENT_QAM2)
-            this_button = EVENT_QAM2
 
         # Create list of events to fire.
         if this_button:
