@@ -23,9 +23,7 @@ from time import sleep
 # Constants
 EVENT_OSK = [[e.EV_KEY, e.BTN_MODE], [e.EV_KEY, e.BTN_NORTH]]
 EVENT_ESC = [[e.EV_MSC, e.MSC_SCAN], [e.EV_KEY, e.KEY_ESC]]
-EVENT_QAM = [[e.EV_KEY, e.BTN_MODE]]
-EVENT_QAM2 = [[e.EV_KEY, e.BTN_SOUTH]]
-#EVENT_QAM = [[e.EV_KEY, e.KEY_LEFTCTRL], [e.EV_KEY, e.KEY_2]]
+EVENT_QAM = [[e.EV_KEY, e.BTN_MODE], [e.EV_KEY, e.BTN_SOUTH]]
 EVENT_SCR = [[e.EV_KEY, e.BTN_MODE], [e.EV_KEY, e.BTN_TR]]
 EVENT_HOME = [[e.EV_KEY, e.BTN_MODE]]
 
@@ -210,7 +208,7 @@ async def capture_keyboard_events(device):
         # BUTTON 2 (Default: QAM)
         elif active in [[97, 100, 111], [40, 133], [32, 125]] and button_on == 1 and button2 not in event_queue:
             event_queue.append(button2)
-        elif ((active == []) or (seed_event.code in [32, 40, 100, 111])) and button2 in event_queue:
+        elif ((active == []) or (seed_event.code in [32, 40, 100, 111])) and button_on == 0 and button2 in event_queue:
             this_button = button2
 
         # BUTTON 3 (Default: ESC)
@@ -237,23 +235,19 @@ async def capture_keyboard_events(device):
         elif seed_event.code in [88, 96, 105, 34] and button_on == 0 and button5 in event_queue:
             this_button = button5
 
-        # Steam needs 1 frame to block input, otherwize the "A" button will get through and click on whatever is selected.
-        if last_button == EVENT_QAM:
-            event_queue.append(EVENT_QAM2)
-            this_button = EVENT_QAM2
 
         # Create list of events to fire.
-        if this_button:
-
+        # Handle new button presses.
+        if this_button and not last_button:
             for button_event in this_button:
                 event = InputEvent(seed_event.sec, seed_event.usec, button_event[0], button_event[1], 1)
                 events.append(event)
             event_queue.remove(this_button)
             last_button = this_button
 
-        elif not this_button and last_button:
+        # Clean up old button presses.
+        elif last_button and not this_button:
             for button_event in last_button:
-                await asyncio.sleep(0.15)
                 event = InputEvent(seed_event.sec, seed_event.usec, button_event[0], button_event[1], 0)
                 events.append(event)
             last_button = None
@@ -275,7 +269,8 @@ async def emit_events(events: list):
     for event in events:
         if event:
             new_device.write_event(event)
-    new_device.syn()
+            new_device.syn()
+            await asyncio.sleep(0.08)
 
 
 # Gracefull shutdown.
