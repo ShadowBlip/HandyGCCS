@@ -226,7 +226,7 @@ async def capture_keyboard_events(device):
         # BUTTON 4 (Default: OSK)
         elif active == [24, 97, 125] and button_on == 1 and button4 not in event_queue:
             event_queue.append(button4)
-        elif active == [97] and button_on == 0 and button4 in event_queue:
+        elif ((active == [97]) or (active == [])) and button_on == 0 and button4 in event_queue:
             this_button = button4
 
         # BUTTON 5 (Default: Home)
