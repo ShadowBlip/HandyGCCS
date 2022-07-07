@@ -264,7 +264,14 @@ async def capture_keyboard_events(device):
 # Captures the controller_device events and passes them through.
 async def capture_controller_events(device):
     async for event in device.async_read_loop():
-        await emit_events([event])
+        # overwrite home for INTEL OXP. We use short press instead. Long press is QAM
+        print("Event:", event)
+        if event.code == 316 and system_type == "OXP-INTEL":
+            ev1 = InputEvent(event.sec, event.usec, e.EV_KEY, e.KEY_LEFTCTRL, event.value)
+            ev2 = InputEvent(event.sec, event.usec, e.EV_KEY, e.KEY_2, event.value)
+            await emit_events([ev1, ev2])
+        else:
+            await emit_events([event])
 
 
 async def emit_events(events: list):
