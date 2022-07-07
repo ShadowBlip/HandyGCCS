@@ -196,29 +196,29 @@ async def capture_keyboard_events(device):
         button_on = seed_event.value
         
         # Debugging variables
-        #if active != []:
-        #   print("Active Keys:", device.active_keys(verbose=True), "Seed Value", seed_event.value, "Seed Code:", seed_event.code, "Seed Type:", seed_event.type, "Button pressed", button_on)
+        if active != []:
+           print("Active Keys:", device.active_keys(verbose=True), "Seed Value", seed_event.value, "Seed Code:", seed_event.code, "Seed Type:", seed_event.type, "Button pressed", button_on)
 
         # Automatically pass default keycodes we dont intend to replace.
         if seed_event.code in [e.KEY_VOLUMEDOWN, e.KEY_VOLUMEUP]:
             events.append(seed_event)
 
         # BUTTON 1 (Default: Screenshot)
-        if ((active == [125] and system_type == "AYA_GEN1") or active == [99, 125] ) and button_on == 1 and button1 not in event_queue:
+        if ((active == [125] and system_type == "AYA_GEN1") or active == [99, 125]) and button_on == 1 and button1 not in event_queue:
             event_queue.append(button1)
         elif active == [] and seed_event.code in [99, 125] and button_on == 0 and button1 in event_queue:
             this_button = button1
 
         # BUTTON 2 (Default: QAM)
-        elif active in [[97, 100, 111], [40, 133], [32, 125]] and button_on == 1 and button2 not in event_queue:
+        elif ((active in [[40, 133], [32, 125]] and system_type == "AYA_GEN2") or active in [[97, 100, 111], [34, 125]]) and button_on == 1 and button2 not in event_queue:
             event_queue.append(button2)
-        elif ((active == []) or (seed_event.code in [32, 40, 100, 111])) and button_on == 0 and button2 in event_queue:
+        elif active == [] and seed_event.code in [32, 34, 40, 97, 100, 111, 125, 133] and button_on == 0 and button2 in event_queue:
             this_button = button2
 
         # BUTTON 3 (Default: ESC)
-        elif ((active == [97, 100, 111]) or (seed_event.code == 1)) and button_on == 1 and button3 not in event_queue:
+        elif active == [1] and seed_event.code == 1 and button_on == 1 and button3 not in event_queue:
             event_queue.append(button3)
-        elif active == [] and ((seed_event.code == 1) or (seed_event.code == 100)) and button_on == 0 and button3 in event_queue:
+        elif active == [] and seed_event.code == 1 and button_on == 0 and button3 in event_queue:
             this_button = button3
 
         # BITTON 3 SECOND STATE (Default: TBD)
@@ -230,13 +230,13 @@ async def capture_keyboard_events(device):
         # BUTTON 4 (Default: OSK)
         elif active == [24, 97, 125] and button_on == 1 and button4 not in event_queue:
             event_queue.append(button4)
-        elif ((active == [97]) or (active == [])) and button_on == 0 and button4 in event_queue:
+        elif active == [] and seed_event.code in [24, 97, 125] and button_on == 0 and button4 in event_queue:
             this_button = button4
 
         # BUTTON 5 (Default: Home)
-        elif active in [[96, 105, 133], [97, 125, 88], [88, 97, 125], [34, 125]] and button_on == 1 and button5 not in event_queue:
+        elif ((active in [[96, 105, 133], [88, 97, 125]]) or (active == [32, 125] and system_type in ["OXP_AMD", "OXP_INTEL"])) and button_on == 1 and button5 not in event_queue:
             event_queue.append(button5)
-        elif seed_event.code in [88, 96, 105, 34] and button_on == 0 and button5 in event_queue:
+        elif active == [] and seed_event.code in [32, 88, 96, 97, 105, 125, 133] and button_on == 0 and button5 in event_queue:
             this_button = button5
 
 
