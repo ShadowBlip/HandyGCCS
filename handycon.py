@@ -248,7 +248,7 @@ async def capture_keyboard_events(device):
                 elif active == [] and seed_event.code in [88, 96, 97, 105, 125, 133] and button_on == 0 and button5 in event_queue:
                     this_button = button5
 
-            case "OXP_AMD":
+            case "OXP_AMD" | "OXP_INTEL":
                 # BUTTON 1 (Default: Screenshot) Short press orange + |||||
                 if active == [99, 125] and button_on == 1 and button1 not in event_queue:
                     event_queue.append(button1)
@@ -274,27 +274,6 @@ async def capture_keyboard_events(device):
                     this_button = button5
 
                 # UNUSED [97, 100, 111]  ORANGE + KB Reserved for gyro enable
-
-            case "OXP_INTEL":
-                # BUTTON 1 (Default: Screenshot) Short press orange + |||||
-                if active == [99, 125] and button_on == 1 and button1 not in event_queue:
-                    event_queue.append(button1)
-                elif active == [] and seed_event.code in [99, 125] and button_on == 0 and button1 in event_queue:
-                    this_button = button1
-
-                # BUTTON 2 (Default: QAM) Short press orange
-                if active == [32, 125] and button_on == 1 and button2 not in event_queue:
-                    event_queue.append(button2)
-                elif active == [] and seed_event.code in [32, 125] and button_on == 0 and button2 in event_queue:
-                    this_button = button2
-
-                # BUTTON 4 (Default: OSK) Short press KB
-                if active == [24, 97, 125] and button_on == 1 and button4 not in event_queue:
-                    event_queue.append(button4)
-                elif active == [] and seed_event.code in [24, 97, 125] and button_on == 0 and button4 in event_queue:
-                    this_button = button4
-
-                # UNUSED [97, 100, 111] ORANGE + KB Reserved for gyro enable
 
         # Create list of events to fire.
         # Handle new button presses.
@@ -332,7 +311,7 @@ async def emit_events(events: list):
             if event:
                 new_device.write_event(event)
                 new_device.syn()
-                await asyncio.sleep(0.08)
+                await asyncio.sleep(0.20)
 
 
 # Gracefull shutdown.
