@@ -311,7 +311,7 @@ async def emit_events(events: list):
             if event:
                 new_device.write_event(event)
                 new_device.syn()
-                await asyncio.sleep(0.20)
+                await asyncio.sleep(0.09)
 
 
 # Gracefull shutdown.
