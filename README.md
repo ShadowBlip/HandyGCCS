@@ -11,7 +11,10 @@ Designed to bring the full controller functionality to handheld game consoles in
 ## Installation
 
 ### From the AUR
-`pikaur -Sy handygccs-git`
+```
+pikaur -Sy handygccs-git
+sudo systemctl enable handucon && sudo systemctl start handycon
+```
 
 ### From Source
 
