@@ -13,6 +13,7 @@ Designed to bring the full controller functionality to handheld game consoles in
 ### From the AUR
 ```
 pikaur -Sy handygccs-git
+sudo udevadm control -R
 sudo systemctl enable handycon && sudo systemctl start handycon
 ```
 
