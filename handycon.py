@@ -98,10 +98,12 @@ def __init__():
     elif system_id in [
             "ONE XPLAYER",
             ]:
-         if system_cpu in ["GenuineIntel"]:
-            system_type = "OXP_INTEL"
-         elif system_cpu in ["AuthenticAMD Advanced Micro Devices, Inc.", "AuthenticAMD"]:
-            system_type ="OXP_AMD"
+            
+            system_type = "OXP"
+        # if system_cpu in ["GenuineIntel"]:
+           # system_type = "OXP_INTEL"
+        # elif system_cpu in ["AuthenticAMD Advanced Micro Devices, Inc.", "AuthenticAMD"]:
+           # system_type ="OXP_AMD"
 
     # Block devices that aren't supported as this could cause issues.
     else:
@@ -202,43 +204,78 @@ async def capture_keyboard_events(device):
         # Automatically pass default keycodes we dont intend to replace.
         if seed_event.code in [e.KEY_VOLUMEDOWN, e.KEY_VOLUMEUP]:
             events.append(seed_event)
+        match system_type:
 
-        # BUTTON 1 (Default: Screenshot)
-        if ((active == [125] and system_type == "AYA_GEN1") or active == [99, 125] ) and button_on == 1 and button1 not in event_queue:
-            event_queue.append(button1)
-        elif active == [] and seed_event.code in [99, 125] and button_on == 0 and button1 in event_queue:
-            this_button = button1
+            case "AYA_GEN1":
+                # BUTTON 1 (Default: Screenshot) WIN button
+                if active == [125] and button_on == 1 and button1 not in event_queue:
+                    event_queue.append(button1)
+                elif active == [] and seed_event.code == 125 and button_on == 0 and button1 in event_queue:
+                    this_button = button1
 
-        # BUTTON 2 (Default: QAM)
-        elif active in [[97, 100, 111], [40, 133], [32, 125]] and button_on == 1 and button2 not in event_queue:
-            event_queue.append(button2)
-        elif ((active == []) or (seed_event.code in [32, 40, 100, 111])) and button_on == 0 and button2 in event_queue:
-            this_button = button2
+                # BUTTON 2 (Default: QAM) TM Button
+                if active == [97, 100, 111] and button_on == 1 and button2 not in event_queue:
+                    event_queue.append(button2)
+                elif active == [] and seed_event.code in [97, 100, 111] and button_on == 0 and button2 in event_queue:
+                    this_button = button2
 
-        # BUTTON 3 (Default: ESC)
-        elif ((active == [97, 100, 111]) or (seed_event.code == 1)) and button_on == 1 and button3 not in event_queue:
-            event_queue.append(button3)
-        elif active == [] and ((seed_event.code == 1) or (seed_event.code == 100)) and button_on == 0 and button3 in event_queue:
-            this_button = button3
+                # BUTTON 3 (Default: ESC) ESC Button
+                if active == [1] and seed_event.code == 1 and button_on == 1 and button3 not in event_queue:
+                    event_queue.append(button3)
+                elif active == [] and seed_event.code == 1 and button_on == 0 and button3 in event_queue:
+                    this_button = button3
 
-        # BITTON 3 SECOND STATE (Default: TBD)
-        #elif seed_event.code == 1 and button_on == 2 and button3 in event_queue:
-        #    this_button = button4
-        #    event_queue.remove(button3)
-        #    event_queue.append(button4)
+                # BUTTON 3 SECOND STATE (Default: TBD) Long hold ESC Reserved for Gyro enable
+                #elif seed_event.code == 1 and button_on == 2 and button3 in event_queue:
+                #    this_button = button4
+                #    event_queue.remove(button3)
+                #    event_queue.append(button4)
 
-        # BUTTON 4 (Default: OSK)
-        elif active == [24, 97, 125] and button_on == 1 and button4 not in event_queue:
-            event_queue.append(button4)
-        elif ((active == [97]) or (active == [])) and button_on == 0 and button4 in event_queue:
-            this_button = button4
+                # BUTTON 4 (Default: OSK) KB Button
+                if active == [24, 97, 125] and button_on == 1 and button4 not in event_queue:
+                    event_queue.append(button4)
+                elif active == [] and seed_event.code in [24, 97, 125] and button_on == 0 and button4 in event_queue:
+                    this_button = button4
 
-        # BUTTON 5 (Default: Home)
-        elif active in [[96, 105, 133], [97, 125, 88], [88, 97, 125], [34, 125]] and button_on == 1 and button5 not in event_queue:
-            event_queue.append(button5)
-        elif seed_event.code in [88, 96, 105, 34] and button_on == 0 and button5 in event_queue:
-            this_button = button5
+            case "AYA_GEN2":
+                # BUTTON 2 (Default: QAM) Small button
+                if active in [[40, 133], [32, 125]] and button_on == 1 and button2 not in event_queue:
+                    event_queue.append(button2)
+                elif active == [] and seed_event.code in [32, 40, 125, 133] and button_on == 0 and button2 in event_queue:
+                    this_button = button2
 
+                # BUTTON 5 (Default: Home) Big button
+                if active in [[96, 105, 133], [88, 97, 125]] and button_on == 1 and button5 not in event_queue:
+                    event_queue.append(button5)
+                elif active == [] and seed_event.code in [88, 96, 97, 105, 125, 133] and button_on == 0 and button5 in event_queue:
+                    this_button = button5
+
+            case "OXP":
+                # BUTTON 1 (Default: Screenshot) Short press orange + |||||
+                if active == [99, 125] and button_on == 1 and button1 not in event_queue:
+                    event_queue.append(button1)
+                elif active == [] and seed_event.code in [99, 125] and button_on == 0 and button1 in event_queue:
+                    this_button = button1
+
+                # BUTTON 2 (Default: QAM) Short press orange
+                if active == [32, 125] and button_on == 1 and button2 not in event_queue:
+                    event_queue.append(button2)
+                elif active == [] and seed_event.code in [32, 125] and button_on == 0 and button2 in event_queue:
+                    this_button = button2
+
+                # BUTTON 4 (Default: OSK) Short press KB
+                if active == [24, 97, 125] and button_on == 1 and button4 not in event_queue:
+                    event_queue.append(button4)
+                elif active == [] and seed_event.code in [24, 97, 125] and button_on == 0 and button4 in event_queue:
+                    this_button = button4
+
+                # BUTTON 5 (Default: Home) Long press orange
+                if active == [34, 125] and button_on == 1 and button5 not in event_queue:
+                    event_queue.append(button5)
+                elif active == [] and seed_event.code in [34, 125] and button_on == 0 and button5 in event_queue:
+                    this_button = button5
+
+                # UNUSED [97, 100, 111]  ORANGE + KB Reserved for gyro enable
 
         # Create list of events to fire.
         # Handle new button presses.
@@ -276,7 +313,7 @@ async def emit_events(events: list):
             if event:
                 new_device.write_event(event)
                 new_device.syn()
-                await asyncio.sleep(0.08)
+                await asyncio.sleep(0.09)
 
 
 # Gracefull shutdown.
@@ -325,7 +362,7 @@ def main():
     try:
         loop.run_forever()
     except Exception as e:
-        print("OBJECTION!\n", e)
+        print("Hit exception condition:\n", e)
     finally:
         loop.stop()
 

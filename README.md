@@ -9,6 +9,12 @@ Designed to bring the full controller functionality to handheld game consoles in
 ### Under active development, check back later!
 
 ## Installation
+
+### From the AUR
+`pikaur -Sy handygccs-git`
+
+### From Source
+
 ```
 git clone https://github.com/ShadowBlip/HandyGCCS.git
 cd HandyGCCS
@@ -16,6 +22,11 @@ sudo make install
 ```
 
 ## Removal
+
+### From the AUR
+`pikaur -U handygccs-git`
+
+### From Source
 ```
 cd <clonedir>
 sudo make clean
