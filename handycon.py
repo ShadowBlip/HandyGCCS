@@ -98,10 +98,12 @@ def __init__():
     elif system_id in [
             "ONE XPLAYER",
             ]:
-         if system_cpu in ["GenuineIntel"]:
-            system_type = "OXP_INTEL"
-         elif system_cpu in ["AuthenticAMD Advanced Micro Devices, Inc.", "AuthenticAMD"]:
-            system_type ="OXP_AMD"
+            
+            system_type = "OXP"
+        # if system_cpu in ["GenuineIntel"]:
+           # system_type = "OXP_INTEL"
+        # elif system_cpu in ["AuthenticAMD Advanced Micro Devices, Inc.", "AuthenticAMD"]:
+           # system_type ="OXP_AMD"
 
     # Block devices that aren't supported as this could cause issues.
     else:
@@ -248,7 +250,7 @@ async def capture_keyboard_events(device):
                 elif active == [] and seed_event.code in [88, 96, 97, 105, 125, 133] and button_on == 0 and button5 in event_queue:
                     this_button = button5
 
-            case "OXP_AMD" | "OXP_INTEL":
+            case "OXP":
                 # BUTTON 1 (Default: Screenshot) Short press orange + |||||
                 if active == [99, 125] and button_on == 1 and button1 not in event_queue:
                     event_queue.append(button1)
