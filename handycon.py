@@ -196,8 +196,8 @@ async def capture_keyboard_events(device):
         button_on = seed_event.value
         
         # Debugging variables
-        if active != []:
-           print("Active Keys:", device.active_keys(verbose=True), "Seed Value", seed_event.value, "Seed Code:", seed_event.code, "Seed Type:", seed_event.type, "Button pressed", button_on)
+        #if active != []:
+        #   print("Active Keys:", device.active_keys(verbose=True), "Seed Value", seed_event.value, "Seed Code:", seed_event.code, "Seed Type:", seed_event.type, "Button pressed", button_on)
 
         # Automatically pass default keycodes we dont intend to replace.
         if seed_event.code in [e.KEY_VOLUMEDOWN, e.KEY_VOLUMEUP]:
@@ -360,7 +360,7 @@ def main():
     try:
         loop.run_forever()
     except Exception as e:
-        print("OBJECTION!\n", e)
+        print("Hit exception condition:\n", e)
     finally:
         loop.stop()
 
