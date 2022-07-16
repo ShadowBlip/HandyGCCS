@@ -21,11 +21,31 @@ from time import sleep
 # Declare global variables
 
 # Constants
+# EVENTS
 EVENT_OSK = [[e.EV_KEY, e.BTN_MODE], [e.EV_KEY, e.BTN_NORTH]]
 EVENT_ESC = [[e.EV_MSC, e.MSC_SCAN], [e.EV_KEY, e.KEY_ESC]]
 EVENT_QAM = [[e.EV_KEY, e.BTN_MODE], [e.EV_KEY, e.BTN_SOUTH]]
 EVENT_SCR = [[e.EV_KEY, e.BTN_MODE], [e.EV_KEY, e.BTN_TR]]
 EVENT_HOME = [[e.EV_KEY, e.BTN_MODE]]
+
+# CONTROLLERS
+CONTROLLER_NAME_LIST = [
+        'Microsoft X-Box 360 pad',
+        'Generic X-Box pad',
+        ]
+CONTROLLER_ADDRESS_LIST = [
+        'usb-0000:00:14.0-9/input0',
+        'usb-0000:02:00.3-5/input0'
+        'usb-0000:03:00.3-4/input0',
+        ]:
+
+#KEYBOARDS
+KEYBOARD_NAME_LIST = [
+        'AT Translated Set 2 keyboard',
+        ]
+KEYBOARD_ADDRESS_LIST = [
+        'isa0060/serio0/input0',
+        ]
 
 # Track button on/off (prevents spam presses)
 event_queue = [] # Stores incoming button presses to block spam
@@ -100,10 +120,11 @@ def __init__():
             ]:
             
             system_type = "OXP"
-        # if system_cpu in ["GenuineIntel"]:
-           # system_type = "OXP_INTEL"
-        # elif system_cpu in ["AuthenticAMD Advanced Micro Devices, Inc.", "AuthenticAMD"]:
-           # system_type ="OXP_AMD"
+
+    elif system_id in [
+            "Win600"
+            ]:
+            system_type = "WIN600"
 
     # Block devices that aren't supported as this could cause issues.
     else:
@@ -128,14 +149,14 @@ that file with your issue.")
         for device in devices_original:
 
             # Xbox 360 Controller
-            if device.name in ['Microsoft X-Box 360 pad', 'Generic X-Box pad'] and device.phys in ['usb-0000:03:00.3-4/input0', 'usb-0000:00:14.0-9/input0']:
+            if device.name in CONTROLLER_NAME_LIST and device.phys in CONTROLLER_ADDRESS_LIST:
                 controller_path = device.path
                 controller_device = InputDevice(controller_path)
                 controller_capabilities = controller_device.capabilities()
                 controller_device.grab()
 
             # Keyboard Device
-            elif device.name == 'AT Translated Set 2 keyboard' and device.phys == 'isa0060/serio0/input0':
+        elif device.name in KEYBOARD_NAME_LIST and device.phys in KEYBOARD_ADDRESS_LIST:
                 keyboard_path = device.path
                 keyboard_device = InputDevice(keyboard_path)
                 keyboard_device.grab()
@@ -276,6 +297,13 @@ async def capture_keyboard_events(device):
                     this_button = button5
 
                 # UNUSED [97, 100, 111]  ORANGE + KB Reserved for gyro enable
+
+            case "WIN600":
+                # BUTTON 2 (Default: QAM) Windows Key
+                if active == [125] and button_on == 1 and button2 not in event_queue:
+                    event_queue.append(button2)
+                elif active == [] and seed_event.code == 125 and button_on == 0 and button2 in event_queue:
+                    this_button = button2
 
         # Create list of events to fire.
         # Handle new button presses.
