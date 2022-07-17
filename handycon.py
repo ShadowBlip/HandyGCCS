@@ -37,7 +37,7 @@ CONTROLLER_ADDRESS_LIST = [
         'usb-0000:00:14.0-9/input0',
         'usb-0000:02:00.3-5/input0'
         'usb-0000:03:00.3-4/input0',
-        ]:
+        ]
 
 #KEYBOARDS
 KEYBOARD_NAME_LIST = [
@@ -156,7 +156,7 @@ that file with your issue.")
                 controller_device.grab()
 
             # Keyboard Device
-        elif device.name in KEYBOARD_NAME_LIST and device.phys in KEYBOARD_ADDRESS_LIST:
+            elif device.name in KEYBOARD_NAME_LIST and device.phys in KEYBOARD_ADDRESS_LIST:
                 keyboard_path = device.path
                 keyboard_device = InputDevice(keyboard_path)
                 keyboard_device.grab()
