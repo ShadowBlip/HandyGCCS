@@ -35,7 +35,7 @@ CONTROLLER_NAME_LIST = [
         ]
 CONTROLLER_ADDRESS_LIST = [
         'usb-0000:00:14.0-9/input0',
-        'usb-0000:02:00.3-5/input0'
+        'usb-0000:02:00.3-5/input0',
         'usb-0000:03:00.3-4/input0',
         ]
 
