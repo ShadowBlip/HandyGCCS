@@ -34,6 +34,7 @@ EVENT_HOME = [[e.EV_KEY, e.BTN_MODE]]
 
 # Track button on/off (prevents spam presses)
 event_queue = [] # Stores incoming button presses to block spam
+controller_events = [] # Stores incoming events if gyro aim is enabled.
 
 # Devices
 controller_device = None
@@ -67,7 +68,6 @@ def __init__():
     global controller_event
     global controller_path
     global gyro_device
-    global gyro_enabled
     global keyboard_device
     global keyboard_event
     global keyboard_path
@@ -168,11 +168,9 @@ Exiting...")
     # Make a gyro_device, if it exists.
     try:
         gyro_device = Driver(0x68)
-        #gyro_enabled = True # This will be handled by GUI later. Default to on if found for now.
 
     except FileNotFoundError:
         print("gyro device not initialized. ensure bmi160_i2c and i2c_dev modules are loaded. Skipping gyro device.")
-        gyro_enabled = False
 
     # Create the virtual controller.
     new_device = UInput.from_device(
@@ -197,8 +195,9 @@ async def capture_keyboard_events(device):
 
     # Get access to global variables. These are globalized because the function
     # is instanciated twice and need to persist accross both instances.
-    global event_queue
     global button_map
+    global event_queue
+    global gyro_enabled
 
     # Button map shortcuts for easy reference.
     button1 = button_map["button1"]
