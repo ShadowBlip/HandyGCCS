@@ -32,6 +32,9 @@ EVENT_QAM = [[e.EV_KEY, e.BTN_MODE], [e.EV_KEY, e.BTN_SOUTH]]
 EVENT_SCR = [[e.EV_KEY, e.BTN_MODE], [e.EV_KEY, e.BTN_TR]]
 EVENT_HOME = [[e.EV_KEY, e.BTN_MODE]]
 
+JOY_MIN = -32767
+JOY_MAX = 32767
+
 # Track button on/off (prevents spam presses)
 event_queue = [] # Stores incoming button presses to block spam
 controller_events = [] # Stores incoming events if gyro aim is enabled.
