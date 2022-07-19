@@ -275,18 +275,24 @@ async def capture_keyboard_events(device):
                     this_button = button5
 
             case "OXP":
-                # BUTTON 1 (Default: Toggle Gyro) Short press orange + |||||
+                # BUTTON 1 (Default: Not used, dangerous fan activity!) Short press orange + |||||
                 if active == [99, 125] and button_on == 1 and button1 not in event_queue:
-                    event_queue.append(button1)
+                    pass
                 elif active == [] and seed_event.code in [99, 125] and button_on == 0 and button1 in event_queue:
-                    event_queue.remove(button1)
-                    gyro_enabled = not gyro_enabled
+                    pass
 
                 # BUTTON 2 (Default: QAM) Short press orange
                 if active == [32, 125] and button_on == 1 and button2 not in event_queue:
                     event_queue.append(button2)
                 elif active == [] and seed_event.code in [32, 125] and button_on == 0 and button2 in event_queue:
                     this_button = button2
+
+                # BUTTON 3 (Default: Toggle Gyro) Short press orange + KB
+                if active == [97, 100, 111] and button_on == 1 and button3 not in event_queue:
+                    event_queue.append(button3)
+                elif active == [] and seed_event.code in [97, 100, 11] and button_on == 0 and button3 in event_queue:
+                    event_queue.append(button3)
+                    gyro_enabled = not gyro_enabled
 
                 # BUTTON 4 (Default: OSK) Short press KB
                 if active == [24, 97, 125] and button_on == 1 and button4 not in event_queue:
@@ -299,9 +305,7 @@ async def capture_keyboard_events(device):
                     event_queue.append(button5)
                 elif active == [] and seed_event.code in [34, 125] and button_on == 0 and button5 in event_queue:
                     this_button = button5
-
-                # UNUSED [97, 100, 111]  ORANGE + KB Reserved for gyro enable
-
+                
         # Create list of events to fire.
         # Handle new button presses.
         if this_button and not last_button:
