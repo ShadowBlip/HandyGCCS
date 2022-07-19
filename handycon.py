@@ -13,6 +13,9 @@ import sys
 import dbus
 import subprocess
 
+import warnings
+warnings.filterwarnings("ignore", category=DeprecationWarning)
+
 try :
     from BMI160_i2c import Driver
 except ModuleNotFoundError:
@@ -62,7 +65,7 @@ button_map = {
         "button5": EVENT_HOME,
         }
 gyro_enabled = False
-gyro_sensitivity = 100
+gyro_sensitivity = 50
 
 
 def __init__():
@@ -378,7 +381,7 @@ async def capture_gyro_events(gyro):
             await asyncio.sleep(0.01)
         else:
             # Slow down the loop so we don't waste millions of cycles
-            await asyncio.sleep(1)
+            await asyncio.sleep(.5)
 
 async def emit_events(events: list):
     if len(events) == 1:
