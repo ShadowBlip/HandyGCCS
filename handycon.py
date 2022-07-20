@@ -21,7 +21,7 @@ try :
 except ModuleNotFoundError:
         print("BMI160_i2c Module was not found. Install with `python3 -m pip install BMI160-i2c`. Skipping gyro device.")
 
-from evdev import InputDevice, InputEvent, UInput, ecodes as e, categorize, list_devices, RelEvent
+from evdev import InputDevice, InputEvent, UInput, ecodes as e, categorize, list_devices, ff
 from pathlib import PurePath as p
 from shutil import move
 from time import sleep
@@ -195,6 +195,25 @@ Exiting...")
     controller_event = p(controller_path).name
     move(controller_path, hide_path+controller_event)
 
+# Do a little buzz
+async def buzz():
+
+    rumble = ff.Rumble(strong_magnitude=0x0000, weak_magnitude=0xffff)
+    effect_type = ff.EffectType(ff_rumble_effect=rumble)
+    duration_ms = 1000
+
+    effect = ff.Effect(
+        e.FF_RUMBLE, -1, 0,
+        ff.Trigger(0, 0),
+        ff.Replay(duration_ms, 0),
+        ff.EffectType(ff_rumble_effect=rumble)
+    )
+
+    repeat_count = 1
+    effect_id = controller_device.upload_effect(effect)
+    controller_device.write(e.EV_FF, effect_id, repeat_count)
+    await asyncio.sleep(0.1)
+    controller_device.erase_effect(effect_id)
 
 # Captures keyboard events and translates them to virtual device events.
 async def capture_keyboard_events(device):
@@ -254,6 +273,7 @@ async def capture_keyboard_events(device):
                 elif seed_event.code == 1 and button_on == 2 and button3 in event_queue:
                     event_queue.remove(button3)
                     gyro_enabled = not gyro_enabled
+                    await buzz()
 
                 # BUTTON 4 (Default: OSK) KB Button
                 if active == [24, 97, 125] and button_on == 1 and button4 not in event_queue:
@@ -293,6 +313,7 @@ async def capture_keyboard_events(device):
                 elif active == [] and seed_event.code in [97, 100, 11] and button_on == 0 and button3 in event_queue:
                     event_queue.append(button3)
                     gyro_enabled = not gyro_enabled
+                    await buzz()
 
                 # BUTTON 4 (Default: OSK) Short press KB
                 if active == [24, 97, 125] and button_on == 1 and button4 not in event_queue:
@@ -437,6 +458,12 @@ def main():
     asyncio.ensure_future(capture_controller_events(controller_device))
     asyncio.ensure_future(capture_keyboard_events(keyboard_device))
     if gyro_device:
+        print("INFO.\nGYRO RATE:",
+                gyro_device.get_gyro_rate(),
+                "\nGYRO LOW PASS FILTER MODE:",
+                gyro_device.get_gyro_dlpf_mode(),
+                "\nGYRO FULL SCALE RANGE:",
+                gyro_device.getFullScaleGyroRange())
         asyncio.ensure_future(capture_gyro_events(gyro_device))
 
     # Establish signaling to handle gracefull shutdown.
