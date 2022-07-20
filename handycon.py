@@ -310,7 +310,7 @@ async def capture_keyboard_events(device):
                 # BUTTON 3 (Default: Toggle Gyro) Short press orange + KB
                 if active == [97, 100, 111] and button_on == 1 and button3 not in event_queue:
                     event_queue.append(button3)
-                elif active == [] and seed_event.code in [97, 100, 11] and button_on == 0 and button3 in event_queue:
+                elif active == [] and seed_event.code in [100, 111] and button_on == 0 and button3 in event_queue:
                     event_queue.append(button3)
                     gyro_enabled = not gyro_enabled
                     await buzz()
@@ -368,7 +368,6 @@ async def capture_gyro_events(gyro):
     while True:
         # Only run this loop if gyro is enabled
         if gyro_enabled:
-
             # Check if there is a controller event and modify it, otherwise pass the event:
             if controller_events != []:
                 for event in controller_events:
@@ -400,7 +399,6 @@ async def capture_gyro_events(gyro):
                 angular_velocity_y = float(gyro.getRotationY()[0] / 32768.0 * 2000)
                 adjusted_y = max(min(int(angular_velocity_y * gyro_sensitivity) + last_y_val, JOY_MAX), JOY_MIN)
                 y_event = InputEvent(0, 0, e.EV_ABS, e.ABS_RY, adjusted_y)
-                print("Gyro events:", x_event, y_event)
                 await emit_events([x_event, y_event])
 
             await asyncio.sleep(0.01)
@@ -458,12 +456,6 @@ def main():
     asyncio.ensure_future(capture_controller_events(controller_device))
     asyncio.ensure_future(capture_keyboard_events(keyboard_device))
     if gyro_device:
-        print("INFO.\nGYRO RATE:",
-                gyro_device.get_gyro_rate(),
-                "\nGYRO LOW PASS FILTER MODE:",
-                gyro_device.get_gyro_dlpf_mode(),
-                "\nGYRO FULL SCALE RANGE:",
-                gyro_device.getFullScaleGyroRange())
         asyncio.ensure_future(capture_gyro_events(gyro_device))
 
     # Establish signaling to handle gracefull shutdown.
