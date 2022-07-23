@@ -13,7 +13,15 @@ import sys
 import dbus
 import subprocess
 
-from evdev import InputDevice, InputEvent, UInput, ecodes as e, categorize, list_devices, RelEvent
+import warnings
+warnings.filterwarnings("ignore", category=DeprecationWarning)
+
+try :
+    from BMI160_i2c import Driver
+except ModuleNotFoundError:
+        print("BMI160_i2c Module was not found. Install with `python3 -m pip install BMI160-i2c`. Skipping gyro device.")
+
+from evdev import InputDevice, InputEvent, UInput, ecodes as e, categorize, list_devices, ff
 from pathlib import PurePath as p
 from shutil import move
 from time import sleep
@@ -27,11 +35,16 @@ EVENT_QAM = [[e.EV_KEY, e.BTN_MODE], [e.EV_KEY, e.BTN_SOUTH]]
 EVENT_SCR = [[e.EV_KEY, e.BTN_MODE], [e.EV_KEY, e.BTN_TR]]
 EVENT_HOME = [[e.EV_KEY, e.BTN_MODE]]
 
+JOY_MIN = -32767
+JOY_MAX = 32767
+
 # Track button on/off (prevents spam presses)
 event_queue = [] # Stores incoming button presses to block spam
+controller_events = [] # Stores incoming events if gyro aim is enabled.
 
 # Devices
 controller_device = None
+gyro_device = None
 keyboard_device = None
 new_device = None
 system_type = None
@@ -51,17 +64,21 @@ button_map = {
         "button4": EVENT_OSK,
         "button5": EVENT_HOME,
         }
+gyro_enabled = False
+gyro_sensitivity = 50
+
 
 def __init__():
 
-    global keyboard_event
-    global keyboard_path
-    global keyboard_device
-    global new_device
-    global system_type
     global controller_device
     global controller_event
     global controller_path
+    global gyro_device
+    global keyboard_device
+    global keyboard_event
+    global keyboard_path
+    global new_device
+    global system_type
 
     controller_capabilities = None
 
@@ -154,6 +171,13 @@ If this service has previously been started, try rebooting.\n \
 Exiting...")
         exit(1)
 
+    # Make a gyro_device, if it exists.
+    try:
+        gyro_device = Driver(0x68)
+
+    except FileNotFoundError:
+        print("gyro device not initialized. ensure bmi160_i2c and i2c_dev modules are loaded. Skipping gyro device.")
+
     # Create the virtual controller.
     new_device = UInput.from_device(
             controller_device,
@@ -171,14 +195,34 @@ Exiting...")
     controller_event = p(controller_path).name
     move(controller_path, hide_path+controller_event)
 
+# Do a little buzz
+async def buzz():
+
+    rumble = ff.Rumble(strong_magnitude=0x0000, weak_magnitude=0xffff)
+    effect_type = ff.EffectType(ff_rumble_effect=rumble)
+    duration_ms = 1000
+
+    effect = ff.Effect(
+        e.FF_RUMBLE, -1, 0,
+        ff.Trigger(0, 0),
+        ff.Replay(duration_ms, 0),
+        ff.EffectType(ff_rumble_effect=rumble)
+    )
+
+    repeat_count = 1
+    effect_id = controller_device.upload_effect(effect)
+    controller_device.write(e.EV_FF, effect_id, repeat_count)
+    await asyncio.sleep(0.1)
+    controller_device.erase_effect(effect_id)
 
 # Captures keyboard events and translates them to virtual device events.
 async def capture_keyboard_events(device):
 
     # Get access to global variables. These are globalized because the function
     # is instanciated twice and need to persist accross both instances.
-    global event_queue
     global button_map
+    global event_queue
+    global gyro_enabled
 
     # Button map shortcuts for easy reference.
     button1 = button_map["button1"]
@@ -224,12 +268,12 @@ async def capture_keyboard_events(device):
                     event_queue.append(button3)
                 elif active == [] and seed_event.code == 1 and button_on == 0 and button3 in event_queue:
                     this_button = button3
-
-                # BUTTON 3 SECOND STATE (Default: TBD) Long hold ESC Reserved for Gyro enable
-                #elif seed_event.code == 1 and button_on == 2 and button3 in event_queue:
-                #    this_button = button4
-                #    event_queue.remove(button3)
-                #    event_queue.append(button4)
+        
+                # BUTTON 3 SECOND STATE (Default: Toggle Gyro)
+                elif seed_event.code == 1 and button_on == 2 and button3 in event_queue:
+                    event_queue.remove(button3)
+                    gyro_enabled = not gyro_enabled
+                    await buzz()
 
                 # BUTTON 4 (Default: OSK) KB Button
                 if active == [24, 97, 125] and button_on == 1 and button4 not in event_queue:
@@ -251,17 +295,25 @@ async def capture_keyboard_events(device):
                     this_button = button5
 
             case "OXP":
-                # BUTTON 1 (Default: Screenshot) Short press orange + |||||
+                # BUTTON 1 (Default: Not used, dangerous fan activity!) Short press orange + |||||
                 if active == [99, 125] and button_on == 1 and button1 not in event_queue:
-                    event_queue.append(button1)
+                    pass
                 elif active == [] and seed_event.code in [99, 125] and button_on == 0 and button1 in event_queue:
-                    this_button = button1
+                    pass
 
                 # BUTTON 2 (Default: QAM) Short press orange
                 if active == [32, 125] and button_on == 1 and button2 not in event_queue:
                     event_queue.append(button2)
                 elif active == [] and seed_event.code in [32, 125] and button_on == 0 and button2 in event_queue:
                     this_button = button2
+
+                # BUTTON 3 (Default: Toggle Gyro) Short press orange + KB
+                if active == [97, 100, 111] and button_on == 1 and button3 not in event_queue:
+                    event_queue.append(button3)
+                elif active == [] and seed_event.code in [100, 111] and button_on == 0 and button3 in event_queue:
+                    event_queue.append(button3)
+                    gyro_enabled = not gyro_enabled
+                    await buzz()
 
                 # BUTTON 4 (Default: OSK) Short press KB
                 if active == [24, 97, 125] and button_on == 1 and button4 not in event_queue:
@@ -274,9 +326,7 @@ async def capture_keyboard_events(device):
                     event_queue.append(button5)
                 elif active == [] and seed_event.code in [34, 125] and button_on == 0 and button5 in event_queue:
                     this_button = button5
-
-                # UNUSED [97, 100, 111]  ORANGE + KB Reserved for gyro enable
-
+                
         # Create list of events to fire.
         # Handle new button presses.
         if this_button and not last_button:
@@ -297,12 +347,64 @@ async def capture_keyboard_events(device):
         if events != []:
             await emit_events(events)
 
-
 # Captures the controller_device events and passes them through.
-async def capture_controller_events(device):
-    async for event in device.async_read_loop():
-        await emit_events([event])
+async def capture_controller_events(controller):
+    async for event in controller.async_read_loop():
 
+        # If gyro is enabled, queue all events so the gyro event handler can manage them.
+        if gyro_enabled:
+            controller_events.append(event)
+
+        # If gyro isn't enabled, emit the event.
+        else:
+            await emit_events([event])
+
+async def capture_gyro_events(gyro):
+
+    # Holding the last value allows us to maintain motion while a joystick is held.
+    last_x_val = 0
+    last_y_val = 0
+
+    while True:
+        # Only run this loop if gyro is enabled
+        if gyro_enabled:
+            # Check if there is a controller event and modify it, otherwise pass the event:
+            if controller_events != []:
+                for event in controller_events:
+                    adjusted_val = None
+                    seed_event = event
+                    controller_events.remove(event)
+
+                    # We only modify RX/RY ABS events.
+                    if seed_event.type == e.EV_ABS and seed_event.code == e.ABS_RX:
+                        angular_velocity_x = float(gyro.getRotationX()[0] / 32768.0 * 2000)
+                        adjusted_val = max(min(int(angular_velocity_x * gyro_sensitivity) + event.value, JOY_MAX), JOY_MIN)
+                        event = InputEvent(seed_event.sec, seed_event.usec, seed_event.type, seed_event.code, adjusted_val)
+                        last_x_val = adjusted_val
+                    if event.type == e.EV_ABS and event.code == e.ABS_RY:
+                        angular_velocity_y = float(gyro.getRotationY()[0] / 32768.0 * 2000)
+                        adjusted_val = max(min(int(angular_velocity_y * gyro_sensitivity) + event.value, JOY_MAX), JOY_MIN)
+                        last_y_val = adjusted_val
+                    if adjusted_val:
+                        event = InputEvent(seed_event.sec, seed_event.usec, seed_event.type, seed_event.code, adjusted_val)
+
+                    # Output all events.
+                    await emit_events([event])
+
+            # If no input events we can just add an event with no modifying.
+            else:
+                angular_velocity_x = float(gyro.getRotationX()[0] / 32768.0 * 2000)
+                adjusted_x = max(min(int(angular_velocity_x * gyro_sensitivity) + last_x_val, JOY_MAX), JOY_MIN)
+                x_event = InputEvent(0, 0, e.EV_ABS, e.ABS_RX, adjusted_x)
+                angular_velocity_y = float(gyro.getRotationY()[0] / 32768.0 * 2000)
+                adjusted_y = max(min(int(angular_velocity_y * gyro_sensitivity) + last_y_val, JOY_MAX), JOY_MIN)
+                y_event = InputEvent(0, 0, e.EV_ABS, e.ABS_RY, adjusted_y)
+                await emit_events([x_event, y_event])
+
+            await asyncio.sleep(0.01)
+        else:
+            # Slow down the loop so we don't waste millions of cycles
+            await asyncio.sleep(.5)
 
 async def emit_events(events: list):
     if len(events) == 1:
@@ -353,6 +455,8 @@ def main():
     # Attach the event loop of each device to the asyncio loop.
     asyncio.ensure_future(capture_controller_events(controller_device))
     asyncio.ensure_future(capture_keyboard_events(keyboard_device))
+    if gyro_device:
+        asyncio.ensure_future(capture_gyro_events(gyro_device))
 
     # Establish signaling to handle gracefull shutdown.
     signals = (signal.SIGHUP, signal.SIGTERM, signal.SIGINT, signal.SIGQUIT)
