@@ -175,8 +175,8 @@ Exiting...")
     try:
         gyro_device = Driver(0x68)
 
-    except FileNotFoundError:
-        print("gyro device not initialized. ensure bmi160_i2c and i2c_dev modules are loaded. Skipping gyro device.")
+    except (FileNotFoundError, NameError) as e:
+        print("Gyro device not initialized. Ensure bmi160_i2c and i2c_dev modules are loaded, and all python dependencies are met. Skipping gyro device setup.\n", e)
 
     # Create the virtual controller.
     new_device = UInput.from_device(
