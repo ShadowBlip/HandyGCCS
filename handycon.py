@@ -299,11 +299,11 @@ async def capture_keyboard_events(device):
                 # UNUSED [97, 100, 111]  ORANGE + KB Reserved for gyro enable
 
             case "WIN600":
-                # BUTTON 2 (Default: QAM) Windows Key
-                if active == [125] and button_on == 1 and button2 not in event_queue:
-                    event_queue.append(button2)
-                elif active == [] and seed_event.code == 125 and button_on == 0 and button2 in event_queue:
-                    this_button = button2
+                # BUTTON 5 (Default: HOME) Windows Key
+                if active == [125] and button_on == 1 and button5 not in event_queue:
+                    event_queue.append(button5)
+                elif active == [] and seed_event.code == 125 and button_on == 0 and button5 in event_queue:
+                    this_button = button5
 
         # Create list of events to fire.
         # Handle new button presses.
