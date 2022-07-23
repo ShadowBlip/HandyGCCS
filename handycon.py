@@ -262,19 +262,19 @@ async def capture_keyboard_events(device):
                     event_queue.append(button2)
                 elif active == [] and seed_event.code in [97, 100, 111] and button_on == 0 and button2 in event_queue:
                     this_button = button2
+                    await buzz()
 
                 # BUTTON 3 (Default: ESC) ESC Button
                 if active == [1] and seed_event.code == 1 and button_on == 1 and button3 not in event_queue:
                     event_queue.append(button3)
                 elif active == [] and seed_event.code == 1 and button_on == 0 and button3 in event_queue:
-                    pass
-                    #this_button = button3
+                    this_button = button3
                 # BUTTON 3 SECOND STATE (Default: Toggle Gyro)
-                elif seed_event.code == 1 and button_on == 2 and button3 in event_queue:
-                    pass
-                    #event_queue.remove(button3)
-                    #gyro_enabled = not gyro_enabled
-                    #await buzz()
+                elif seed_event.code == 1 and button_on == 2 and button3 in event_queue and gyro_device:
+                    event_queue.remove(button3)
+                    gyro_enabled = not gyro_enabled
+                    await buzz()
+                    await buzz()
 
                 # BUTTON 4 (Default: OSK) KB Button
                 if active == [24, 97, 125] and button_on == 1 and button4 not in event_queue:
@@ -288,6 +288,7 @@ async def capture_keyboard_events(device):
                     event_queue.append(button2)
                 elif active == [] and seed_event.code in [32, 40, 125, 133] and button_on == 0 and button2 in event_queue:
                     this_button = button2
+                    await buzz()
 
                 # BUTTON 5 (Default: Home) Big button
                 if active in [[96, 105, 133], [88, 97, 125]] and button_on == 1 and button5 not in event_queue:
@@ -307,16 +308,16 @@ async def capture_keyboard_events(device):
                     event_queue.append(button2)
                 elif active == [] and seed_event.code in [32, 125] and button_on == 0 and button2 in event_queue:
                     this_button = button2
+                    await buzz()
 
                 # BUTTON 3 (Default: Toggle Gyro) Short press orange + KB
-                if active == [97, 100, 111] and button_on == 1 and button3 not in event_queue:
-                    pass
-                    #event_queue.append(button3)
-                elif active == [] and seed_event.code in [100, 111] and button_on == 0 and button3 in event_queue:
-                    pass
-                    #event_queue.append(button3)
-                    #gyro_enabled = not gyro_enabled
-                    #await buzz()
+                if active == [97, 100, 111] and button_on == 1 and button3 not in event_queue and gyro_device:
+                    event_queue.append(button3)
+                elif active == [] and seed_event.code in [100, 111] and button_on == 0 and button3 in event_queue and gyro_device:
+                    event_queue.append(button3)
+                    gyro_enabled = not gyro_enabled
+                    await buzz()
+                    await buzz()
 
                 # BUTTON 4 (Default: OSK) Short press KB
                 if active == [24, 97, 125] and button_on == 1 and button4 not in event_queue:
