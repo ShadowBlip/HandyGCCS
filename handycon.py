@@ -196,24 +196,23 @@ Exiting...")
     move(controller_path, hide_path+controller_event)
 
 # Do a little buzz
-async def buzz():
+async def buzz(duration=1000, count=1, delay=0.1):
 
     rumble = ff.Rumble(strong_magnitude=0x0000, weak_magnitude=0xffff)
     effect_type = ff.EffectType(ff_rumble_effect=rumble)
-    duration_ms = 1000
 
     effect = ff.Effect(
         e.FF_RUMBLE, -1, 0,
         ff.Trigger(0, 0),
-        ff.Replay(duration_ms, 0),
+        ff.Replay(duration, 0),
         ff.EffectType(ff_rumble_effect=rumble)
     )
 
-    repeat_count = 1
-    effect_id = controller_device.upload_effect(effect)
-    controller_device.write(e.EV_FF, effect_id, repeat_count)
-    await asyncio.sleep(0.1)
-    controller_device.erase_effect(effect_id)
+    for run in range(count):
+        effect_id = controller_device.upload_effect(effect)
+        controller_device.write(e.EV_FF, effect_id, 1)
+        await asyncio.sleep(delay)
+        controller_device.erase_effect(effect_id)
 
 # Captures keyboard events and translates them to virtual device events.
 async def capture_keyboard_events(device):
@@ -273,8 +272,7 @@ async def capture_keyboard_events(device):
                 elif seed_event.code == 1 and button_on == 2 and button3 in event_queue and gyro_device:
                     event_queue.remove(button3)
                     gyro_enabled = not gyro_enabled
-                    await buzz()
-                    await buzz()
+                    await buzz(500, 2, 0.2)
 
                 # BUTTON 4 (Default: OSK) KB Button
                 if active == [24, 97, 125] and button_on == 1 and button4 not in event_queue:
@@ -316,8 +314,7 @@ async def capture_keyboard_events(device):
                 elif active == [] and seed_event.code in [100, 111] and button_on == 0 and button3 in event_queue and gyro_device:
                     event_queue.append(button3)
                     gyro_enabled = not gyro_enabled
-                    await buzz()
-                    await buzz()
+                    await buzz(500, 2, 0.2)
 
                 # BUTTON 4 (Default: OSK) Short press KB
                 if active == [24, 97, 125] and button_on == 1 and button4 not in event_queue:
