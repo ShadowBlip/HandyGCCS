@@ -8,6 +8,7 @@
 
 import asyncio
 import os
+import getpass
 import signal
 import sys
 import dbus
@@ -58,9 +59,13 @@ hide_path = "/dev/input/.hidden/"
 keyboard_event = None
 keyboard_path = None
 
-USER = os.getlogin()
+USER = None
+cmd = "who | awk '{print $1}' | sort | head -1"
+USER_LIST = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout = subprocess.PIPE, stderr = subprocess.PIPE, shell=True)
+for get_first in USER_LIST.stdout:
+    USER = get_first.decode().strip()
+    break
 HOME_PATH = "/home/"+USER
-print(HOME_PATH)
 
 # Configuration
 button_map = {
