@@ -61,10 +61,14 @@ keyboard_path = None
 
 USER = None
 cmd = "who | awk '{print $1}' | sort | head -1"
-USER_LIST = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout = subprocess.PIPE, stderr = subprocess.PIPE, shell=True)
-for get_first in USER_LIST.stdout:
-    USER = get_first.decode().strip()
-    break
+while USER == None:
+    USER_LIST = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout = subprocess.PIPE, stderr = subprocess.PIPE, shell=True)
+    for get_first in USER_LIST.stdout:
+        name = get_first.decode().strip()
+        if name is not None:
+            USER = name
+        break
+    sleep(1)
 HOME_PATH = "/home/"+USER
 
 # Configuration
@@ -192,7 +196,7 @@ Exiting...")
     try:
         gyro_device = Driver(0x68)
 
-    except (FileNotFoundError, NameError) as e:
+    except (FileNotFoundError, NameError, BrokenPipeError) as e:
         print("Gyro device not initialized. Ensure bmi160_i2c and i2c_dev modules are loaded, and all python dependencies are met. Skipping gyro device setup.\n", e)
 
     # Create the virtual controller.
@@ -447,13 +451,19 @@ async def capture_power_events(power, keyboard):
         if event.type == e.EV_KEY and event.code == 116: # KEY_POWER
             if event.value == 0:
                 if active_keys == [125]:
+                    # For DeckUI Sessions
                     cmd = 'su {} -c "{}/.steam/root/ubuntu12_32/steam -ifrunning steam://longpowerpress"'.format(USER, HOME_PATH)
                     os.system(cmd)
                     shutdown = True
+
                 else:
+                    # For DeckUI Sessions
                     cmd = 'su {} -c "{}/.steam/root/ubuntu12_32/steam -ifrunning steam://shortpowerpress"'.format(USER, HOME_PATH)
                     os.system(cmd)
 
+                    # For BPM and Desktop sessions
+                    await asyncio.sleep(1)
+                    os.system('systemctl suspend')
 
 # Emits passed or generated events to the virtual controller.
 async def emit_events(events: list):
