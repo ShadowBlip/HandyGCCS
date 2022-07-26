@@ -451,9 +451,9 @@ async def capture_power_events(power, keyboard):
             if event.value == 0:
                 if active_keys == [125]:
                     # For DeckUI Sessions
+                    shutdown = True
                     cmd = 'su {} -c "{}/.steam/root/ubuntu12_32/steam -ifrunning steam://longpowerpress"'.format(USER, HOME_PATH)
                     os.system(cmd)
-                    shutdown = True
 
                 else:
                     # For DeckUI Sessions
