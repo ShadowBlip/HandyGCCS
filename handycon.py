@@ -8,7 +8,6 @@
 
 import asyncio
 import os
-import getpass
 import signal
 import sys
 import dbus
