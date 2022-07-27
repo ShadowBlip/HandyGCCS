@@ -21,7 +21,7 @@ try :
 except ModuleNotFoundError:
         print("BMI160_i2c Module was not found. Install with `python3 -m pip install BMI160-i2c`. Skipping gyro device.")
 
-from evdev import InputDevice, InputEvent, UInput, ecodes as e, categorize, list_devices, ff
+from evdev import InputDevice, InputEvent, UInput, ecodes as e, categorize, list_devices, ff, AbsInfo
 from pathlib import PurePath as p
 from shutil import move
 from time import sleep
@@ -35,6 +35,192 @@ EVENT_QAM = [[e.EV_KEY, e.BTN_MODE], [e.EV_KEY, e.BTN_SOUTH]]
 EVENT_SCR = [[e.EV_KEY, e.BTN_MODE], [e.EV_KEY, e.BTN_TR]]
 EVENT_HOME = [[e.EV_KEY, e.BTN_MODE]]
 
+CONTROLLER_EVENTS = {
+    e.EV_KEY: [
+        e.KEY_ESC,
+        e.KEY_1,
+        e.KEY_2,
+        e.KEY_3,
+        e.KEY_4,
+        e.KEY_5,
+        e.KEY_6,
+        e.KEY_7,
+        e.KEY_8,
+        e.KEY_9,
+        e.KEY_0,
+        e.KEY_MINUS,
+        e.KEY_EQUAL,
+        e.KEY_BACKSPACE,
+        e.KEY_TAB,
+        e.KEY_Q,
+        e.KEY_W,
+        e.KEY_E,
+        e.KEY_R,
+        e.KEY_T,
+        e.KEY_Y,
+        e.KEY_U,
+        e.KEY_I,
+        e.KEY_O,
+        e.KEY_P,
+        e.KEY_LEFTBRACE,
+        e.KEY_RIGHTBRACE,
+        e.KEY_ENTER,
+        e.KEY_LEFTCTRL,
+        e.KEY_A,
+        e.KEY_S,
+        e.KEY_D,
+        e.KEY_F,
+        e.KEY_G,
+        e.KEY_H,
+        e.KEY_J,
+        e.KEY_K,
+        e.KEY_L,
+        e.KEY_SEMICOLON,
+        e.KEY_APOSTROPHE,
+        e.KEY_GRAVE,
+        e.KEY_LEFTSHIFT,
+        e.KEY_BACKSLASH,
+        e.KEY_Z,
+        e.KEY_X,
+        e.KEY_C,
+        e.KEY_V,
+        e.KEY_B,
+        e.KEY_N,
+        e.KEY_M,
+        e.KEY_COMMA,
+        e.KEY_DOT,
+        e.KEY_SLASH,
+        e.KEY_RIGHTSHIFT,
+        e.KEY_KPASTERISK,
+        e.KEY_LEFTALT,
+        e.KEY_SPACE,
+        e.KEY_CAPSLOCK,
+        e.KEY_F1,
+        e.KEY_F2,
+        e.KEY_F3,
+        e.KEY_F4,
+        e.KEY_F5,
+        e.KEY_F6,
+        e.KEY_F7,
+        e.KEY_F8,
+        e.KEY_F9,
+        e.KEY_F10,
+        e.KEY_NUMLOCK,
+        e.KEY_SCROLLLOCK,
+        e.KEY_KP7,
+        e.KEY_KP8,
+        e.KEY_KP9,
+        e.KEY_KPMINUS,
+        e.KEY_KP4,
+        e.KEY_KP5,
+        e.KEY_KP6,
+        e.KEY_KPPLUS,
+        e.KEY_KP1,
+        e.KEY_KP2,
+        e.KEY_KP3,
+        e.KEY_KP0,
+        e.KEY_KPDOT,
+        e.KEY_ZENKAKUHANKAKU,
+        e.KEY_102ND,
+        e.KEY_F11,
+        e.KEY_F12,
+        e.KEY_RO,
+        e.KEY_KATAKANA,
+        e.KEY_HIRAGANA,
+        e.KEY_HENKAN,
+        e.KEY_KATAKANAHIRAGANA,
+        e.KEY_MUHENKAN,
+        e.KEY_KPJPCOMMA,
+        e.KEY_KPENTER,
+        e.KEY_RIGHTCTRL,
+        e.KEY_KPSLASH,
+        e.KEY_SYSRQ,
+        e.KEY_RIGHTALT,
+        e.KEY_HOME,
+        e.KEY_UP,
+        e.KEY_PAGEUP,
+        e.KEY_LEFT,
+        e.KEY_RIGHT,
+        e.KEY_END,
+        e.KEY_DOWN,
+        e.KEY_PAGEDOWN,
+        e.KEY_INSERT,
+        e.KEY_DELETE,
+        e.KEY_MACRO,
+        e.KEY_MUTE,
+        e.KEY_VOLUMEDOWN,
+        e.KEY_VOLUMEUP,
+        e.KEY_POWER,
+        e.KEY_KPEQUAL,
+        e.KEY_KPPLUSMINUS,
+        e.KEY_PAUSE,
+        e.KEY_KPCOMMA,
+        e.KEY_HANGUEL,
+        e.KEY_HANJA,
+        e.KEY_YEN,
+        e.KEY_LEFTMETA,
+        e.KEY_RIGHTMETA,
+        e.KEY_COMPOSE,
+        e.KEY_STOP,
+        e.KEY_CALC,
+        e.KEY_SLEEP,
+        e.KEY_WAKEUP,
+        e.KEY_MAIL,
+        e.KEY_BOOKMARKS,
+        e.KEY_COMPUTER,
+        e.KEY_BACK,
+        e.KEY_FORWARD,
+        e.KEY_NEXTSONG,
+        e.KEY_PLAYPAUSE,
+        e.KEY_PREVIOUSSONG,
+        e.KEY_STOPCD,
+        e.KEY_HOMEPAGE,
+        e.KEY_REFRESH,
+        e.KEY_F13,
+        e.KEY_F14,
+        e.KEY_F15,
+        e.KEY_SEARCH,
+        e.KEY_MEDIA,
+        e.BTN_SOUTH,
+        e.BTN_EAST,
+        e.BTN_NORTH,
+        e.BTN_WEST,
+        e.BTN_TL,
+        e.BTN_TR,
+        e.BTN_SELECT,
+        e.BTN_START,
+        e.BTN_MODE,
+        e.BTN_THUMBL,
+        e.BTN_THUMBR,
+    ],
+    e.EV_ABS: [
+        (e.ABS_X, AbsInfo(0, -32768, 32767, 16, 128, 0)),
+        (e.ABS_Y, AbsInfo(0, -32768, 32767, 16, 128, 0)),
+        (e.ABS_Z, AbsInfo(0, 0, 255, 0, 0, 0)),
+        (e.ABS_RX, AbsInfo(0, -32768, 32767, 16, 128, 0)),
+        (e.ABS_RY, AbsInfo(0, -32768, 32767, 16, 128, 0)),
+        (e.ABS_RZ, AbsInfo(0, 0, 255, 0, 0, 0)),
+        (e.ABS_HAT0X, AbsInfo(0, -1, 1, 0, 0, 0)),
+        (e.ABS_HAT0Y, AbsInfo(0, -1, 1, 0, 0, 0)),
+    ],
+    e.EV_MSC: [
+        e.MSC_SCAN,
+    ],
+    e.EV_LED: [
+        e.LED_NUML,
+        e.LED_CAPSL,
+        e.LED_SCROLLL,
+    ],
+    e.EV_FF: [
+        e.FF_RUMBLE,
+        e.FF_PERIODIC,
+        e.FF_SQUARE,
+        e.FF_TRIANGLE,
+        e.FF_SINE,
+        e.FF_GAIN,
+    ],
+}
+
 JOY_MIN = -32767
 JOY_MAX = 32767
 
@@ -44,9 +230,10 @@ controller_events = [] # Stores incoming events if gyro aim is enabled.
 
 # Devices
 controller_device = None
+ff_device = None
 gyro_device = None
 keyboard_device = None
-new_device = None
+ui_device = None
 system_type = None
 
 # Paths
@@ -73,11 +260,12 @@ def __init__():
     global controller_device
     global controller_event
     global controller_path
+    global ff_device
     global gyro_device
     global keyboard_device
     global keyboard_event
     global keyboard_path
-    global new_device
+    global ui_device
     global system_type
 
     controller_capabilities = None
@@ -115,7 +303,7 @@ def __init__():
     elif system_id in [
             "ONE XPLAYER",
             ]:
-            
+
             system_type = "OXP"
         # if system_cpu in ["GenuineIntel"]:
            # system_type = "OXP_INTEL"
@@ -175,18 +363,18 @@ Exiting...")
     try:
         gyro_device = Driver(0x68)
 
-    except (FileNotFoundError, NameError) as e:
+    except (FileNotFoundError, NameError, BrokenPipeError) as e:
         print("Gyro device not initialized. Ensure bmi160_i2c and i2c_dev modules are loaded, and all python dependencies are met. Skipping gyro device setup.\n", e)
 
     # Create the virtual controller.
-    new_device = UInput.from_device(
-            controller_device,
-            keyboard_device,
+    ui_device = UInput(
+            CONTROLLER_EVENTS,
             name='Handheld Controller',
-            bustype=3,
+            bustype=int('3', base=16),
             vendor=int('045e', base=16),
             product=int('028e', base=16),
-            version=110)
+            version=int('110', base=16)
+            )
 
     # Move the reference to the original controllers to hide them from the user/steam.
     os.makedirs(hide_path, exist_ok=True)
@@ -195,24 +383,23 @@ Exiting...")
     controller_event = p(controller_path).name
     move(controller_path, hide_path+controller_event)
 
-# Do a little buzz
-async def buzz(duration=1000, count=1, delay=0.1):
+# Do a force feedback event
+async def do_rumble(effect_id=-1, direction=0, button=0, interval=10, duration=1000, delay=0):
 
     rumble = ff.Rumble(strong_magnitude=0x0000, weak_magnitude=0xffff)
-    effect_type = ff.EffectType(ff_rumble_effect=rumble)
-
     effect = ff.Effect(
-        e.FF_RUMBLE, -1, 0,
-        ff.Trigger(0, 0),
-        ff.Replay(duration, 0),
+        e.FF_RUMBLE,
+        effect_id,
+        direction,
+        ff.Trigger(button, interval),
+        ff.Replay(duration, delay),
         ff.EffectType(ff_rumble_effect=rumble)
     )
 
-    for run in range(count):
-        effect_id = controller_device.upload_effect(effect)
-        controller_device.write(e.EV_FF, effect_id, 1)
-        await asyncio.sleep(delay)
-        controller_device.erase_effect(effect_id)
+    effect_id = controller_device.upload_effect(effect)
+    controller_device.write(e.EV_FF, effect_id, 1)
+    await asyncio.sleep(interval/1000)
+    controller_device.erase_effect(effect_id)
 
 # Captures keyboard events and translates them to virtual device events.
 async def capture_keyboard_events(device):
@@ -261,7 +448,7 @@ async def capture_keyboard_events(device):
                     event_queue.append(button2)
                 elif active == [] and seed_event.code in [97, 100, 111] and button_on == 0 and button2 in event_queue:
                     this_button = button2
-                    await buzz()
+                    await do_rumble()
 
                 # BUTTON 3 (Default: ESC) ESC Button
                 if active == [1] and seed_event.code == 1 and button_on == 1 and button3 not in event_queue:
@@ -272,7 +459,7 @@ async def capture_keyboard_events(device):
                 elif seed_event.code == 1 and button_on == 2 and button3 in event_queue and gyro_device:
                     event_queue.remove(button3)
                     gyro_enabled = not gyro_enabled
-                    await buzz(500, 2, 0.2)
+                    await do_rumble()
 
                 # BUTTON 4 (Default: OSK) KB Button
                 if active == [24, 97, 125] and button_on == 1 and button4 not in event_queue:
@@ -286,7 +473,7 @@ async def capture_keyboard_events(device):
                     event_queue.append(button2)
                 elif active == [] and seed_event.code in [32, 40, 125, 133] and button_on == 0 and button2 in event_queue:
                     this_button = button2
-                    await buzz()
+                    await do_rumble()
 
                 # BUTTON 5 (Default: Home) Big button
                 if active in [[96, 105, 133], [88, 97, 125]] and button_on == 1 and button5 not in event_queue:
@@ -306,7 +493,7 @@ async def capture_keyboard_events(device):
                     event_queue.append(button2)
                 elif active == [] and seed_event.code in [32, 125] and button_on == 0 and button2 in event_queue:
                     this_button = button2
-                    await buzz()
+                    await do_rumble()
 
                 # BUTTON 3 (Default: Toggle Gyro) Short press orange + KB
                 if active == [97, 100, 111] and button_on == 1 and button3 not in event_queue and gyro_device:
@@ -314,7 +501,7 @@ async def capture_keyboard_events(device):
                 elif active == [] and seed_event.code in [100, 111] and button_on == 0 and button3 in event_queue and gyro_device:
                     event_queue.append(button3)
                     gyro_enabled = not gyro_enabled
-                    await buzz(500, 2, 0.2)
+                    await do_rumble()
 
                 # BUTTON 4 (Default: OSK) Short press KB
                 if active == [24, 97, 125] and button_on == 1 and button4 not in event_queue:
@@ -356,9 +543,10 @@ async def capture_controller_events(controller):
         if gyro_enabled:
             controller_events.append(event)
 
-        # If gyro isn't enabled, emit the event.
+        # If gyro isn't enabled, emit the event. Also block FF events, or get infinite recursion. Up to you I guess...
         else:
-            await emit_events([event])
+            if event.type not in [e.EV_FF, e.EV_UINPUT]:
+                await emit_events([event])
 
 async def capture_gyro_events(gyro):
 
@@ -404,20 +592,41 @@ async def capture_gyro_events(gyro):
 
             await asyncio.sleep(0.01)
         else:
-            # Slow down the loop so we don't waste millions of cycles
+            # Slow down the loop so we don't waste millions of cycles and overheat our controller.
             await asyncio.sleep(.5)
 
 async def emit_events(events: list):
     if len(events) == 1:
-        new_device.write_event(events[0])
-        new_device.syn()
+        ui_device.write_event(events[0])
+        ui_device.syn()
     elif len(events) > 1:
         for event in events:
             if event:
-                new_device.write_event(event)
-                new_device.syn()
+                ui_device.write_event(event)
+                ui_device.syn()
                 await asyncio.sleep(0.09)
 
+# Handle FF event uploads
+async def capture_ff_events(ui_device, controller):
+    async for event in ui_device.async_read_loop():
+
+        # Do a rumble any time we are requested to do one? Seems obvious...
+        if event.type == e.EV_FF:
+            await do_rumble()
+
+        # Programs will submit these EV_UINPUT events to ensure the device is capable.
+        # Doing this forever doesn't seem to pose a problem, and attempting to ignore
+        # any of them causes the program to halt.
+        elif event.type == e.EV_UINPUT:
+            if event.code == e.UI_FF_UPLOAD and e.FF_RUMBLE:
+                effect = ui_device.begin_upload(e.FF_RUMBLE)
+                effect.retval = 0
+                ui_device.end_upload(effect)
+
+            elif event.code == e.UI_FF_ERASE:
+                effect_id = ui_device.begin_erase(event.value)
+                effect_id.retval = 0
+                ui_device.end_erase(effect_id)
 
 # Gracefull shutdown.
 async def restore(loop):
@@ -448,7 +657,6 @@ async def restore(loop):
 
 # Main loop
 def main():
-
     # Run asyncio loop to capture all events.
     loop = asyncio.get_event_loop()
     loop.create_future()
@@ -456,6 +664,7 @@ def main():
     # Attach the event loop of each device to the asyncio loop.
     asyncio.ensure_future(capture_controller_events(controller_device))
     asyncio.ensure_future(capture_keyboard_events(keyboard_device))
+    asyncio.ensure_future(capture_ff_events(ui_device, controller_device))
     if gyro_device:
         asyncio.ensure_future(capture_gyro_events(gyro_device))
 
