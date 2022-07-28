@@ -448,7 +448,7 @@ async def capture_keyboard_events(device):
                     event_queue.append(button2)
                 elif active == [] and seed_event.code in [97, 100, 111] and button_on == 0 and button2 in event_queue:
                     this_button = button2
-                    await do_rumble()
+                    await do_rumble(-1, 0, 0, 150, 1000, 0)
 
                 # BUTTON 3 (Default: ESC) ESC Button
                 if active == [1] and seed_event.code == 1 and button_on == 1 and button3 not in event_queue:
@@ -459,7 +459,12 @@ async def capture_keyboard_events(device):
                 elif seed_event.code == 1 and button_on == 2 and button3 in event_queue and gyro_device:
                     event_queue.remove(button3)
                     gyro_enabled = not gyro_enabled
-                    await do_rumble()
+                    if gyro_enabled:
+                        await do_rumble(-1, 0, 0, 250, 1000, 0)
+                    else:
+                        await do_rumble(-1, 0, 0, 100, 1000, 0)
+                        await asyncio.sleep(.2)
+                        await do_rumble(-1, 0, 0, 100, 1000, 0)
 
                 # BUTTON 4 (Default: OSK) KB Button
                 if active == [24, 97, 125] and button_on == 1 and button4 not in event_queue:
@@ -493,15 +498,20 @@ async def capture_keyboard_events(device):
                     event_queue.append(button2)
                 elif active == [] and seed_event.code in [32, 125] and button_on == 0 and button2 in event_queue:
                     this_button = button2
-                    await do_rumble()
+                    await do_rumble(-1, 0, 0, 150, 1000, 0)
 
                 # BUTTON 3 (Default: Toggle Gyro) Short press orange + KB
                 if active == [97, 100, 111] and button_on == 1 and button3 not in event_queue and gyro_device:
                     event_queue.append(button3)
                 elif active == [] and seed_event.code in [100, 111] and button_on == 0 and button3 in event_queue and gyro_device:
-                    event_queue.append(button3)
+                    event_queue.remove(button3)
                     gyro_enabled = not gyro_enabled
-                    await do_rumble()
+                    if gyro_enabled:
+                        await do_rumble(-1, 0, 0, 250, 1000, 0)
+                    else:
+                        await do_rumble(-1, 0, 0, 100, 1000, 0)
+                        await asyncio.sleep(.2)
+                        await do_rumble(-1, 0, 0, 100, 1000, 0)
 
                 # BUTTON 4 (Default: OSK) Short press KB
                 if active == [24, 97, 125] and button_on == 1 and button4 not in event_queue:
@@ -560,6 +570,8 @@ async def capture_gyro_events(gyro):
             # Check if there is a controller event and modify it, otherwise pass the event:
             if controller_events != []:
                 for event in controller_events:
+                    if event.type == e.EV_FF:
+                        continue
                     adjusted_val = None
                     seed_event = event
                     controller_events.remove(event)
@@ -610,7 +622,6 @@ async def emit_events(events: list):
 async def capture_ff_events(ui_device, controller):
     async for event in ui_device.async_read_loop():
 
-        # Do a rumble any time we are requested to do one? Seems obvious...
         if event.type == e.EV_FF:
             await do_rumble()
 
