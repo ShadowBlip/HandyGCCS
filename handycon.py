@@ -41,12 +41,14 @@ JOY_MAX = 32767
 # Track button on/off (prevents spam presses)
 event_queue = [] # Stores incoming button presses to block spam
 controller_events = [] # Stores incoming events if gyro aim is enabled.
+shutdown = False
 
 # Devices
 controller_device = None
 gyro_device = None
 keyboard_device = None
 new_device = None
+power_device = None
 system_type = None
 
 # Paths
@@ -55,6 +57,18 @@ controller_path = None
 hide_path = "/dev/input/.hidden/"
 keyboard_event = None
 keyboard_path = None
+
+USER = None
+cmd = "who | awk '{print $1}' | sort | head -1"
+while USER == None:
+    USER_LIST = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout = subprocess.PIPE, stderr = subprocess.PIPE, shell=True)
+    for get_first in USER_LIST.stdout:
+        name = get_first.decode().strip()
+        if name is not None:
+            USER = name
+        break
+    sleep(1)
+HOME_PATH = "/home/"+USER
 
 # Configuration
 button_map = {
@@ -78,6 +92,7 @@ def __init__():
     global keyboard_event
     global keyboard_path
     global new_device
+    global power_device
     global system_type
 
     controller_capabilities = None
@@ -157,6 +172,11 @@ that file with your issue.")
                 keyboard_device = InputDevice(keyboard_path)
                 keyboard_device.grab()
 
+            # Power Button
+            if device.name == 'Power Button' and device.phys == "LNXPWRBN/button/input0":
+                power_device = device
+                power_device.grab()
+
         # Sometimes the service loads before all input devices have full initialized. Try a few times.
         if not controller_path or not keyboard_path:
             attempts += 1
@@ -175,7 +195,7 @@ Exiting...")
     try:
         gyro_device = Driver(0x68)
 
-    except (FileNotFoundError, NameError) as e:
+    except (FileNotFoundError, NameError, BrokenPipeError) as e:
         print("Gyro device not initialized. Ensure bmi160_i2c and i2c_dev modules are loaded, and all python dependencies are met. Skipping gyro device setup.\n", e)
 
     # Create the virtual controller.
@@ -222,6 +242,7 @@ async def capture_keyboard_events(device):
     global button_map
     global event_queue
     global gyro_enabled
+    global shutdown
 
     # Button map shortcuts for easy reference.
     button1 = button_map["button1"]
@@ -251,7 +272,7 @@ async def capture_keyboard_events(device):
 
             case "AYA_GEN1":
                 # BUTTON 1 (Default: Screenshot) WIN button
-                if active == [125] and button_on == 1 and button1 not in event_queue:
+                if active == [125] and button_on == 1 and button1 not in event_queue and shutdown == False:
                     event_queue.append(button1)
                 elif active == [] and seed_event.code == 125 and button_on == 0 and button1 in event_queue:
                     this_button = button1
@@ -280,6 +301,10 @@ async def capture_keyboard_events(device):
                 elif active == [] and seed_event.code in [24, 97, 125] and button_on == 0 and button4 in event_queue:
                     this_button = button4
 
+                # Handle L_META from power button
+                elif active == [] and seed_event.code == 125 and button_on == 0 and  event_queue == [] and shutdown == True:
+                    shutdown = False
+
             case "AYA_GEN2":
                 # BUTTON 2 (Default: QAM) Small button
                 if active in [[40, 133], [32, 125]] and button_on == 1 and button2 not in event_queue:
@@ -293,6 +318,10 @@ async def capture_keyboard_events(device):
                     event_queue.append(button5)
                 elif active == [] and seed_event.code in [88, 96, 97, 105, 125, 133] and button_on == 0 and button5 in event_queue:
                     this_button = button5
+
+                # Handle L_META from power button
+                elif active == [] and seed_event.code == 125 and button_on == 0 and  event_queue == [] and shutdown == True:
+                    shutdown = False
 
             case "OXP":
                 # BUTTON 1 (Default: Not used, dangerous fan activity!) Short press orange + |||||
@@ -328,6 +357,10 @@ async def capture_keyboard_events(device):
                 elif active == [] and seed_event.code in [34, 125] and button_on == 0 and button5 in event_queue:
                     this_button = button5
                 
+                # Handle L_META from power button
+                elif active == [] and seed_event.code == 125 and button_on == 0 and  event_queue == [] and shutdown == True:
+                    shutdown = False
+
         # Create list of events to fire.
         # Handle new button presses.
         if this_button and not last_button:
@@ -407,6 +440,31 @@ async def capture_gyro_events(gyro):
             # Slow down the loop so we don't waste millions of cycles
             await asyncio.sleep(.5)
 
+# Captures power events and handles long or short press events.
+async def capture_power_events(power, keyboard):
+    global HOME_PATH
+    global USER
+    global shutdown
+    async for event in power.async_read_loop():
+        active_keys = keyboard.active_keys()
+        if event.type == e.EV_KEY and event.code == 116: # KEY_POWER
+            if event.value == 0:
+                if active_keys == [125]:
+                    # For DeckUI Sessions
+                    shutdown = True
+                    cmd = 'su {} -c "{}/.steam/root/ubuntu12_32/steam -ifrunning steam://longpowerpress"'.format(USER, HOME_PATH)
+                    os.system(cmd)
+
+                else:
+                    # For DeckUI Sessions
+                    cmd = 'su {} -c "{}/.steam/root/ubuntu12_32/steam -ifrunning steam://shortpowerpress"'.format(USER, HOME_PATH)
+                    os.system(cmd)
+
+                    # For BPM and Desktop sessions
+                    await asyncio.sleep(1)
+                    os.system('systemctl suspend')
+
+# Emits passed or generated events to the virtual controller.
 async def emit_events(events: list):
     if len(events) == 1:
         new_device.write_event(events[0])
@@ -456,6 +514,7 @@ def main():
     # Attach the event loop of each device to the asyncio loop.
     asyncio.ensure_future(capture_controller_events(controller_device))
     asyncio.ensure_future(capture_keyboard_events(keyboard_device))
+    asyncio.ensure_future(capture_power_events(power_device, keyboard_device))
     if gyro_device:
         asyncio.ensure_future(capture_gyro_events(gyro_device))
 
