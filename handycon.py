@@ -384,15 +384,15 @@ Exiting...")
     move(controller_path, hide_path+controller_event)
 
 # Do a force feedback event
-async def do_rumble(effect_id=-1, direction=0, button=0, interval=10, duration=1000, delay=0):
+async def do_rumble(button=0, interval=10, length=1000, delay=0):
 
     rumble = ff.Rumble(strong_magnitude=0x0000, weak_magnitude=0xffff)
     effect = ff.Effect(
         e.FF_RUMBLE,
-        effect_id,
-        direction,
+        -1,
+        0,
         ff.Trigger(button, interval),
-        ff.Replay(duration, delay),
+        ff.Replay(length, delay),
         ff.EffectType(ff_rumble_effect=rumble)
     )
 
@@ -448,7 +448,7 @@ async def capture_keyboard_events(device):
                     event_queue.append(button2)
                 elif active == [] and seed_event.code in [97, 100, 111] and button_on == 0 and button2 in event_queue:
                     this_button = button2
-                    await do_rumble(-1, 0, 0, 150, 1000, 0)
+                    await do_rumble(0, 150, 1000, 0)
 
                 # BUTTON 3 (Default: ESC) ESC Button
                 if active == [1] and seed_event.code == 1 and button_on == 1 and button3 not in event_queue:
@@ -460,11 +460,11 @@ async def capture_keyboard_events(device):
                     event_queue.remove(button3)
                     gyro_enabled = not gyro_enabled
                     if gyro_enabled:
-                        await do_rumble(-1, 0, 0, 250, 1000, 0)
+                        await do_rumble(0, 250, 1000, 0)
                     else:
-                        await do_rumble(-1, 0, 0, 100, 1000, 0)
+                        await do_rumble(0, 100, 1000, 0)
                         await asyncio.sleep(.2)
-                        await do_rumble(-1, 0, 0, 100, 1000, 0)
+                        await do_rumble(0, 100, 1000, 0)
 
                 # BUTTON 4 (Default: OSK) KB Button
                 if active == [24, 97, 125] and button_on == 1 and button4 not in event_queue:
@@ -478,7 +478,7 @@ async def capture_keyboard_events(device):
                     event_queue.append(button2)
                 elif active == [] and seed_event.code in [32, 40, 125, 133] and button_on == 0 and button2 in event_queue:
                     this_button = button2
-                    await do_rumble()
+                    await do_rumble(0, 150, 1000, 0)
 
                 # BUTTON 5 (Default: Home) Big button
                 if active in [[96, 105, 133], [88, 97, 125]] and button_on == 1 and button5 not in event_queue:
@@ -498,7 +498,7 @@ async def capture_keyboard_events(device):
                     event_queue.append(button2)
                 elif active == [] and seed_event.code in [32, 125] and button_on == 0 and button2 in event_queue:
                     this_button = button2
-                    await do_rumble(-1, 0, 0, 150, 1000, 0)
+                    await do_rumble(0, 150, 1000, 0)
 
                 # BUTTON 3 (Default: Toggle Gyro) Short press orange + KB
                 if active == [97, 100, 111] and button_on == 1 and button3 not in event_queue and gyro_device:
@@ -507,11 +507,11 @@ async def capture_keyboard_events(device):
                     event_queue.remove(button3)
                     gyro_enabled = not gyro_enabled
                     if gyro_enabled:
-                        await do_rumble(-1, 0, 0, 250, 1000, 0)
+                        await do_rumble(0, 250, 1000, 0)
                     else:
-                        await do_rumble(-1, 0, 0, 100, 1000, 0)
+                        await do_rumble(0, 100, 1000, 0)
                         await asyncio.sleep(.2)
-                        await do_rumble(-1, 0, 0, 100, 1000, 0)
+                        await do_rumble(0, 100, 1000, 0)
 
                 # BUTTON 4 (Default: OSK) Short press KB
                 if active == [24, 97, 125] and button_on == 1 and button4 not in event_queue:
@@ -622,22 +622,30 @@ async def emit_events(events: list):
 async def capture_ff_events(ui_device, controller):
     async for event in ui_device.async_read_loop():
 
-        if event.type == e.EV_FF:
-            await do_rumble()
-
         # Programs will submit these EV_UINPUT events to ensure the device is capable.
         # Doing this forever doesn't seem to pose a problem, and attempting to ignore
         # any of them causes the program to halt.
-        elif event.type == e.EV_UINPUT:
-            if event.code == e.UI_FF_UPLOAD and e.FF_RUMBLE:
-                effect = ui_device.begin_upload(e.FF_RUMBLE)
-                effect.retval = 0
-                ui_device.end_upload(effect)
+        if event.type != e.EV_UINPUT:
+            continue
 
-            elif event.code == e.UI_FF_ERASE:
-                effect_id = ui_device.begin_erase(event.value)
-                effect_id.retval = 0
-                ui_device.end_erase(effect_id)
+        if event.code == e.UI_FF_UPLOAD:
+            # Upload to the virtual device to prevent threadlocking. This does nothing else
+            upload = ui_device.begin_upload(event.value)
+            upload.retval = 0
+            effect = upload.effect
+            ui_device.end_upload(upload)
+
+            # Upload to the actual controller.
+            effect.id = -1 # all other values throw an error for invalid input.
+            effect_id = controller_device.upload_effect(effect)
+            controller.write(e.EV_FF, effect_id, 1)
+            await asyncio.sleep(.01)
+            controller.erase_effect(effect_id)
+
+        elif event.code == e.UI_FF_ERASE:
+            effect_id = ui_device.begin_erase(event.value)
+            effect_id.retval = 0
+            ui_device.end_erase(effect_id)
 
 # Gracefull shutdown.
 async def restore(loop):
@@ -668,9 +676,6 @@ async def restore(loop):
 
 # Main loop
 def main():
-    # Run asyncio loop to capture all events.
-    loop = asyncio.get_event_loop()
-    loop.create_future()
 
     # Attach the event loop of each device to the asyncio loop.
     asyncio.ensure_future(capture_controller_events(controller_device))
@@ -678,6 +683,9 @@ def main():
     asyncio.ensure_future(capture_ff_events(ui_device, controller_device))
     if gyro_device:
         asyncio.ensure_future(capture_gyro_events(gyro_device))
+
+    # Run asyncio loop to capture all events.
+    loop = asyncio.get_event_loop()
 
     # Establish signaling to handle gracefull shutdown.
     signals = (signal.SIGHUP, signal.SIGTERM, signal.SIGINT, signal.SIGQUIT)
