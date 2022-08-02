@@ -24,7 +24,7 @@ except ModuleNotFoundError:
 from evdev import InputDevice, InputEvent, UInput, ecodes as e, categorize, list_devices, ff, AbsInfo
 from pathlib import PurePath as p
 from shutil import move
-from time import sleep
+from time import sleep, time
 
 # Declare global variables
 
@@ -235,6 +235,7 @@ gyro_device = None
 keyboard_device = None
 ui_device = None
 system_type = None
+last_time = time()
 
 # Paths
 controller_event = None
@@ -622,6 +623,16 @@ async def emit_events(events: list):
 async def capture_ff_events(ui_device, controller):
     async for event in ui_device.async_read_loop():
 
+        # Calculate our frametime so we can sleep the maximum possible without affecting framerate.
+        global last_time
+        time_now = time()
+        time_delta = time_now - last_time
+        last_time = time_now
+
+        # Create upper bounds so we don't hang the system on slow frames
+        if time_delta > 0.03:
+            time_delta = 0.03
+
         # Programs will submit these EV_UINPUT events to ensure the device is capable.
         # Doing this forever doesn't seem to pose a problem, and attempting to ignore
         # any of them causes the program to halt.
@@ -639,7 +650,7 @@ async def capture_ff_events(ui_device, controller):
             effect.id = -1 # all other values throw an error for invalid input.
             effect_id = controller_device.upload_effect(effect)
             controller.write(e.EV_FF, effect_id, 1)
-            await asyncio.sleep(.01)
+            await asyncio.sleep(time_delta)
             controller.erase_effect(effect_id)
 
         elif event.code == e.UI_FF_ERASE:
