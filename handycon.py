@@ -384,7 +384,7 @@ Exiting...")
     try:
         gyro_device = Driver(0x68)
 
-    except (FileNotFoundError, NameError, BrokenPipeError) as e:
+    except (FileNotFoundError, NameError, BrokenPipeError, OSError) as e:
         print("Gyro device not initialized. Ensure bmi160_i2c and i2c_dev modules are loaded, and all python dependencies are met. Skipping gyro device setup.\n", e)
 
     # Create the virtual controller.
@@ -664,18 +664,6 @@ async def capture_power_events(power, keyboard):
                     await asyncio.sleep(1)
                     os.system('systemctl suspend')
 
-# Emits passed or generated events to the virtual controller.
-async def emit_events(events: list):
-    if len(events) == 1:
-        ui_device.write_event(events[0])
-        ui_device.syn()
-    elif len(events) > 1:
-        for event in events:
-            if event:
-                ui_device.write_event(event)
-                ui_device.syn()
-                await asyncio.sleep(0.09)
-
 # Handle FF event uploads
 async def capture_ff_events(ui_device, controller):
     async for event in ui_device.async_read_loop():
@@ -714,6 +702,18 @@ async def capture_ff_events(ui_device, controller):
             effect_id = ui_device.begin_erase(event.value)
             effect_id.retval = 0
             ui_device.end_erase(effect_id)
+
+# Emits passed or generated events to the virtual controller.
+async def emit_events(events: list):
+    if len(events) == 1:
+        ui_device.write_event(events[0])
+        ui_device.syn()
+    elif len(events) > 1:
+        for event in events:
+            if event:
+                ui_device.write_event(event)
+                ui_device.syn()
+                await asyncio.sleep(0.09)
 
 # Gracefull shutdown.
 async def restore(loop):
