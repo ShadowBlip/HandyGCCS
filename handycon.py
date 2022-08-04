@@ -9,23 +9,20 @@
 import asyncio
 import os
 import signal
-import sys
-import dbus
 import subprocess
-
 import warnings
-warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 try :
     from BMI160_i2c import Driver
 except ModuleNotFoundError:
         print("BMI160_i2c Module was not found. Install with `python3 -m pip install BMI160-i2c`. Skipping gyro device.")
 
-from evdev import InputDevice, InputEvent, UInput, ecodes as e, categorize, list_devices, ff, AbsInfo
+from evdev import InputDevice, InputEvent, UInput, ecodes as e, list_devices, ff, AbsInfo
 from pathlib import PurePath as p
 from shutil import move
 from time import sleep, time
 
+warnings.filterwarnings("ignore", category=DeprecationWarning)
 # Declare global variables
 
 # Constants
@@ -231,7 +228,6 @@ shutdown = False
 
 # Devices
 controller_device = None
-ff_device = None
 gyro_device = None
 keyboard_device = None
 ui_device = None
@@ -275,7 +271,6 @@ def __init__():
     global controller_device
     global controller_event
     global controller_path
-    global ff_device
     global gyro_device
     global keyboard_device
     global keyboard_event
