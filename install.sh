@@ -8,8 +8,11 @@ cp -v handycon.py /usr/local/bin/
 cp -v handycon.service /etc/systemd/system/
 cp -v handycon.conf /etc/modules-load.d/
 cp -v 60-handycon.rules /etc/udev/rules.d/
-cp -vp HandyGCCS-Controller.cfg /usr/share/libretro/autoconfig/udev/
-
+if [ ! -d "/usr/share/libretro/autoconfig/udev" ]
+then
+    mkdir -p "/usr/share/libretro/autoconfig/udev"
+fi
+cp -v HandyGCCS-Controller.cfg /usr/share/libretro/autoconfig/udev/
 udevadm control -R
 systemctl enable handycon && systemctl start handycon
 echo "Installation complete. You should now have additional controller functionality."
