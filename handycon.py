@@ -425,6 +425,7 @@ async def capture_keyboard_events(device):
     global button_map
     global event_queue
     global gyro_enabled
+    global shutdown
 
     # Button map shortcuts for easy reference.
     button1 = button_map["button1"]
