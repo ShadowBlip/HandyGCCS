@@ -344,7 +344,7 @@ that file with your issue.")
         for device in devices_original:
 
             # Xbox 360 Controller
-            if device.name in ['Microsoft X-Box 360 pad', 'Generic X-Box pad'] and device.phys in ['usb-0000:03:00.3-4/input0', 'usb-0000:00:14.0-9/input0']:
+            if device.name in ['Microsoft X-Box 360 pad', 'Generic X-Box pad'] and device.phys in ['usb-0000:03:00.3-4/input0', 'usb-0000:04:00.3-4/input0', 'usb-0000:00:14.0-9/input0']:
                 controller_path = device.path
                 controller_device = InputDevice(controller_path)
                 controller_capabilities = controller_device.capabilities()
@@ -424,6 +424,7 @@ async def capture_keyboard_events(device):
     # is instanciated twice and need to persist accross both instances.
     global button_map
     global event_queue
+    global gyro_device
     global gyro_enabled
     global shutdown
 
@@ -494,12 +495,42 @@ async def capture_keyboard_events(device):
                     shutdown = False
 
             case "AYA_GEN2":
+                # BUTTON 1 (Default: Screenshot) LC Button
+                if active == [87, 97, 125] and button_on == 1 and button1 not in event_queue and shutdown == False:
+                    event_queue.append(button1)
+                elif active == [] and seed_event.code in [87, 97, 125] and button_on == 0 and button1 in event_queue:
+                    this_button = button1
+
                 # BUTTON 2 (Default: QAM) Small button
                 if active in [[40, 133], [32, 125]] and button_on == 1 and button2 not in event_queue:
                     event_queue.append(button2)
                 elif active == [] and seed_event.code in [32, 40, 125, 133] and button_on == 0 and button2 in event_queue:
                     this_button = button2
                     await do_rumble(0, 150, 1000, 0)
+
+                # BUTTON 3 (Default: Toggle Gyro) RC + LC Buttons
+                if active == [68, 87, 97, 125] and button_on == 1 and button3 not in event_queue and gyro_device:
+                    event_queue.append(button3)
+                    if button1 in event_queue:
+                        event_queue.remove(button1)
+                    if button4 in event_queue:
+                        event_queue.remove(button4)
+
+                elif active == [] and seed_event.code in [68, 87, 97, 125] and button_on == 0 and button3 in event_queue and gyro_device:
+                    event_queue.remove(button3)
+                    gyro_enabled = not gyro_enabled
+                    if gyro_enabled:
+                        await do_rumble(0, 250, 1000, 0)
+                    else:
+                        await do_rumble(0, 100, 1000, 0)
+                        await asyncio.sleep(.2)
+                        await do_rumble(0, 100, 1000, 0)
+
+                # BUTTON 4 (Default: OSK) RC Button
+                if active == [68, 97, 125] and button_on == 1 and button4 not in event_queue:
+                    event_queue.append(button4)
+                elif active == [] and seed_event.code in [68, 97, 125] and button_on == 0 and button4 in event_queue:
+                    this_button = button4
 
                 # BUTTON 5 (Default: Home) Big button
                 if active in [[96, 105, 133], [88, 97, 125]] and button_on == 1 and button5 not in event_queue:
