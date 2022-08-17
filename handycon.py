@@ -870,7 +870,7 @@ async def emit_events(events: list):
 async def restore_all(loop):
 
     print('Receved exit signal. Restoring Devices.')
-    running = false
+    running = False
 
     if controller_device:
         controller_device.ungrab()
