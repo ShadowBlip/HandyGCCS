@@ -845,9 +845,9 @@ async def capture_ff_events():
             # Upload to the actual controller.
             effect.id = -1 # all other values throw an error for invalid input.
             effect_id = controller_device.upload_effect(effect)
-            controller.write(e.EV_FF, effect_id, 1)
+            controller_device.write(e.EV_FF, effect_id, 1)
             await asyncio.sleep(time_delta)
-            controller.erase_effect(effect_id)
+            controller_device.erase_effect(effect_id)
 
         elif event.code == e.UI_FF_ERASE:
             effect_id = ui_device.begin_erase(event.value)
