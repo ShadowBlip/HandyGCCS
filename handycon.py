@@ -221,9 +221,23 @@ CONTROLLER_EVENTS = {
 JOY_MIN = -32767
 JOY_MAX = 32767
 
-# Track button on/off (prevents spam presses)
+HIDE_PATH = "/dev/input/.hidden/"
+USER = None
+cmd = "who | awk '{print $1}' | sort | head -1"
+while USER == None:
+    USER_LIST = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout = subprocess.PIPE, stderr = subprocess.PIPE, shell=True)
+    for get_first in USER_LIST.stdout:
+        name = get_first.decode().strip()
+        if name is not None:
+            USER = name
+        break
+    sleep(.1)
+HOME_PATH = "/home/"+USER
+
+# Functionality Variables
 event_queue = [] # Stores incoming button presses to block spam
 controller_events = [] # Stores incoming events if gyro aim is enabled.
+running = True
 shutdown = False
 
 # Devices
@@ -238,21 +252,8 @@ last_time = time()
 # Paths
 controller_event = None
 controller_path = None
-hide_path = "/dev/input/.hidden/"
 keyboard_event = None
 keyboard_path = None
-
-USER = None
-cmd = "who | awk '{print $1}' | sort | head -1"
-while USER == None:
-    USER_LIST = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout = subprocess.PIPE, stderr = subprocess.PIPE, shell=True)
-    for get_first in USER_LIST.stdout:
-        name = get_first.decode().strip()
-        if name is not None:
-            USER = name
-        break
-    sleep(1)
-HOME_PATH = "/home/"+USER
 
 # Configuration
 button_map = {
@@ -265,16 +266,15 @@ button_map = {
 gyro_enabled = False
 gyro_sensitivity = 50
 
-
 def __init__():
 
     global controller_device
-    global hide_path
+    global HIDE_PATH
     global keyboard_device
     global power_device
 
     id_system()
-    os.makedirs(hide_path, exist_ok=True)
+    os.makedirs(HIDE_PATH, exist_ok=True)
     get_controller()
     get_keyboard()
     get_powerkey()
@@ -282,10 +282,17 @@ def __init__():
 
     # Catch if devices weren't found.
     if not controller_device or not keyboard_device or not power_device:
-        print("Keyboard and/or X-Box 360 controller not found.\n \
-If this service has previously been started, try rebooting.\n \
-Exiting...")
+        print("One or more input devices weren't found. Exiting...")
+        # Put stuff back if we partially initialized
+        if controller_device:
+            controller_device.ungrab()
+            restore_controller()
+        if keyboard_device:
+            keyboard_device.ungrab()
+            restore_keyboard()
         exit(1)
+
+    print("Device setup complete. Handheld Game Console Controller Service running.")
 
 def id_system():
     global system_type
@@ -346,7 +353,7 @@ def get_controller():
     global controller_device
     global controller_event
     global controller_path
-    global hide_path
+    global HIDE_PATH
 
     # Identify system input event devices.
     attempts = 0
@@ -356,7 +363,7 @@ def get_controller():
         # Some funky stuff happens sometimes when booting. Give it another shot.
         except OSError:
             attempts += 1
-            sleep(1)
+            sleep(.1)
             continue
 
         # Grab the built-in devices. This will give us exclusive acces to the devices and their capabilities.
@@ -375,23 +382,22 @@ def get_controller():
                 controller_path = device.path
                 controller_device = InputDevice(controller_path)
                 controller_device.grab()
+                controller_event = p(controller_path).name
+                move(controller_path, HIDE_PATH+controller_event)
 
         # Sometimes the service loads before all input devices have full initialized. Try a few times.
-        if not controller_path:
+        if not controller_device:
             attempts += 1
-            sleep(1)
+            sleep(.1)
         else:
+            print("Found", controller_device.name+".", "Capturing input data.")
             break
-
-    # Move the reference to the original controllers to hide them from the user/steam.
-    controller_event = p(controller_path).name
-    move(controller_path, hide_path+controller_event)
 
 def get_keyboard():
     global keyboard_device
     global keyboard_event
     global keyboard_path
-    global hide_path
+    global HIDE_PATH
 
     # Identify system input event devices.
     attempts = 0
@@ -401,7 +407,7 @@ def get_keyboard():
         # Some funky stuff happens sometimes when booting. Give it another shot.
         except OSError:
             attempts += 1
-            sleep(1)
+            sleep(.1)
             continue
 
         # Grab the built-in devices. This will give us exclusive acces to the devices and their capabilities.
@@ -412,17 +418,16 @@ def get_keyboard():
                 keyboard_path = device.path
                 keyboard_device = InputDevice(keyboard_path)
                 keyboard_device.grab()
+                keyboard_event = p(keyboard_path).name
+                move(keyboard_path, HIDE_PATH+keyboard_event)
 
         # Sometimes the service loads before all input devices have full initialized. Try a few times.
-        if not keyboard_path:
+        if not keyboard_device:
             attempts += 1
-            sleep(1)
+            sleep(.1)
         else:
+            print("Found", keyboard_device.name+".", "Capturing input data.")
             break
-
-    # Move the reference to the original controllers to hide them from the user/steam.
-    keyboard_event = p(keyboard_path).name
-    move(keyboard_path, hide_path+keyboard_event)
 
 def get_powerkey():
     global power_device
@@ -435,7 +440,7 @@ def get_powerkey():
         # Some funky stuff happens sometimes when booting. Give it another shot.
         except OSError:
             attempts += 1
-            sleep(1)
+            sleep(.1)
             continue
 
         # Grab the built-in devices. This will give us exclusive acces to the devices and their capabilities.
@@ -448,8 +453,9 @@ def get_powerkey():
 
         if not power_device:
             attempts += 1
-            sleep(1)
+            sleep(.1)
         else:
+            print("Found", power_device.name+".", "Capturing input data.")
             break
 
 def get_gyro():
@@ -457,9 +463,10 @@ def get_gyro():
     # Make a gyro_device, if it exists.
     try:
         gyro_device = Driver(0x68)
+        print("Found gyro device. Gyro support enabled.")
 
-    except (FileNotFoundError, NameError, BrokenPipeError, OSError) as e:
-        print("Gyro device not initialized. Ensure bmi160_i2c and i2c_dev modules are loaded, and all python dependencies are met. Skipping gyro device setup.\n", e)
+    except (FileNotFoundError, NameError, BrokenPipeError, OSError) as err:
+        print("Gyro device not initialized. Ensure bmi160_i2c and i2c_dev modules are loaded, and all python dependencies are met. Skipping gyro device setup.\n", err)
 
 def make_controller():
     global ui_device
@@ -474,9 +481,14 @@ def make_controller():
             version=int('110', base=16)
             )
 
-# Do a force feedback event
 async def do_rumble(button=0, interval=10, length=1000, delay=0):
+    global controller_device
 
+    # Prevent look crash if controller_device was taken.
+    if not controller_device:
+        return
+
+    # Create the rumble effect.
     rumble = ff.Rumble(strong_magnitude=0x0000, weak_magnitude=0xffff)
     effect = ff.Effect(
         e.FF_RUMBLE,
@@ -487,6 +499,7 @@ async def do_rumble(button=0, interval=10, length=1000, delay=0):
         ff.EffectType(ff_rumble_effect=rumble)
     )
 
+    # Upload and transmit the effect.
     effect_id = controller_device.upload_effect(effect)
     controller_device.write(e.EV_FF, effect_id, 1)
     await asyncio.sleep(interval/1000)
@@ -501,6 +514,7 @@ async def capture_keyboard_events():
     global event_queue
     global gyro_device
     global gyro_enabled
+    global keyboard_device
     global shutdown
 
     # Button map shortcuts for easy reference.
@@ -511,187 +525,214 @@ async def capture_keyboard_events():
     button5 = button_map["button5"]
     last_button = None
 
-    # Capture events for the given device.
-    async for seed_event in keyboard_device.async_read_loop():
+    # Capture keyboard events and translate them to mapped events.
+    while running:
+        if keyboard_device:
+            try:
+                async for seed_event in keyboard_device.async_read_loop():
 
-        # Loop variables
-        active = keyboard_device.active_keys()
-        events = []
-        this_button = None
-        button_on = seed_event.value
-        
-        # Debugging variables
-        #if active != []:
-        #   print("Active Keys:", keyboard_device.active_keys(verbose=True), "Seed Value", seed_event.value, "Seed Code:", seed_event.code, "Seed Type:", seed_event.type, "Button pressed", button_on)
-        print(seed_event)
-        # Automatically pass default keycodes we dont intend to replace.
-        if seed_event.code in [e.KEY_VOLUMEDOWN, e.KEY_VOLUMEUP]:
-            events.append(seed_event)
-        match system_type:
+                    # Loop variables
+                    active = keyboard_device.active_keys()
+                    events = []
+                    this_button = None
+                    button_on = seed_event.value
 
-            case "AYA_GEN1":
-                # BUTTON 1 (Default: Screenshot) WIN button
-                if active == [125] and button_on == 1 and button1 not in event_queue and shutdown == False:
-                    event_queue.append(button1)
-                elif active == [] and seed_event.code == 125 and button_on == 0 and button1 in event_queue:
-                    this_button = button1
+                    # Debugging variables
+                    #if active != []:
+                    #   print("Active Keys:", keyboard_device.active_keys(verbose=True), "Seed Value", seed_event.value, "Seed Code:", seed_event.code, "Seed Type:", seed_event.type, "Button pressed", button_on)
+                    # Automatically pass default keycodes we dont intend to replace.
+                    if seed_event.code in [e.KEY_VOLUMEDOWN, e.KEY_VOLUMEUP]:
+                        events.append(seed_event)
+                    match system_type:
 
-                # BUTTON 2 (Default: QAM) TM Button
-                if active == [97, 100, 111] and button_on == 1 and button2 not in event_queue:
-                    event_queue.append(button2)
-                elif active == [] and seed_event.code in [97, 100, 111] and button_on == 0 and button2 in event_queue:
-                    this_button = button2
-                    await do_rumble(0, 150, 1000, 0)
+                        case "AYA_GEN1":
+                            # BUTTON 1 (Default: Screenshot) WIN button
+                            if active == [125] and button_on == 1 and button1 not in event_queue and shutdown == False:
+                                event_queue.append(button1)
+                            elif active == [] and seed_event.code == 125 and button_on == 0 and button1 in event_queue:
+                                this_button = button1
 
-                # BUTTON 3 (Default: ESC) ESC Button
-                if active == [1] and seed_event.code == 1 and button_on == 1 and button3 not in event_queue:
-                    event_queue.append(button3)
-                elif active == [] and seed_event.code == 1 and button_on == 0 and button3 in event_queue:
-                    this_button = button3
-                # BUTTON 3 SECOND STATE (Default: Toggle Gyro)
-                elif seed_event.code == 1 and button_on == 2 and button3 in event_queue and gyro_device:
-                    event_queue.remove(button3)
-                    gyro_enabled = not gyro_enabled
-                    if gyro_enabled:
-                        await do_rumble(0, 250, 1000, 0)
-                    else:
-                        await do_rumble(0, 100, 1000, 0)
-                        await asyncio.sleep(.2)
-                        await do_rumble(0, 100, 1000, 0)
+                            # BUTTON 2 (Default: QAM) TM Button
+                            if active == [97, 100, 111] and button_on == 1 and button2 not in event_queue:
+                                event_queue.append(button2)
+                            elif active == [] and seed_event.code in [97, 100, 111] and button_on == 0 and button2 in event_queue:
+                                this_button = button2
+                                await do_rumble(0, 150, 1000, 0)
 
-                # BUTTON 4 (Default: OSK) KB Button
-                if active == [24, 97, 125] and button_on == 1 and button4 not in event_queue:
-                    event_queue.append(button4)
-                elif active == [] and seed_event.code in [24, 97, 125] and button_on == 0 and button4 in event_queue:
-                    this_button = button4
+                            # BUTTON 3 (Default: ESC) ESC Button
+                            if active == [1] and seed_event.code == 1 and button_on == 1 and button3 not in event_queue:
+                                event_queue.append(button3)
+                            elif active == [] and seed_event.code == 1 and button_on == 0 and button3 in event_queue:
+                                this_button = button3
+                            # BUTTON 3 SECOND STATE (Default: Toggle Gyro)
+                            elif seed_event.code == 1 and button_on == 2 and button3 in event_queue and gyro_device:
+                                event_queue.remove(button3)
+                                gyro_enabled = not gyro_enabled
+                                if gyro_enabled:
+                                    await do_rumble(0, 250, 1000, 0)
+                                else:
+                                    await do_rumble(0, 100, 1000, 0)
+                                    await asyncio.sleep(.2)
+                                    await do_rumble(0, 100, 1000, 0)
 
-                # Handle L_META from power button
-                elif active == [] and seed_event.code == 125 and button_on == 0 and  event_queue == [] and shutdown == True:
-                    shutdown = False
+                            # BUTTON 4 (Default: OSK) KB Button
+                            if active == [24, 97, 125] and button_on == 1 and button4 not in event_queue:
+                                event_queue.append(button4)
+                            elif active == [] and seed_event.code in [24, 97, 125] and button_on == 0 and button4 in event_queue:
+                                this_button = button4
 
-            case "AYA_GEN2":
-                # BUTTON 1 (Default: Screenshot) LC Button
-                if active == [87, 97, 125] and button_on == 1 and button1 not in event_queue and shutdown == False:
-                    event_queue.append(button1)
-                elif active == [] and seed_event.code in [87, 97, 125] and button_on == 0 and button1 in event_queue:
-                    this_button = button1
+                            # Handle L_META from power button
+                            elif active == [] and seed_event.code == 125 and button_on == 0 and  event_queue == [] and shutdown == True:
+                                shutdown = False
 
-                # BUTTON 2 (Default: QAM) Small button
-                if active in [[40, 133], [32, 125]] and button_on == 1 and button2 not in event_queue:
-                    event_queue.append(button2)
-                elif active == [] and seed_event.code in [32, 40, 125, 133] and button_on == 0 and button2 in event_queue:
-                    this_button = button2
-                    await do_rumble(0, 150, 1000, 0)
+                        case "AYA_GEN2":
+                            # BUTTON 1 (Default: Screenshot) LC Button
+                            if active == [87, 97, 125] and button_on == 1 and button1 not in event_queue and shutdown == False:
+                                event_queue.append(button1)
+                            elif active == [] and seed_event.code in [87, 97, 125] and button_on == 0 and button1 in event_queue:
+                                this_button = button1
 
-                # BUTTON 3 (Default: Toggle Gyro) RC + LC Buttons
-                if active == [68, 87, 97, 125] and button_on == 1 and button3 not in event_queue and gyro_device:
-                    event_queue.append(button3)
-                    if button1 in event_queue:
-                        event_queue.remove(button1)
-                    if button4 in event_queue:
-                        event_queue.remove(button4)
+                            # BUTTON 2 (Default: QAM) Small button
+                            if active in [[40, 133], [32, 125]] and button_on == 1 and button2 not in event_queue:
+                                event_queue.append(button2)
+                            elif active == [] and seed_event.code in [32, 40, 125, 133] and button_on == 0 and button2 in event_queue:
+                                this_button = button2
+                                await do_rumble(0, 150, 1000, 0)
 
-                elif active == [] and seed_event.code in [68, 87, 97, 125] and button_on == 0 and button3 in event_queue and gyro_device:
-                    event_queue.remove(button3)
-                    gyro_enabled = not gyro_enabled
-                    if gyro_enabled:
-                        await do_rumble(0, 250, 1000, 0)
-                    else:
-                        await do_rumble(0, 100, 1000, 0)
-                        await asyncio.sleep(.2)
-                        await do_rumble(0, 100, 1000, 0)
+                            # BUTTON 3 (Default: Toggle Gyro) RC + LC Buttons
+                            if active == [68, 87, 97, 125] and button_on == 1 and button3 not in event_queue and gyro_device:
+                                event_queue.append(button3)
+                                if button1 in event_queue:
+                                    event_queue.remove(button1)
+                                if button4 in event_queue:
+                                    event_queue.remove(button4)
 
-                # BUTTON 4 (Default: OSK) RC Button
-                if active == [68, 97, 125] and button_on == 1 and button4 not in event_queue:
-                    event_queue.append(button4)
-                elif active == [] and seed_event.code in [68, 97, 125] and button_on == 0 and button4 in event_queue:
-                    this_button = button4
+                            elif active == [] and seed_event.code in [68, 87, 97, 125] and button_on == 0 and button3 in event_queue and gyro_device:
+                                event_queue.remove(button3)
+                                gyro_enabled = not gyro_enabled
+                                if gyro_enabled:
+                                    await do_rumble(0, 250, 1000, 0)
+                                else:
+                                    await do_rumble(0, 100, 1000, 0)
+                                    await asyncio.sleep(.2)
+                                    await do_rumble(0, 100, 1000, 0)
 
-                # BUTTON 5 (Default: Home) Big button
-                if active in [[96, 105, 133], [88, 97, 125]] and button_on == 1 and button5 not in event_queue:
-                    event_queue.append(button5)
-                elif active == [] and seed_event.code in [88, 96, 97, 105, 125, 133] and button_on == 0 and button5 in event_queue:
-                    this_button = button5
+                            # BUTTON 4 (Default: OSK) RC Button
+                            if active == [68, 97, 125] and button_on == 1 and button4 not in event_queue:
+                                event_queue.append(button4)
+                            elif active == [] and seed_event.code in [68, 97, 125] and button_on == 0 and button4 in event_queue:
+                                this_button = button4
 
-                # Handle L_META from power button
-                elif active == [] and seed_event.code == 125 and button_on == 0 and  event_queue == [] and shutdown == True:
-                    shutdown = False
+                            # BUTTON 5 (Default: Home) Big button
+                            if active in [[96, 105, 133], [88, 97, 125]] and button_on == 1 and button5 not in event_queue:
+                                event_queue.append(button5)
+                            elif active == [] and seed_event.code in [88, 96, 97, 105, 125, 133] and button_on == 0 and button5 in event_queue:
+                                this_button = button5
 
-            case "OXP":
-                # BUTTON 1 (Default: Not used, dangerous fan activity!) Short press orange + |||||
-                if active == [99, 125] and button_on == 1 and button1 not in event_queue:
-                    pass
-                elif active == [] and seed_event.code in [99, 125] and button_on == 0 and button1 in event_queue:
-                    pass
+                            # Handle L_META from power button
+                            elif active == [] and seed_event.code == 125 and button_on == 0 and  event_queue == [] and shutdown == True:
+                                shutdown = False
 
-                # BUTTON 2 (Default: QAM) Short press orange
-                if active == [32, 125] and button_on == 1 and button2 not in event_queue:
-                    event_queue.append(button2)
-                elif active == [] and seed_event.code in [32, 125] and button_on == 0 and button2 in event_queue:
-                    this_button = button2
-                    await do_rumble(0, 150, 1000, 0)
+                        case "OXP":
+                            # BUTTON 1 (Default: Not used, dangerous fan activity!) Short press orange + |||||
+                            if active == [99, 125] and button_on == 1 and button1 not in event_queue:
+                                pass
+                            elif active == [] and seed_event.code in [99, 125] and button_on == 0 and button1 in event_queue:
+                                pass
 
-                # BUTTON 3 (Default: Toggle Gyro) Short press orange + KB
-                if active == [97, 100, 111] and button_on == 1 and button3 not in event_queue and gyro_device:
-                    event_queue.append(button3)
-                elif active == [] and seed_event.code in [100, 111] and button_on == 0 and button3 in event_queue and gyro_device:
-                    event_queue.remove(button3)
-                    gyro_enabled = not gyro_enabled
-                    if gyro_enabled:
-                        await do_rumble(0, 250, 1000, 0)
-                    else:
-                        await do_rumble(0, 100, 1000, 0)
-                        await asyncio.sleep(.2)
-                        await do_rumble(0, 100, 1000, 0)
+                            # BUTTON 2 (Default: QAM) Short press orange
+                            if active == [32, 125] and button_on == 1 and button2 not in event_queue:
+                                event_queue.append(button2)
+                            elif active == [] and seed_event.code in [32, 125] and button_on == 0 and button2 in event_queue:
+                                this_button = button2
+                                await do_rumble(0, 150, 1000, 0)
 
-                # BUTTON 4 (Default: OSK) Short press KB
-                if active == [24, 97, 125] and button_on == 1 and button4 not in event_queue:
-                    event_queue.append(button4)
-                elif active == [] and seed_event.code in [24, 97, 125] and button_on == 0 and button4 in event_queue:
-                    this_button = button4
+                            # BUTTON 3 (Default: Toggle Gyro) Short press orange + KB
+                            if active == [97, 100, 111] and button_on == 1 and button3 not in event_queue and gyro_device:
+                                event_queue.append(button3)
+                            elif active == [] and seed_event.code in [100, 111] and button_on == 0 and button3 in event_queue and gyro_device:
+                                event_queue.remove(button3)
+                                gyro_enabled = not gyro_enabled
+                                if gyro_enabled:
+                                    await do_rumble(0, 250, 1000, 0)
+                                else:
+                                    await do_rumble(0, 100, 1000, 0)
+                                    await asyncio.sleep(.2)
+                                    await do_rumble(0, 100, 1000, 0)
 
-                # BUTTON 5 (Default: Home) Long press orange
-                if active == [34, 125] and button_on == 1 and button5 not in event_queue:
-                    event_queue.append(button5)
-                elif active == [] and seed_event.code in [34, 125] and button_on == 0 and button5 in event_queue:
-                    this_button = button5
-                
-                # Handle L_META from power button
-                elif active == [] and seed_event.code == 125 and button_on == 0 and  event_queue == [] and shutdown == True:
-                    shutdown = False
+                            # BUTTON 4 (Default: OSK) Short press KB
+                            if active == [24, 97, 125] and button_on == 1 and button4 not in event_queue:
+                                event_queue.append(button4)
+                            elif active == [] and seed_event.code in [24, 97, 125] and button_on == 0 and button4 in event_queue:
+                                this_button = button4
 
-        # Create list of events to fire.
-        # Handle new button presses.
-        if this_button and not last_button:
-            for button_event in this_button:
-                event = InputEvent(seed_event.sec, seed_event.usec, button_event[0], button_event[1], 1)
-                events.append(event)
-            event_queue.remove(this_button)
-            last_button = this_button
+                            # BUTTON 5 (Default: Home) Long press orange
+                            if active == [34, 125] and button_on == 1 and button5 not in event_queue:
+                                event_queue.append(button5)
+                            elif active == [] and seed_event.code in [34, 125] and button_on == 0 and button5 in event_queue:
+                                this_button = button5
 
-        # Clean up old button presses.
-        elif last_button and not this_button:
-            for button_event in last_button:
-                event = InputEvent(seed_event.sec, seed_event.usec, button_event[0], button_event[1], 0)
-                events.append(event)
-            last_button = None
+                            # Handle L_META from power button
+                            elif active == [] and seed_event.code == 125 and button_on == 0 and  event_queue == [] and shutdown == True:
+                                shutdown = False
 
-        # Push out all events.
-        if events != []:
-            await emit_events(events)
+                    # Create list of events to fire.
+                    # Handle new button presses.
+                    if this_button and not last_button:
+                        for button_event in this_button:
+                            event = InputEvent(seed_event.sec, seed_event.usec, button_event[0], button_event[1], 1)
+                            events.append(event)
+                        event_queue.remove(this_button)
+                        last_button = this_button
+
+                    # Clean up old button presses.
+                    elif last_button and not this_button:
+                        for button_event in last_button:
+                            event = InputEvent(seed_event.sec, seed_event.usec, button_event[0], button_event[1], 0)
+                            events.append(event)
+                        last_button = None
+
+                    # Push out all events.
+                    if events != []:
+                        await emit_events(events)
+
+            except Exception as err:
+                print("Error reading events from", keyboard_device.name+".", err)
+                restore_keyboard()
+                keyboard_device = None
+                keyboard_event = None
+                keyboard_path = None
+        else:
+            print("Keyboard lost. Attempting to grab device...")
+            get_keyboard()
+            await asyncio.sleep(.25)
 
 # Captures the controller_device events and passes them through.
 async def capture_controller_events():
-    async for event in controller_device.async_read_loop():
-        print(event)
-        # If gyro is enabled, queue all events so the gyro event handler can manage them.
-        if gyro_enabled:
-            controller_events.append(event)
+    global controller_device
 
-        # If gyro isn't enabled, emit the event. Also block FF events, or get infinite recursion. Up to you I guess...
+    while running:
+        if controller_device:
+            try:
+                async for event in controller_device.async_read_loop():
+                    # If gyro is enabled, queue all events so the gyro event handler can manage them.
+                    if gyro_enabled:
+                        controller_events.append(event)
+
+                    # If gyro isn't enabled, emit the event. Also block FF events, or get infinite recursion. Up to you I guess...
+                    else:
+                        if event.type not in [e.EV_FF, e.EV_UINPUT]:
+                            await emit_events([event])
+            except Exception as err:
+                print("Error reading events from", controller_device.name+".", err)
+                restore_controller()
+                controller_device = None
+                controller_event = None
+                controller_path = None
         else:
-            if event.type not in [e.EV_FF, e.EV_UINPUT]:
-                await emit_events([event])
+            print("Controller lost. Attempting to grab device...")
+            get_controller()
+            await asyncio.sleep(.25)
 
 async def capture_gyro_events():
 
@@ -766,6 +807,9 @@ async def capture_power_events():
                     await asyncio.sleep(1)
                     os.system('systemctl suspend')
 
+        if active_keys == [125]:
+            await do_rumble(0, 150, 1000, 0)
+
 # Handle FF event uploads
 async def capture_ff_events():
     async for event in ui_device.async_read_loop():
@@ -818,19 +862,17 @@ async def emit_events(events: list):
                 await asyncio.sleep(0.09)
 
 # Gracefull shutdown.
-async def restore(loop):
+async def restore_all(loop):
 
     print('Receved exit signal. Restoring Devices.')
+    running = false
 
-    # Both devices threads will attempt this, so ignore if they have been moved.
-    try:
-        move(hide_path+keyboard_event, keyboard_path)
-    except FileNotFoundError:
-        pass
-    try:
-        move(hide_path+controller_event, controller_path)
-    except FileNotFoundError:
-        pass
+    if controller_device:
+        controller_device.ungrab()
+        restore_controller()
+    if keyboard_device:
+        keyboard_device.ungrab()
+        restore_keyboard()
 
     # Kill all tasks. They are infinite loops so we will wait forver.
     tasks = [t for t in asyncio.all_tasks() if t is not asyncio.current_task()]
@@ -841,8 +883,21 @@ async def restore(loop):
         except asyncio.CancelledError:
             pass
     loop.stop()
-    print("Device restore complete. Stopping...")
+    print("Device restore complete. Handheld Game Console Controller Service Stopped...")
 
+def restore_keyboard():
+    # Both devices threads will attempt this, so ignore if they have been moved.
+    try:
+        move(HIDE_PATH+keyboard_event, keyboard_path)
+    except FileNotFoundError:
+        pass
+
+def restore_controller():
+    # Both devices threads will attempt this, so ignore if they have been moved.
+    try:
+        move(HIDE_PATH+controller_event, controller_path)
+    except FileNotFoundError:
+        pass
 
 # Main loop
 def main():
@@ -861,7 +916,7 @@ def main():
     # Establish signaling to handle gracefull shutdown.
     signals = (signal.SIGHUP, signal.SIGTERM, signal.SIGINT, signal.SIGQUIT)
     for s in signals:
-        loop.add_signal_handler(s, lambda s=s: asyncio.create_task(restore(loop)))
+        loop.add_signal_handler(s, lambda s=s: asyncio.create_task(restore_all(loop)))
 
     try:
         loop.run_forever()
