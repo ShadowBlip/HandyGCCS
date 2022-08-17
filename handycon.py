@@ -309,17 +309,21 @@ def __init__():
             ]:
         system_type = "AYA_GEN2"
 
-    # ONE XPLAYER devices have incomplete DMI data so we need addtional information.
-    #TODO: FInd better data to ID systems as there may be some differences in buttons.
+    # ONE XPLAYER devices. Original BIOS have incomplete DMI data and all models report as
+    # "ONE XPLAYER". OXP have provided new DMI data via BIOS updates.
     elif system_id in [
             "ONE XPLAYER",
+            "ONEXPLAYER 1 T08",
+            "ONEXPLAYER 1S A08",
+            "ONEXPLAYER 1S T08",
+            "ONEXPLAYER mini A07",
+            "ONEXPLAYER mini GA72",
+            "ONEXPLAYER mini GT72",
+            "ONEXPLAYER GUNDAM GA72",
+            "ONEXPLAYER 2 ARP23",
             ]:
 
             system_type = "OXP"
-        # if system_cpu in ["GenuineIntel"]:
-           # system_type = "OXP_INTEL"
-        # elif system_cpu in ["AuthenticAMD Advanced Micro Devices, Inc.", "AuthenticAMD"]:
-           # system_type ="OXP_AMD"
 
     # Block devices that aren't supported as this could cause issues.
     else:
