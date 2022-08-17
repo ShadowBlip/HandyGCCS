@@ -816,6 +816,7 @@ async def capture_ff_events():
 
         # Calculate our frametime so we can sleep the maximum possible without affecting framerate.
         global last_time
+
         time_now = time()
         time_delta = time_now - last_time
         last_time = time_now
@@ -836,6 +837,10 @@ async def capture_ff_events():
             upload.retval = 0
             effect = upload.effect
             ui_device.end_upload(upload)
+
+            # Don't crash if there is no controller.
+            if not controller_device:
+                continue
 
             # Upload to the actual controller.
             effect.id = -1 # all other values throw an error for invalid input.
