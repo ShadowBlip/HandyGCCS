@@ -363,8 +363,7 @@ def get_controller():
         # Some funky stuff happens sometimes when booting. Give it another shot.
         except Exception as err:
             attempts += 1
-            print("Error getting devices list. Attempt", attempts, "of 3.")
-            sleep(.1)
+            sleep(.25)
             continue
 
         controller_names = [
@@ -379,7 +378,6 @@ def get_controller():
 
         # Grab the built-in devices. This will give us exclusive acces to the devices and their capabilities.
         for device in devices_original:
-            print("Checking", device.name, "at", device.phys, "as a compatible controller.")
             if device.name in controller_names and device.phys in controller_phys:
                 controller_path = device.path
                 controller_device = InputDevice(controller_path)
@@ -390,9 +388,9 @@ def get_controller():
 
         # Sometimes the service loads before all input devices have full initialized. Try a few times.
         if not controller_device:
-            print("Unable to find controller device. Attempt", attempts,"of 3.")
+            print("Unable to find controller device. Attempt", attempts, "of 3.")
             attempts += 1
-            sleep(.1)
+            sleep(.25)
         else:
             print("Found", controller_device.name+".", "Capturing input data.")
             break
@@ -411,13 +409,11 @@ def get_keyboard():
         # Some funky stuff happens sometimes when booting. Give it another shot.
         except Exception as err:
             attempts += 1
-            print("Error getting devices list. Attempt", attempts, "of 3.")
-            sleep(.1)
+            sleep(.25)
             continue
 
         # Grab the built-in devices. This will give us exclusive acces to the devices and their capabilities.
         for device in devices_original:
-            print("Checking", device.name, "at", device.phys, "as a compatible controller.")
             if device.name == 'AT Translated Set 2 keyboard' and device.phys == 'isa0060/serio0/input0':
                 keyboard_path = device.path
                 keyboard_device = InputDevice(keyboard_path)
@@ -430,7 +426,7 @@ def get_keyboard():
         if not keyboard_device:
             print("Unable to find keyboard device. Attempt", attempts, "of 3.")
             attempts += 1
-            sleep(.1)
+            sleep(.25)
         else:
             print("Found", keyboard_device.name+".", "Capturing input data.")
             break
@@ -446,8 +442,7 @@ def get_powerkey():
         # Some funky stuff happens sometimes when booting. Give it another shot.
         except Exception as err:
             attempts += 1
-            print("Error getting devices list. Attempt", attempts, "of 3.")
-            sleep(.1)
+            sleep(.25)
             continue
 
         # Grab the built-in devices. This will give us exclusive acces to the devices and their capabilities.
@@ -461,7 +456,7 @@ def get_powerkey():
 
         if not power_device:
             attempts += 1
-            sleep(.1)
+            sleep(.25)
         else:
             print("Found", power_device.name+".", "Capturing input data.")
             break
