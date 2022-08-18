@@ -361,23 +361,25 @@ def get_controller():
         try:
             devices_original = [InputDevice(path) for path in list_devices()]
         # Some funky stuff happens sometimes when booting. Give it another shot.
-        except OSError:
+        except Exception as err:
             attempts += 1
+            print("Error getting devices list. Attempt", attempts, "of 3.")
             sleep(.1)
             continue
 
+        controller_names = [
+                'Microsoft X-Box 360 pad',
+                'Generic X-Box pad',
+                ]
+        controller_phys =[
+                'usb-0000:03:00.3-4/input0',
+                'usb-0000:04:00.3-4/input0',
+                'usb-0000:00:14.0-9/input0',
+                ]
+
         # Grab the built-in devices. This will give us exclusive acces to the devices and their capabilities.
         for device in devices_original:
-            controller_names = [
-                    'Microsoft X-Box 360 pad',
-                    'Generic X-Box pad',
-                    ]
-            controller_phys =[
-                    'usb-0000:03:00.3-4/input0',
-                    'usb-0000:04:00.3-4/input0',
-                    'usb-0000:00:14.0-9/input0',
-                    ]
-            # Xbox 360 Controller
+            print("Checking", device.name, "at", device.phys, "as a compatible controller.")
             if device.name in controller_names and device.phys in controller_phys:
                 controller_path = device.path
                 controller_device = InputDevice(controller_path)
@@ -387,6 +389,7 @@ def get_controller():
 
         # Sometimes the service loads before all input devices have full initialized. Try a few times.
         if not controller_device:
+            print("Unable to find controller device. Attempt", attempts,"of 3.")
             attempts += 1
             sleep(.1)
         else:
@@ -405,15 +408,15 @@ def get_keyboard():
         try:
             devices_original = [InputDevice(path) for path in list_devices()]
         # Some funky stuff happens sometimes when booting. Give it another shot.
-        except OSError:
+        except Exception as err:
             attempts += 1
+            print("Error getting devices list. Attempt", attempts, "of 3.")
             sleep(.1)
             continue
 
         # Grab the built-in devices. This will give us exclusive acces to the devices and their capabilities.
         for device in devices_original:
-
-            # Keyboard Device
+            print("Checking", device.name, "at", device.phys, "as a compatible controller.")
             if device.name == 'AT Translated Set 2 keyboard' and device.phys == 'isa0060/serio0/input0':
                 keyboard_path = device.path
                 keyboard_device = InputDevice(keyboard_path)
@@ -423,6 +426,7 @@ def get_keyboard():
 
         # Sometimes the service loads before all input devices have full initialized. Try a few times.
         if not keyboard_device:
+            print("Unable to find keyboard device. Attempt", attempts, "of 3.")
             attempts += 1
             sleep(.1)
         else:
@@ -438,8 +442,9 @@ def get_powerkey():
         try:
             devices_original = [InputDevice(path) for path in list_devices()]
         # Some funky stuff happens sometimes when booting. Give it another shot.
-        except OSError:
+        except Exception as err:
             attempts += 1
+            print("Error getting devices list. Attempt", attempts, "of 3.")
             sleep(.1)
             continue
 
@@ -740,7 +745,7 @@ async def capture_gyro_events():
     last_x_val = 0
     last_y_val = 0
 
-    while True:
+    while running:
         # Only run this loop if gyro is enabled
         if gyro_enabled:
             # Check if there is a controller event and modify it, otherwise pass the event:
