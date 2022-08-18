@@ -386,6 +386,7 @@ def get_controller():
                 controller_device.grab()
                 controller_event = p(controller_path).name
                 move(controller_path, HIDE_PATH+controller_event)
+                break
 
         # Sometimes the service loads before all input devices have full initialized. Try a few times.
         if not controller_device:
@@ -423,6 +424,7 @@ def get_keyboard():
                 keyboard_device.grab()
                 keyboard_event = p(keyboard_path).name
                 move(keyboard_path, HIDE_PATH+keyboard_event)
+                break
 
         # Sometimes the service loads before all input devices have full initialized. Try a few times.
         if not keyboard_device:
@@ -455,6 +457,7 @@ def get_powerkey():
             if device.name == 'Power Button' and device.phys == "LNXPWRBN/button/input0":
                 power_device = device
                 power_device.grab()
+                break
 
         if not power_device:
             attempts += 1
