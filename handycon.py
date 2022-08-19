@@ -714,6 +714,7 @@ async def capture_keyboard_events():
 # Captures the controller_device events and passes them through.
 async def capture_controller_events():
     global controller_device
+    global controller_events
 
     while running:
         if controller_device:
@@ -721,7 +722,8 @@ async def capture_controller_events():
                 async for event in controller_device.async_read_loop():
                     # If gyro is enabled, queue all events so the gyro event handler can manage them.
                     if gyro_enabled:
-                        controller_events.append(event)
+                        if event.type not in [e.EV_FF, e.EV_UINPUT]:
+                            controller_events.append(event)
 
                     # If gyro isn't enabled, emit the event. Also block FF events, or get infinite recursion. Up to you I guess...
                     else:
@@ -739,6 +741,7 @@ async def capture_controller_events():
             await asyncio.sleep(.25)
 
 async def capture_gyro_events():
+    global controller_events
 
     # Holding the last value allows us to maintain motion while a joystick is held.
     last_x_val = 0
