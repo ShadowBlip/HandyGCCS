@@ -278,6 +278,7 @@ def __init__():
     get_controller()
     get_keyboard()
     get_powerkey()
+    get_gyro()
     make_controller()
 
     # Catch if devices weren't found.
