@@ -780,7 +780,7 @@ async def capture_gyro_events():
             if gyro_device == None:
                 get_gyro()
             elif gyro_device == False:
-            break
+                break
 
 # Captures power events and handles long or short press events.
 async def capture_power_events():
