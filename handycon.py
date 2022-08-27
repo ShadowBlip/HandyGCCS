@@ -230,8 +230,9 @@ while USER == None:
 HOME_PATH = "/home/"+USER
 
 # Functionality Variables
-event_queue = [] # Stores incoming button presses to block spam
 controller_events = [] # Stores incoming events if gyro aim is enabled.
+event_queue = [] # Stores incoming button presses to block spam
+last_time = time()
 running = True
 shutdown = False
 
@@ -242,13 +243,13 @@ keyboard_device = None
 ui_device = None
 power_device = None
 system_type = None
-last_time = time()
 
 try :
     from BMI160_i2c import Driver
 except ModuleNotFoundError:
         print("BMI160_i2c Module was not found. Install with `python3 -m pip install BMI160-i2c`. Skipping gyro device.")
         gyro_device = False
+
 # Paths
 controller_event = None
 controller_path = None
@@ -264,7 +265,7 @@ button_map = {
         "button5": EVENT_HOME,
         }
 gyro_enabled = False
-gyro_sensitivity = 50
+gyro_sensitivity = 20
 
 def __init__():
 
@@ -690,7 +691,7 @@ async def capture_keyboard_events():
                 keyboard_event = None
                 keyboard_path = None
         else:
-            print("Keyboard lost. Attempting to grab device...")
+            print("Attempting to grab keyboard device...")
             get_keyboard()
             await asyncio.sleep(.25)
 
@@ -719,7 +720,7 @@ async def capture_controller_events():
                 controller_event = None
                 controller_path = None
         else:
-            print("Controller lost. Attempting to grab device...")
+            print("Attempting to grab controller device...")
             get_controller()
             await asyncio.sleep(.25)
 
