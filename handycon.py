@@ -527,7 +527,10 @@ async def capture_keyboard_events():
 
                     # Debugging variables
                     #if active != []:
-                    #   print("Active Keys:", keyboard_device.active_keys(verbose=True), "Seed Value", seed_event.value, "Seed Code:", seed_event.code, "Seed Type:", seed_event.type, "Button pressed", button_on)
+                    #    print("Active Keys:", keyboard_device.active_keys(verbose=True), "Seed Value", seed_event.value, "Seed Code:", seed_event.code, "Seed Type:", seed_event.type, "Button pressed", button_on)
+                    #if event_queue != []:
+                    #    print("Queued events:", event_queue)
+
                     # Automatically pass default keycodes we dont intend to replace.
                     if seed_event.code in [e.KEY_VOLUMEDOWN, e.KEY_VOLUMEUP]:
                         events.append(seed_event)
@@ -871,15 +874,15 @@ async def capture_ff_events():
 
 # Emits passed or generated events to the virtual controller.
 async def emit_events(events: list):
+
     if len(events) == 1:
         ui_device.write_event(events[0])
         ui_device.syn()
     elif len(events) > 1:
         for event in events:
-            if event:
-                ui_device.write_event(event)
-                ui_device.syn()
-                await asyncio.sleep(0.09)
+            ui_device.write_event(event)
+            ui_device.syn()
+            await asyncio.sleep(0.09)
 
 # Gracefull shutdown.
 async def restore_all(loop):
