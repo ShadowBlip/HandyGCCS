@@ -340,44 +340,42 @@ def get_controller():
     global HIDE_PATH
 
     # Identify system input event devices.
-    attempts = 0
-    while attempts < 3:
-        try:
-            devices_original = [InputDevice(path) for path in list_devices()]
-        # Some funky stuff happens sometimes when booting. Give it another shot.
-        except Exception as err:
-            attempts += 1
-            sleep(.25)
-            continue
+    try:
+        devices_original = [InputDevice(path) for path in list_devices()]
 
-        controller_names = [
-                'Microsoft X-Box 360 pad',
-                'Generic X-Box pad',
-                ]
-        controller_phys =[
-                'usb-0000:03:00.3-4/input0',
-                'usb-0000:04:00.3-4/input0',
-                'usb-0000:00:14.0-9/input0',
-                ]
+    except Exception as err:
+        print("Error when scanning event devices. Restarting scan.")
+        sleep(.25)
+        return False
 
-        # Grab the built-in devices. This will give us exclusive acces to the devices and their capabilities.
-        for device in devices_original:
-            if device.name in controller_names and device.phys in controller_phys:
-                controller_path = device.path
-                controller_device = InputDevice(controller_path)
-                controller_device.grab()
-                controller_event = p(controller_path).name
-                move(controller_path, HIDE_PATH+controller_event)
-                break
+    controller_names = [
+            'Microsoft X-Box 360 pad',
+            'Generic X-Box pad',
+            ]
+    controller_phys =[
+            'usb-0000:03:00.3-4/input0',
+            'usb-0000:04:00.3-4/input0',
+            'usb-0000:00:14.0-9/input0',
+            ]
 
-        # Sometimes the service loads before all input devices have full initialized. Try a few times.
-        if not controller_device:
-            print("Unable to find controller device. Attempt", attempts, "of 3.")
-            attempts += 1
-            sleep(.25)
-        else:
-            print("Found", controller_device.name+".", "Capturing input data.")
+    # Grab the built-in devices. This will give us exclusive acces to the devices and their capabilities.
+    for device in devices_original:
+        if device.name in controller_names and device.phys in controller_phys:
+            controller_path = device.path
+            controller_device = InputDevice(controller_path)
+            controller_device.grab()
+            controller_event = p(controller_path).name
+            move(controller_path, HIDE_PATH+controller_event)
             break
+
+    # Sometimes the service loads before all input devices have full initialized. Try a few times.
+    if not controller_device:
+        print("Controller device not yet found. Restarting scan.")
+        sleep(.25)
+        return False
+    else:
+        print("Found", controller_device.name+".", "Capturing input data.")
+        return True
 
 def get_keyboard():
     global keyboard_device
@@ -386,64 +384,61 @@ def get_keyboard():
     global HIDE_PATH
 
     # Identify system input event devices.
-    attempts = 0
-    while attempts < 3:
-        try:
-            devices_original = [InputDevice(path) for path in list_devices()]
-        # Some funky stuff happens sometimes when booting. Give it another shot.
-        except Exception as err:
-            attempts += 1
-            sleep(.25)
-            continue
+    try:
+        devices_original = [InputDevice(path) for path in list_devices()]
+    # Some funky stuff happens sometimes when booting. Give it another shot.
+    except Exception as err:
+        print("Error when scanning event devices. Restarting scan.")
+        sleep(.25)
+        return False
 
-        # Grab the built-in devices. This will give us exclusive acces to the devices and their capabilities.
-        for device in devices_original:
-            if device.name == 'AT Translated Set 2 keyboard' and device.phys == 'isa0060/serio0/input0':
-                keyboard_path = device.path
-                keyboard_device = InputDevice(keyboard_path)
-                keyboard_device.grab()
-                keyboard_event = p(keyboard_path).name
-                move(keyboard_path, HIDE_PATH+keyboard_event)
-                break
-
-        # Sometimes the service loads before all input devices have full initialized. Try a few times.
-        if not keyboard_device:
-            print("Unable to find keyboard device. Attempt", attempts, "of 3.")
-            attempts += 1
-            sleep(.25)
-        else:
-            print("Found", keyboard_device.name+".", "Capturing input data.")
+    # Grab the built-in devices. This will give us exclusive acces to the devices and their capabilities.
+    for device in devices_original:
+        if device.name == 'AT Translated Set 2 keyboard' and device.phys == 'isa0060/serio0/input0':
+            keyboard_path = device.path
+            keyboard_device = InputDevice(keyboard_path)
+            keyboard_device.grab()
+            keyboard_event = p(keyboard_path).name
+            move(keyboard_path, HIDE_PATH+keyboard_event)
             break
+
+    # Sometimes the service loads before all input devices have full initialized. Try a few times.
+    if not keyboard_device:
+        print("Keyboard device not yet found. Restarting scan.")
+        sleep(.25)
+        return False
+    else:
+        print("Found", keyboard_device.name+".", "Capturing input data.")
+        return True
 
 def get_powerkey():
     global power_device
 
     # Identify system input event devices.
-    attempts = 0
-    while attempts < 3:
-        try:
-            devices_original = [InputDevice(path) for path in list_devices()]
-        # Some funky stuff happens sometimes when booting. Give it another shot.
-        except Exception as err:
-            attempts += 1
-            sleep(.25)
-            continue
+    try:
+        devices_original = [InputDevice(path) for path in list_devices()]
+    # Some funky stuff happens sometimes when booting. Give it another shot.
+    except Exception as err:
+        print("Error when scanning event devices. Restarting scan.")
+        sleep(.25)
+        return False
 
-        # Grab the built-in devices. This will give us exclusive acces to the devices and their capabilities.
-        for device in devices_original:
+    # Grab the built-in devices. This will give us exclusive acces to the devices and their capabilities.
+    for device in devices_original:
 
-            # Power Button
-            if device.name == 'Power Button' and device.phys == "LNXPWRBN/button/input0":
-                power_device = device
-                power_device.grab()
-                break
-
-        if not power_device:
-            attempts += 1
-            sleep(.25)
-        else:
-            print("Found", power_device.name+".", "Capturing input data.")
+        # Power Button
+        if device.name == 'Power Button' and device.phys == "LNXPWRBN/button/input0":
+            power_device = device
+            power_device.grab()
             break
+
+    if not power_device:
+        print("Power Button device not yet found. Restarting scan.")
+        sleep(.25)
+        return False
+    else:
+        print("Found", power_device.name+".", "Capturing input data.")
+        return True
 
 def get_gyro():
     global gyro_device
