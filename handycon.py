@@ -12,11 +12,6 @@ import signal
 import subprocess
 import warnings
 
-try :
-    from BMI160_i2c import Driver
-except ModuleNotFoundError:
-        print("BMI160_i2c Module was not found. Install with `python3 -m pip install BMI160-i2c`. Skipping gyro device.")
-
 from evdev import InputDevice, InputEvent, UInput, ecodes as e, list_devices, ff, AbsInfo
 from pathlib import PurePath as p
 from shutil import move
@@ -235,8 +230,9 @@ while USER == None:
 HOME_PATH = "/home/"+USER
 
 # Functionality Variables
-event_queue = [] # Stores incoming button presses to block spam
 controller_events = [] # Stores incoming events if gyro aim is enabled.
+event_queue = [] # Stores incoming button presses to block spam
+last_time = time()
 running = True
 shutdown = False
 
@@ -247,7 +243,12 @@ keyboard_device = None
 ui_device = None
 power_device = None
 system_type = None
-last_time = time()
+
+try :
+    from BMI160_i2c import Driver
+except ModuleNotFoundError:
+        print("BMI160_i2c Module was not found. Install with `python3 -m pip install BMI160-i2c`. Skipping gyro device.")
+        gyro_device = False
 
 # Paths
 controller_event = None
@@ -264,7 +265,7 @@ button_map = {
         "button5": EVENT_HOME,
         }
 gyro_enabled = False
-gyro_sensitivity = 50
+gyro_sensitivity = 20
 
 def __init__():
 
@@ -275,25 +276,7 @@ def __init__():
 
     id_system()
     os.makedirs(HIDE_PATH, exist_ok=True)
-    get_controller()
-    get_keyboard()
-    get_powerkey()
-    get_gyro()
     make_controller()
-
-    # Catch if devices weren't found.
-    if not controller_device or not keyboard_device or not power_device:
-        print("One or more input devices weren't found. Exiting...")
-        # Put stuff back if we partially initialized
-        if controller_device:
-            controller_device.ungrab()
-            restore_controller()
-        if keyboard_device:
-            keyboard_device.ungrab()
-            restore_keyboard()
-        exit(1)
-
-    print("Device setup complete. Handheld Game Console Controller Service running.")
 
 def id_system():
     global system_type
@@ -357,44 +340,42 @@ def get_controller():
     global HIDE_PATH
 
     # Identify system input event devices.
-    attempts = 0
-    while attempts < 3:
-        try:
-            devices_original = [InputDevice(path) for path in list_devices()]
-        # Some funky stuff happens sometimes when booting. Give it another shot.
-        except Exception as err:
-            attempts += 1
-            sleep(.25)
-            continue
+    try:
+        devices_original = [InputDevice(path) for path in list_devices()]
 
-        controller_names = [
-                'Microsoft X-Box 360 pad',
-                'Generic X-Box pad',
-                ]
-        controller_phys =[
-                'usb-0000:03:00.3-4/input0',
-                'usb-0000:04:00.3-4/input0',
-                'usb-0000:00:14.0-9/input0',
-                ]
+    except Exception as err:
+        print("Error when scanning event devices. Restarting scan.")
+        sleep(.25)
+        return False
 
-        # Grab the built-in devices. This will give us exclusive acces to the devices and their capabilities.
-        for device in devices_original:
-            if device.name in controller_names and device.phys in controller_phys:
-                controller_path = device.path
-                controller_device = InputDevice(controller_path)
-                controller_device.grab()
-                controller_event = p(controller_path).name
-                move(controller_path, HIDE_PATH+controller_event)
-                break
+    controller_names = [
+            'Microsoft X-Box 360 pad',
+            'Generic X-Box pad',
+            ]
+    controller_phys =[
+            'usb-0000:03:00.3-4/input0',
+            'usb-0000:04:00.3-4/input0',
+            'usb-0000:00:14.0-9/input0',
+            ]
 
-        # Sometimes the service loads before all input devices have full initialized. Try a few times.
-        if not controller_device:
-            print("Unable to find controller device. Attempt", attempts, "of 3.")
-            attempts += 1
-            sleep(.25)
-        else:
-            print("Found", controller_device.name+".", "Capturing input data.")
+    # Grab the built-in devices. This will give us exclusive acces to the devices and their capabilities.
+    for device in devices_original:
+        if device.name in controller_names and device.phys in controller_phys:
+            controller_path = device.path
+            controller_device = InputDevice(controller_path)
+            controller_device.grab()
+            controller_event = p(controller_path).name
+            move(controller_path, HIDE_PATH+controller_event)
             break
+
+    # Sometimes the service loads before all input devices have full initialized. Try a few times.
+    if not controller_device:
+        print("Controller device not yet found. Restarting scan.")
+        sleep(.25)
+        return False
+    else:
+        print("Found", controller_device.name+".", "Capturing input data.")
+        return True
 
 def get_keyboard():
     global keyboard_device
@@ -403,64 +384,61 @@ def get_keyboard():
     global HIDE_PATH
 
     # Identify system input event devices.
-    attempts = 0
-    while attempts < 3:
-        try:
-            devices_original = [InputDevice(path) for path in list_devices()]
-        # Some funky stuff happens sometimes when booting. Give it another shot.
-        except Exception as err:
-            attempts += 1
-            sleep(.25)
-            continue
+    try:
+        devices_original = [InputDevice(path) for path in list_devices()]
+    # Some funky stuff happens sometimes when booting. Give it another shot.
+    except Exception as err:
+        print("Error when scanning event devices. Restarting scan.")
+        sleep(.25)
+        return False
 
-        # Grab the built-in devices. This will give us exclusive acces to the devices and their capabilities.
-        for device in devices_original:
-            if device.name == 'AT Translated Set 2 keyboard' and device.phys == 'isa0060/serio0/input0':
-                keyboard_path = device.path
-                keyboard_device = InputDevice(keyboard_path)
-                keyboard_device.grab()
-                keyboard_event = p(keyboard_path).name
-                move(keyboard_path, HIDE_PATH+keyboard_event)
-                break
-
-        # Sometimes the service loads before all input devices have full initialized. Try a few times.
-        if not keyboard_device:
-            print("Unable to find keyboard device. Attempt", attempts, "of 3.")
-            attempts += 1
-            sleep(.25)
-        else:
-            print("Found", keyboard_device.name+".", "Capturing input data.")
+    # Grab the built-in devices. This will give us exclusive acces to the devices and their capabilities.
+    for device in devices_original:
+        if device.name == 'AT Translated Set 2 keyboard' and device.phys == 'isa0060/serio0/input0':
+            keyboard_path = device.path
+            keyboard_device = InputDevice(keyboard_path)
+            keyboard_device.grab()
+            keyboard_event = p(keyboard_path).name
+            move(keyboard_path, HIDE_PATH+keyboard_event)
             break
+
+    # Sometimes the service loads before all input devices have full initialized. Try a few times.
+    if not keyboard_device:
+        print("Keyboard device not yet found. Restarting scan.")
+        sleep(.25)
+        return False
+    else:
+        print("Found", keyboard_device.name+".", "Capturing input data.")
+        return True
 
 def get_powerkey():
     global power_device
 
     # Identify system input event devices.
-    attempts = 0
-    while attempts < 3:
-        try:
-            devices_original = [InputDevice(path) for path in list_devices()]
-        # Some funky stuff happens sometimes when booting. Give it another shot.
-        except Exception as err:
-            attempts += 1
-            sleep(.25)
-            continue
+    try:
+        devices_original = [InputDevice(path) for path in list_devices()]
+    # Some funky stuff happens sometimes when booting. Give it another shot.
+    except Exception as err:
+        print("Error when scanning event devices. Restarting scan.")
+        sleep(.25)
+        return False
 
-        # Grab the built-in devices. This will give us exclusive acces to the devices and their capabilities.
-        for device in devices_original:
+    # Grab the built-in devices. This will give us exclusive acces to the devices and their capabilities.
+    for device in devices_original:
 
-            # Power Button
-            if device.name == 'Power Button' and device.phys == "LNXPWRBN/button/input0":
-                power_device = device
-                power_device.grab()
-                break
-
-        if not power_device:
-            attempts += 1
-            sleep(.25)
-        else:
-            print("Found", power_device.name+".", "Capturing input data.")
+        # Power Button
+        if device.name == 'Power Button' and device.phys == "LNXPWRBN/button/input0":
+            power_device = device
+            power_device.grab()
             break
+
+    if not power_device:
+        print("Power Button device not yet found. Restarting scan.")
+        sleep(.25)
+        return False
+    else:
+        print("Found", power_device.name+".", "Capturing input data.")
+        return True
 
 def get_gyro():
     global gyro_device
@@ -471,6 +449,7 @@ def get_gyro():
 
     except (FileNotFoundError, NameError, BrokenPipeError, OSError) as err:
         print("Gyro device not initialized. Ensure bmi160_i2c and i2c_dev modules are loaded, and all python dependencies are met. Skipping gyro device setup.\n", err)
+        gyro_device=False
 
 def make_controller():
     global ui_device
@@ -543,7 +522,10 @@ async def capture_keyboard_events():
 
                     # Debugging variables
                     #if active != []:
-                    #   print("Active Keys:", keyboard_device.active_keys(verbose=True), "Seed Value", seed_event.value, "Seed Code:", seed_event.code, "Seed Type:", seed_event.type, "Button pressed", button_on)
+                    #    print("Active Keys:", keyboard_device.active_keys(verbose=True), "Seed Value", seed_event.value, "Seed Code:", seed_event.code, "Seed Type:", seed_event.type, "Button pressed", button_on)
+                    #if event_queue != []:
+                    #    print("Queued events:", event_queue)
+
                     # Automatically pass default keycodes we dont intend to replace.
                     if seed_event.code in [e.KEY_VOLUMEDOWN, e.KEY_VOLUMEUP]:
                         events.append(seed_event)
@@ -707,7 +689,7 @@ async def capture_keyboard_events():
                 keyboard_event = None
                 keyboard_path = None
         else:
-            print("Keyboard lost. Attempting to grab device...")
+            print("Attempting to grab keyboard device...")
             get_keyboard()
             await asyncio.sleep(.25)
 
@@ -736,12 +718,15 @@ async def capture_controller_events():
                 controller_event = None
                 controller_path = None
         else:
-            print("Controller lost. Attempting to grab device...")
+            print("Attempting to grab controller device...")
             get_controller()
             await asyncio.sleep(.25)
 
 async def capture_gyro_events():
+
     global controller_events
+    global gyro_device
+    global gyro_enabled
 
     # Holding the last value allows us to maintain motion while a joystick is held.
     last_x_val = 0
@@ -749,73 +734,94 @@ async def capture_gyro_events():
 
     while running:
         # Only run this loop if gyro is enabled
-        if gyro_enabled:
-            # Check if there is a controller event and modify it, otherwise pass the event:
-            if controller_events != []:
-                for event in controller_events:
-                    if event.type == e.EV_FF:
-                        continue
-                    adjusted_val = None
-                    seed_event = event
-                    controller_events.remove(event)
+        if gyro_device:
+            if gyro_enabled:
+                # Check if there is a controller event and modify it, otherwise pass the event:
+                if controller_events != []:
+                    for event in controller_events:
+                        if event.type == e.EV_FF:
+                            continue
+                        adjusted_val = None
+                        seed_event = event
+                        controller_events.remove(event)
 
-                    # We only modify RX/RY ABS events.
-                    if seed_event.type == e.EV_ABS and seed_event.code == e.ABS_RX:
-                        angular_velocity_x = float(gyro_device.getRotationX()[0] / 32768.0 * 2000)
-                        adjusted_val = max(min(int(angular_velocity_x * gyro_sensitivity) + event.value, JOY_MAX), JOY_MIN)
-                        event = InputEvent(seed_event.sec, seed_event.usec, seed_event.type, seed_event.code, adjusted_val)
-                        last_x_val = adjusted_val
-                    if event.type == e.EV_ABS and event.code == e.ABS_RY:
-                        angular_velocity_y = float(gyro_device.getRotationY()[0] / 32768.0 * 2000)
-                        adjusted_val = max(min(int(angular_velocity_y * gyro_sensitivity) + event.value, JOY_MAX), JOY_MIN)
-                        last_y_val = adjusted_val
-                    if adjusted_val:
-                        event = InputEvent(seed_event.sec, seed_event.usec, seed_event.type, seed_event.code, adjusted_val)
+                        # We only modify RX/RY ABS events.
+                        if seed_event.type == e.EV_ABS and seed_event.code == e.ABS_RX:
+                            angular_velocity_x = float(gyro_device.getRotationX()[0] / 32768.0 * 2000)
+                            adjusted_val = max(min(int(angular_velocity_x * gyro_sensitivity) + event.value, JOY_MAX), JOY_MIN)
+                            event = InputEvent(seed_event.sec, seed_event.usec, seed_event.type, seed_event.code, adjusted_val)
+                            last_x_val = adjusted_val
+                        if event.type == e.EV_ABS and event.code == e.ABS_RY:
+                            angular_velocity_y = float(gyro_device.getRotationY()[0] / 32768.0 * 2000)
+                            adjusted_val = max(min(int(angular_velocity_y * gyro_sensitivity) + event.value, JOY_MAX), JOY_MIN)
+                            last_y_val = adjusted_val
+                        if adjusted_val:
+                            event = InputEvent(seed_event.sec, seed_event.usec, seed_event.type, seed_event.code, adjusted_val)
 
-                    # Output all events.
-                    await emit_events([event])
+                        # Output all events.
+                        await emit_events([event])
 
-            # If no input events we can just add an event with no modifying.
+                # If no input events we can just add an event with no modifying.
+                else:
+                    angular_velocity_x = float(gyro_device.getRotationX()[0] / 32768.0 * 2000)
+                    adjusted_x = max(min(int(angular_velocity_x * gyro_sensitivity) + last_x_val, JOY_MAX), JOY_MIN)
+                    x_event = InputEvent(0, 0, e.EV_ABS, e.ABS_RX, adjusted_x)
+                    angular_velocity_y = float(gyro_device.getRotationY()[0] / 32768.0 * 2000)
+                    adjusted_y = max(min(int(angular_velocity_y * gyro_sensitivity) + last_y_val, JOY_MAX), JOY_MIN)
+                    y_event = InputEvent(0, 0, e.EV_ABS, e.ABS_RY, adjusted_y)
+                    await emit_events([x_event, y_event])
+
+                await asyncio.sleep(0.01)
             else:
-                angular_velocity_x = float(gyro_device.getRotationX()[0] / 32768.0 * 2000)
-                adjusted_x = max(min(int(angular_velocity_x * gyro_sensitivity) + last_x_val, JOY_MAX), JOY_MIN)
-                x_event = InputEvent(0, 0, e.EV_ABS, e.ABS_RX, adjusted_x)
-                angular_velocity_y = float(gyro_device.getRotationY()[0] / 32768.0 * 2000)
-                adjusted_y = max(min(int(angular_velocity_y * gyro_sensitivity) + last_y_val, JOY_MAX), JOY_MIN)
-                y_event = InputEvent(0, 0, e.EV_ABS, e.ABS_RY, adjusted_y)
-                await emit_events([x_event, y_event])
-
-            await asyncio.sleep(0.01)
+                # Slow down the loop so we don't waste millions of cycles and overheat our controller.
+                await asyncio.sleep(.5)
         else:
-            # Slow down the loop so we don't waste millions of cycles and overheat our controller.
-            await asyncio.sleep(.5)
+            if gyro_device == None:
+                get_gyro()
+            elif gyro_device == False:
+                break
 
 # Captures power events and handles long or short press events.
 async def capture_power_events():
     global HOME_PATH
     global USER
+
+    global power_device
     global shutdown
-    async for event in power_device.async_read_loop():
-        active_keys = keyboard_device.active_keys()
-        if event.type == e.EV_KEY and event.code == 116: # KEY_POWER
-            if event.value == 0:
-                if active_keys == [125]:
-                    # For DeckUI Sessions
-                    shutdown = True
-                    cmd = 'su {} -c "{}/.steam/root/ubuntu12_32/steam -ifrunning steam://longpowerpress"'.format(USER, HOME_PATH)
-                    os.system(cmd)
+    
+    while running:
+        if power_device:
+            try:
+                async for event in power_device.async_read_loop():
+                    active_keys = keyboard_device.active_keys()
+                    if event.type == e.EV_KEY and event.code == 116: # KEY_POWER
+                        if event.value == 0:
+                            if active_keys == [125]:
+                                # For DeckUI Sessions
+                                shutdown = True
+                                cmd = 'su {} -c "{}/.steam/root/ubuntu12_32/steam -ifrunning steam://longpowerpress"'.format(USER, HOME_PATH)
+                                os.system(cmd)
 
-                else:
-                    # For DeckUI Sessions
-                    cmd = 'su {} -c "{}/.steam/root/ubuntu12_32/steam -ifrunning steam://shortpowerpress"'.format(USER, HOME_PATH)
-                    os.system(cmd)
+                            else:
+                                # For DeckUI Sessions
+                                cmd = 'su {} -c "{}/.steam/root/ubuntu12_32/steam -ifrunning steam://shortpowerpress"'.format(USER, HOME_PATH)
+                                os.system(cmd)
 
-                    # For BPM and Desktop sessions
-                    await asyncio.sleep(1)
-                    os.system('systemctl suspend')
+                                # For BPM and Desktop sessions
+                                await asyncio.sleep(1)
+                                os.system('systemctl suspend')
 
-        if active_keys == [125]:
-            await do_rumble(0, 150, 1000, 0)
+                    if active_keys == [125]:
+                        await do_rumble(0, 150, 1000, 0)
+            
+            except Exception as err:
+                print("Error reading events from power device", err)
+                power_device = None
+        else:
+            print("Attempting to grab power device...")
+            get_powerkey()
+            await asyncio.sleep(.25)
+
 
 # Handle FF event uploads
 async def capture_ff_events():
@@ -863,15 +869,15 @@ async def capture_ff_events():
 
 # Emits passed or generated events to the virtual controller.
 async def emit_events(events: list):
+
     if len(events) == 1:
         ui_device.write_event(events[0])
         ui_device.syn()
     elif len(events) > 1:
         for event in events:
-            if event:
-                ui_device.write_event(event)
-                ui_device.syn()
-                await asyncio.sleep(0.09)
+            ui_device.write_event(event)
+            ui_device.syn()
+            await asyncio.sleep(0.09)
 
 # Gracefull shutdown.
 async def restore_all(loop):
@@ -919,8 +925,7 @@ def main():
     asyncio.ensure_future(capture_keyboard_events())
     asyncio.ensure_future(capture_ff_events())
     asyncio.ensure_future(capture_power_events())
-    if gyro_device:
-        asyncio.ensure_future(capture_gyro_events())
+    asyncio.ensure_future(capture_gyro_events())
 
     # Run asyncio loop to capture all events.
     loop = asyncio.get_event_loop()
