@@ -230,7 +230,6 @@ while USER == None:
 HOME_PATH = "/home/"+USER
 
 # Functionality Variables
-controller_events = [] # Stores incoming events if gyro aim is enabled.
 event_queue = [] # Stores incoming button presses to block spam
 last_time = time()
 running = True
@@ -243,6 +242,11 @@ keyboard_device = None
 ui_device = None
 power_device = None
 system_type = None
+
+# Last right joystick X and Y value
+# Holding the last value allows us to maintain motion while a joystick is held.
+last_x_val = 0
+last_y_val = 0
 
 try :
     from BMI160_i2c import Driver
@@ -697,20 +701,41 @@ async def capture_keyboard_events():
 async def capture_controller_events():
     global controller_device
     global controller_events
+    global last_x_val
+    global last_y_val
 
     while running:
         if controller_device:
             try:
                 async for event in controller_device.async_read_loop():
+                    # Block FF events, or get infinite recursion. Up to you I guess...
+                    if event.type in [e.EV_FF, e.EV_UINPUT]:
+                        continue
+                     
                     # If gyro is enabled, queue all events so the gyro event handler can manage them.
-                    if gyro_enabled:
-                        if event.type not in [e.EV_FF, e.EV_UINPUT]:
-                            controller_events.append(event)
+                    if gyro_device is not None and gyro_enabled:
+                        adjusted_val = None
 
-                    # If gyro isn't enabled, emit the event. Also block FF events, or get infinite recursion. Up to you I guess...
-                    else:
-                        if event.type not in [e.EV_FF, e.EV_UINPUT]:
-                            await emit_events([event])
+                        # We only modify RX/RY ABS events.
+                        if event.type == e.EV_ABS and event.code == e.ABS_RX:
+                            # Record last_x_val before adjustment. 
+                            # If right stick returns to the original position there is always an event that sets last_x_val back to zero. 
+                            last_x_val = event.value
+                            angular_velocity_x = float(gyro_device.getRotationX()[0] / 32768.0 * 2000)
+                            adjusted_val = max(min(int(angular_velocity_x * gyro_sensitivity) + event.value, JOY_MAX), JOY_MIN)
+                        if event.type == e.EV_ABS and event.code == e.ABS_RY:
+                            # Record last_y_val before adjustment. 
+                            # If right stick returns to the original position there is always an event that sets last_y_val back to zero. 
+                            last_y_val = event.value
+                            angular_velocity_y = float(gyro_device.getRotationY()[0] / 32768.0 * 2000)
+                            adjusted_val = max(min(int(angular_velocity_y * gyro_sensitivity) + event.value, JOY_MAX), JOY_MIN)
+
+                        if adjusted_val:
+                            # Overwrite the event.
+                            event = InputEvent(event.sec, event.usec, event.type, event.code, adjusted_val)
+
+                    # Output the event.
+                    await emit_events([event])
             except Exception as err:
                 print("Error reading events from", controller_device.name+".", err)
                 restore_controller()
@@ -727,50 +752,22 @@ async def capture_gyro_events():
     global controller_events
     global gyro_device
     global gyro_enabled
-
-    # Holding the last value allows us to maintain motion while a joystick is held.
-    last_x_val = 0
-    last_y_val = 0
+    global last_x_val
+    global last_y_val
 
     while running:
         # Only run this loop if gyro is enabled
         if gyro_device:
             if gyro_enabled:
-                # Check if there is a controller event and modify it, otherwise pass the event:
-                if controller_events != []:
-                    for event in controller_events:
-                        if event.type == e.EV_FF:
-                            continue
-                        adjusted_val = None
-                        seed_event = event
-                        controller_events.remove(event)
+                # Periodically output the EV_ABS events according to the gyro readings.
+                angular_velocity_x = float(gyro_device.getRotationX()[0] / 32768.0 * 2000)
+                adjusted_x = max(min(int(angular_velocity_x * gyro_sensitivity) + last_x_val, JOY_MAX), JOY_MIN)
+                x_event = InputEvent(0, 0, e.EV_ABS, e.ABS_RX, adjusted_x)
+                angular_velocity_y = float(gyro_device.getRotationY()[0] / 32768.0 * 2000)
+                adjusted_y = max(min(int(angular_velocity_y * gyro_sensitivity) + last_y_val, JOY_MAX), JOY_MIN)
+                y_event = InputEvent(0, 0, e.EV_ABS, e.ABS_RY, adjusted_y)
 
-                        # We only modify RX/RY ABS events.
-                        if seed_event.type == e.EV_ABS and seed_event.code == e.ABS_RX:
-                            angular_velocity_x = float(gyro_device.getRotationX()[0] / 32768.0 * 2000)
-                            adjusted_val = max(min(int(angular_velocity_x * gyro_sensitivity) + event.value, JOY_MAX), JOY_MIN)
-                            event = InputEvent(seed_event.sec, seed_event.usec, seed_event.type, seed_event.code, adjusted_val)
-                            last_x_val = adjusted_val
-                        if event.type == e.EV_ABS and event.code == e.ABS_RY:
-                            angular_velocity_y = float(gyro_device.getRotationY()[0] / 32768.0 * 2000)
-                            adjusted_val = max(min(int(angular_velocity_y * gyro_sensitivity) + event.value, JOY_MAX), JOY_MIN)
-                            last_y_val = adjusted_val
-                        if adjusted_val:
-                            event = InputEvent(seed_event.sec, seed_event.usec, seed_event.type, seed_event.code, adjusted_val)
-
-                        # Output all events.
-                        await emit_events([event])
-
-                # If no input events we can just add an event with no modifying.
-                else:
-                    angular_velocity_x = float(gyro_device.getRotationX()[0] / 32768.0 * 2000)
-                    adjusted_x = max(min(int(angular_velocity_x * gyro_sensitivity) + last_x_val, JOY_MAX), JOY_MIN)
-                    x_event = InputEvent(0, 0, e.EV_ABS, e.ABS_RX, adjusted_x)
-                    angular_velocity_y = float(gyro_device.getRotationY()[0] / 32768.0 * 2000)
-                    adjusted_y = max(min(int(angular_velocity_y * gyro_sensitivity) + last_y_val, JOY_MAX), JOY_MIN)
-                    y_event = InputEvent(0, 0, e.EV_ABS, e.ABS_RY, adjusted_y)
-                    await emit_events([x_event, y_event])
-
+                await emit_events([x_event, y_event])
                 await asyncio.sleep(0.01)
             else:
                 # Slow down the loop so we don't waste millions of cycles and overheat our controller.
@@ -877,7 +874,6 @@ async def emit_events(events: list):
         for event in events:
             ui_device.write_event(event)
             ui_device.syn()
-            await asyncio.sleep(0.09)
 
 # Gracefull shutdown.
 async def restore_all(loop):
