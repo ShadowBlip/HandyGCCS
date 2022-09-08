@@ -232,7 +232,6 @@ HOME_PATH = "/home/"+USER
 # Functionality Variables
 controller_events = [] # Stores incoming events if gyro aim is enabled.
 event_queue = [] # Stores incoming button presses to block spam
-last_time = time()
 running = True
 shutdown = False
 
@@ -825,18 +824,18 @@ async def capture_power_events():
 
 # Handle FF event uploads
 async def capture_ff_events():
+    ff_effect_id_set = set()
+
     async for event in ui_device.async_read_loop():
+        if controller_device is None:
+            # Slow down the loop so we don't waste millions of cycles and overheat our controller.
+            await asyncio.sleep(.5)
+            continue
 
-        # Calculate our frametime so we can sleep the maximum possible without affecting framerate.
-        global last_time
-
-        time_now = time()
-        time_delta = time_now - last_time
-        last_time = time_now
-
-        # Create upper bounds so we don't hang the system on slow frames
-        if time_delta > 0.03:
-            time_delta = 0.03
+        if event.type == e.EV_FF:
+            # Forward FF event to controller.
+            controller_device.write(e.EV_FF, event.code, event.value)
+            continue
 
         # Programs will submit these EV_UINPUT events to ensure the device is capable.
         # Doing this forever doesn't seem to pose a problem, and attempting to ignore
@@ -847,25 +846,37 @@ async def capture_ff_events():
         if event.code == e.UI_FF_UPLOAD:
             # Upload to the virtual device to prevent threadlocking. This does nothing else
             upload = ui_device.begin_upload(event.value)
-            upload.retval = 0
             effect = upload.effect
+
+            if effect.id not in ff_effect_id_set:
+                effect.id = -1 # set to -1 for kernel to allocate a new id. all other values throw an error for invalid input.
+
+            try:
+                # Upload to the actual controller.
+                effect_id = controller_device.upload_effect(effect)
+                effect.id = effect_id
+
+                ff_effect_id_set.add(effect_id)
+
+                upload.retval = 0
+            except IOError as err:
+                print("Error uploading effect", effect.id, err)
+                upload.retval = -1
+            
             ui_device.end_upload(upload)
 
-            # Don't crash if there is no controller.
-            if not controller_device:
-                continue
-
-            # Upload to the actual controller.
-            effect.id = -1 # all other values throw an error for invalid input.
-            effect_id = controller_device.upload_effect(effect)
-            controller_device.write(e.EV_FF, effect_id, 1)
-            await asyncio.sleep(time_delta)
-            controller_device.erase_effect(effect_id)
-
         elif event.code == e.UI_FF_ERASE:
-            effect_id = ui_device.begin_erase(event.value)
-            effect_id.retval = 0
-            ui_device.end_erase(effect_id)
+            erase = ui_device.begin_erase(event.value)
+
+            try:
+                controller_device.erase_effect(erase.effect_id)
+                ff_effect_id_set.remove(erase.effect_id)
+                erase.retval = 0
+            except IOError as err:
+                print("Error erasing effect", erase.effect_id, err)
+                erase.retval = -1
+
+            ui_device.end_erase(erase)
 
 # Emits passed or generated events to the virtual controller.
 async def emit_events(events: list):
