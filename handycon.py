@@ -838,6 +838,14 @@ async def capture_ff_events():
         if time_delta > 0.03:
             time_delta = 0.03
 
+        if controller_device is None:
+            continue
+
+        if event.type == e.EV_FF:
+            # Forward FF event to controller.
+            controller_device.write(e.EV_FF, event.code, event.value)
+            continue
+
         # Programs will submit these EV_UINPUT events to ensure the device is capable.
         # Doing this forever doesn't seem to pose a problem, and attempting to ignore
         # any of them causes the program to halt.
@@ -847,25 +855,21 @@ async def capture_ff_events():
         if event.code == e.UI_FF_UPLOAD:
             # Upload to the virtual device to prevent threadlocking. This does nothing else
             upload = ui_device.begin_upload(event.value)
-            upload.retval = 0
             effect = upload.effect
-            ui_device.end_upload(upload)
-
-            # Don't crash if there is no controller.
-            if not controller_device:
-                continue
 
             # Upload to the actual controller.
             effect.id = -1 # all other values throw an error for invalid input.
             effect_id = controller_device.upload_effect(effect)
-            controller_device.write(e.EV_FF, effect_id, 1)
-            await asyncio.sleep(time_delta)
-            controller_device.erase_effect(effect_id)
+            effect.id = effect_id
+
+            upload.retval = 0
+            ui_device.end_upload(upload)
 
         elif event.code == e.UI_FF_ERASE:
-            effect_id = ui_device.begin_erase(event.value)
-            effect_id.retval = 0
-            ui_device.end_erase(effect_id)
+            erase = ui_device.begin_erase(event.value)
+            controller_device.erase_effect(erase.effect_id)
+            erase.retval = 0
+            ui_device.end_erase(erase)
 
 # Emits passed or generated events to the virtual controller.
 async def emit_events(events: list):
