@@ -678,9 +678,9 @@ async def capture_keyboard_events():
                                 this_button = button2
 
                             # BUTTON 3 (Default: Toggle Gyro) Short press yellow + keyboard
-                            if active == [24, 97, 125] and button_on == 1 and button3 not in event_queue and gyro_device:
+                            if active == [97, 100, 111] and button_on == 1 and button3 not in event_queue and gyro_device:
                                 event_queue.append(button3)
-                            elif active == [] and seed_event.code in [32, 125] and button_on == 0 and button3 in event_queue and gyro_device:
+                            elif active == [] and seed_event.code in [100, 111] and button_on == 0 and button3 in event_queue and gyro_device:
                                 event_queue.remove(button3)
                                 gyro_enabled = not gyro_enabled
                                 if gyro_enabled:
