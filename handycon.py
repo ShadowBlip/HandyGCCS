@@ -351,6 +351,7 @@ def get_controller():
     controller_names = [
             'Microsoft X-Box 360 pad',
             'Generic X-Box pad',
+            'OneXPlayer Gamepad',
             ]
     controller_phys =[
             'usb-0000:03:00.3-4/input0',
