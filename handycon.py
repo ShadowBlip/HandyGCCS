@@ -216,6 +216,10 @@ CONTROLLER_EVENTS = {
 JOY_MIN = -32767
 JOY_MAX = 32767
 
+BUTTON_DELAY = 0.0
+DETECT_DELAY = 0.25
+FF_DELAY = 0.2
+
 HIDE_PATH = "/dev/input/.hidden/"
 USER = None
 cmd = "who | awk '{print $1}' | sort | head -1"
@@ -291,42 +295,52 @@ def id_system():
     # Aya Neo from Founders edition through 2021 Pro Retro Power use the same 
     # input hardware and keycodes.
     if system_id in [
-            "AYA NEO FOUNDER",
-            "AYA NEO 2021",
-            "AYANEO 2021",
-            "AYANEO 2021 Pro",
-            "AYANEO 2021 Pro Retro Power",
-            ]:
+        "AYA NEO FOUNDER",
+        "AYA NEO 2021",
+        "AYANEO 2021",
+        "AYANEO 2021 Pro",
+        "AYANEO 2021 Pro Retro Power",
+        ]:
         system_type = "AYA_GEN1"
+        BUTTON_DELAY = 0.09
 
     # Aya Neo NEXT and after use new keycodes and have fewer buttons.
     elif system_id in [
-            "NEXT",
-            "NEXT Pro",
-            "NEXT Advance",
-            "AYANEO NEXT",
-            "AYANEO NEXT Pro",
-            "AYANEO NEXT Advance",
-            "AIR",
-            "AIR Pro",
-            ]:
+        "NEXT",
+        "NEXT Pro",
+        "NEXT Advance",
+        "AYANEO NEXT",
+        "AYANEO NEXT Pro",
+        "AYANEO NEXT Advance",
+        "AIR",
+        "AIR Pro",
+        ]:
         system_type = "AYA_GEN2"
+        BUTTON_DELAY = 0.09
 
-    # ONE XPLAYER devices. Original BIOS have incomplete DMI data and all models report as
-    # "ONE XPLAYER". OXP have provided new DMI data via BIOS updates.
+    # ONE XPLAYER devices. Original BIOS have incomplete DMI data and all
+    # models report as "ONE XPLAYER". OXP have provided new DMI data via BIOS
+    # updates.
     elif system_id in [
-            "ONE XPLAYER",
-            "ONEXPLAYER 1 T08",
-            "ONEXPLAYER 1S A08",
-            "ONEXPLAYER 1S T08",
-            "ONEXPLAYER mini A07",
-            "ONEXPLAYER mini GA72",
-            "ONEXPLAYER mini GT72",
-            "ONEXPLAYER GUNDAM GA72",
-            "ONEXPLAYER 2 ARP23",
-            ]:
+        "ONE XPLAYER",
+        "ONEXPLAYER 1 T08",
+        "ONEXPLAYER 1S A08",
+        "ONEXPLAYER 1S T08",
+        "ONEXPLAYER mini A07",
+        "ONEXPLAYER mini GA72",
+        "ONEXPLAYER mini GT72",
+        "ONEXPLAYER GUNDAM GA72",
+        "ONEXPLAYER 2 ARP23",
+        ]:
+        system_type = "OXP"
+        BUTTON_DELAY = 0.09
 
-            system_type = "OXP"
+    # AOK ZOE Devices. Same layout as OXP devices.
+    elif system_id in [
+        "AOKZOE A1 AR07"
+        ]:
+        system_type = "AOK"
+        BUTTON_DELAY = 0.07
 
     # Block devices that aren't supported as this could cause issues.
     else:
@@ -337,10 +351,12 @@ that file with your issue.")
         exit(1)
 
 def get_controller():
+    global DETECT_DELAY
+    global HIDE_PATH
+
     global controller_device
     global controller_event
     global controller_path
-    global HIDE_PATH
 
     # Identify system input event devices.
     try:
@@ -348,7 +364,7 @@ def get_controller():
 
     except Exception as err:
         print("Error when scanning event devices. Restarting scan.")
-        sleep(.25)
+        sleep(DETECT_DELAY)
         return False
 
     controller_names = [
@@ -375,17 +391,19 @@ def get_controller():
     # Sometimes the service loads before all input devices have full initialized. Try a few times.
     if not controller_device:
         print("Controller device not yet found. Restarting scan.")
-        sleep(.25)
+        sleep(DETECT_DELAY)
         return False
     else:
         print("Found", controller_device.name+".", "Capturing input data.")
         return True
 
 def get_keyboard():
+    global DETECT_DELAY
+    global HIDE_PATH
+
     global keyboard_device
     global keyboard_event
     global keyboard_path
-    global HIDE_PATH
 
     # Identify system input event devices.
     try:
@@ -393,7 +411,7 @@ def get_keyboard():
     # Some funky stuff happens sometimes when booting. Give it another shot.
     except Exception as err:
         print("Error when scanning event devices. Restarting scan.")
-        sleep(.25)
+        sleep(DETECT_DELAY)
         return False
 
     # Grab the built-in devices. This will give us exclusive acces to the devices and their capabilities.
@@ -409,13 +427,15 @@ def get_keyboard():
     # Sometimes the service loads before all input devices have full initialized. Try a few times.
     if not keyboard_device:
         print("Keyboard device not yet found. Restarting scan.")
-        sleep(.25)
+        sleep(DETECT_DELAY)
         return False
     else:
         print("Found", keyboard_device.name+".", "Capturing input data.")
         return True
 
 def get_powerkey():
+    global DETECT_DELAY
+
     global power_device
 
     # Identify system input event devices.
@@ -424,7 +444,7 @@ def get_powerkey():
     # Some funky stuff happens sometimes when booting. Give it another shot.
     except Exception as err:
         print("Error when scanning event devices. Restarting scan.")
-        sleep(.25)
+        sleep(DETECT_DELAY)
         return False
 
     # Grab the built-in devices. This will give us exclusive acces to the devices and their capabilities.
@@ -438,7 +458,7 @@ def get_powerkey():
 
     if not power_device:
         print("Power Button device not yet found. Restarting scan.")
-        sleep(.25)
+        sleep(DETECT_DELAY)
         return False
     else:
         print("Found", power_device.name+".", "Capturing input data.")
@@ -494,6 +514,8 @@ async def do_rumble(button=0, interval=10, length=1000, delay=0):
 
 # Captures keyboard events and translates them to virtual device events.
 async def capture_keyboard_events():
+    global DETECT_DELAY
+    global FF_DELAY
 
     # Get access to global variables. These are globalized because the function
     # is instanciated twice and need to persist accross both instances.
@@ -562,7 +584,7 @@ async def capture_keyboard_events():
                                     await do_rumble(0, 250, 1000, 0)
                                 else:
                                     await do_rumble(0, 100, 1000, 0)
-                                    await asyncio.sleep(.2)
+                                    await asyncio.sleep(FF_DELAY)
                                     await do_rumble(0, 100, 1000, 0)
 
                             # BUTTON 4 (Default: OSK) KB Button
@@ -604,7 +626,7 @@ async def capture_keyboard_events():
                                     await do_rumble(0, 250, 1000, 0)
                                 else:
                                     await do_rumble(0, 100, 1000, 0)
-                                    await asyncio.sleep(.2)
+                                    await asyncio.sleep(FF_DELAY)
                                     await do_rumble(0, 100, 1000, 0)
 
                             # BUTTON 4 (Default: OSK) RC Button
@@ -623,7 +645,7 @@ async def capture_keyboard_events():
                             elif active == [] and seed_event.code == 125 and button_on == 0 and  event_queue == [] and shutdown == True:
                                 shutdown = False
 
-                        case "OXP":
+                        case "OXP", "AOK":
                             # BUTTON 1 (Default: Not used, dangerous fan activity!) Short press orange + |||||
                             if active == [99, 125] and button_on == 1 and button1 not in event_queue:
                                 pass
@@ -647,7 +669,7 @@ async def capture_keyboard_events():
                                     await do_rumble(0, 250, 1000, 0)
                                 else:
                                     await do_rumble(0, 100, 1000, 0)
-                                    await asyncio.sleep(.2)
+                                    await asyncio.sleep(FF_DELAY)
                                     await do_rumble(0, 100, 1000, 0)
 
                             # BUTTON 4 (Default: OSK) Short press KB
@@ -695,10 +717,12 @@ async def capture_keyboard_events():
         else:
             print("Attempting to grab keyboard device...")
             get_keyboard()
-            await asyncio.sleep(.25)
+            await asyncio.sleep(DETECT_DELAY)
 
 # Captures the controller_device events and passes them through.
 async def capture_controller_events():
+    global DETECT_DELAY
+
     global controller_device
     global controller_events
     global last_x_val
@@ -745,7 +769,7 @@ async def capture_controller_events():
         else:
             print("Attempting to grab controller device...")
             get_controller()
-            await asyncio.sleep(.25)
+            await asyncio.sleep(DETECT_DELAY)
 
 async def capture_gyro_events():
 
@@ -780,6 +804,7 @@ async def capture_gyro_events():
 
 # Captures power events and handles long or short press events.
 async def capture_power_events():
+    global DETECT_DELAY
     global HOME_PATH
     global USER
 
@@ -817,7 +842,7 @@ async def capture_power_events():
         else:
             print("Attempting to grab power device...")
             get_powerkey()
-            await asyncio.sleep(.25)
+            await asyncio.sleep(DETECT_DELAY)
 
 
 # Handle FF event uploads
@@ -886,7 +911,7 @@ async def emit_events(events: list):
         for event in events:
             ui_device.write_event(event)
             ui_device.syn()
-            await asyncio.sleep(0.09)
+            await asyncio.sleep(BUTTON_DELAY)
 
 # Gracefull shutdown.
 async def restore_all(loop):
