@@ -287,6 +287,7 @@ def __init__():
 
 def id_system():
     global system_type
+    global BUTTON_DELAY
 
     # Identify the current device type. Kill script if not compatible.
     system_id = open("/sys/devices/virtual/dmi/id/product_name", "r").read().strip()
