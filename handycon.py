@@ -645,7 +645,7 @@ async def capture_keyboard_events():
                             elif active == [] and seed_event.code == 125 and button_on == 0 and  event_queue == [] and shutdown == True:
                                 shutdown = False
 
-                        case "OXP", "AOK":
+                        case "OXP" | "AOK":
                             # BUTTON 1 (Default: Not used, dangerous fan activity!) Short press orange + |||||
                             if active == [99, 125] and button_on == 1 and button1 not in event_queue:
                                 pass
