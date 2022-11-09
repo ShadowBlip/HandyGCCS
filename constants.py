@@ -3,7 +3,8 @@
 # Copyright 2022 Derek J. Clark <derekjohn dot clark at gmail dot com>
 # List of constants for handycon.py
 
-BUTTON_DELAY = 0.0
+from evdev import AbsInfo, ecodes as e
+
 CONTROLLER_EVENTS = {
     e.EV_KEY: [
         e.KEY_ESC,
