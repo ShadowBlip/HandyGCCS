@@ -153,6 +153,13 @@ def id_system():
         system_type = "AOK_GEN1"
         BUTTON_DELAY = 0.07
 
+    # GPD Devices.
+    elif system_id in [
+        "G1619-04" #WinMax2
+        ]:
+        system_type = "GPD_GEN1"
+        BUTTON_DELAY = 0.09
+
     # Block devices that aren't supported as this could cause issues.
     else:
         print(system_id, "is not currently supported by this tool. Open an issue on \
@@ -220,6 +227,7 @@ def get_controller():
             'usb-0000:03:00.3-4/input0',
             'usb-0000:04:00.3-4/input0',
             'usb-0000:00:14.0-9/input0',
+            'usb-0000:74:00.3-3/input0',
             ]
 
     # Grab the built-in devices. This will give us exclusive acces to the devices and their capabilities.
@@ -369,6 +377,7 @@ async def capture_keyboard_events():
     button4 = button_map["button4"]
     button5 = button_map["button5"]
     last_button = None
+    buttons_active=True
 
     # Capture keyboard events and translate them to mapped events.
     while running:
@@ -523,6 +532,31 @@ async def capture_keyboard_events():
                             # Handle L_META from power button
                             elif active == [] and seed_event.code == 125 and button_on == 0 and  event_queue == [] and shutdown == True:
                                 shutdown = False
+
+                        case "GPD_GEN1":
+
+                            # Allow device to disable/enable if the user needs 0/9 keys.
+                            if active == [10, 11] and button_on == 1:
+                                buttons_active = not buttons_active
+                                continue
+
+                            # BUTTON 2 (Default: QAM) Short press orange
+                            if active == [10] and button_on == 1 and button2 not in event_queue and buttons_active:
+                                event_queue.append(button2)
+                            elif active == [] and seed_event.code in [10] and button_on == 0 and button2 in event_queue:
+                                this_button = button2
+                                await do_rumble(0, 150, 1000, 0)
+
+                            # BUTTON 4 (Default: OSK) Short press KB
+                            if active == [11] and button_on == 1 and button4 not in event_queue and buttons_active:
+                                event_queue.append(button4)
+                            elif active == [] and seed_event.code in [11] and button_on == 0 and button4 in event_queue:
+                                this_button = button4
+
+                            # This device has a full keyboard. Pass through all other events.
+                            if (active not in [10, 11] buttons_active) or not buttons_active:
+                                emit_events([seed_event])
+                                continue
 
                     # Create list of events to fire.
                     # Handle new button presses.
