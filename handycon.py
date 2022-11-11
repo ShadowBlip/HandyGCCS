@@ -16,6 +16,7 @@ import configparser
 from evdev import InputDevice, InputEvent, UInput, ecodes as e, list_devices, ff
 from pathlib import PurePath as p
 from shutil import move
+from subprocess import call
 from time import sleep, time
 
 from constants import CONTROLLER_EVENTS, DETECT_DELAY, EVENT_ESC, EVENT_HOME, EVENT_OSK, EVENT_QAM, EVENT_SCR, FF_DELAY, HIDE_PATH, JOY_MAX, JOY_MIN
@@ -163,6 +164,9 @@ that file with your issue.")
     print("Identified host system as", system_id, "and configured defaults for", system_type)
 
 def get_config():
+    global HONE_PATH
+    global USER
+
     global button_map
     global gyro_sensitivity
 
@@ -183,6 +187,7 @@ def get_config():
         config["Gyro"] = {"sensitivity": "20"}
         with open(config_path, 'w') as config_file:
             config.write(config_file)
+            call(["chown", USER+":"+USER, config_path])
     button_map = {
     "button1": EVENT_MAP[config["Button Map"]["button1"]],
     "button2": EVENT_MAP[config["Button Map"]["button2"]],
