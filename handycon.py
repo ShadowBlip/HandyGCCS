@@ -11,216 +11,25 @@ import os
 import signal
 import subprocess
 import warnings
+import configparser
 
-from evdev import InputDevice, InputEvent, UInput, ecodes as e, list_devices, ff, AbsInfo
+from evdev import InputDevice, InputEvent, UInput, ecodes as e, list_devices, ff
 from pathlib import PurePath as p
 from shutil import move
+from subprocess import call
 from time import sleep, time
 
+from constants import CONTROLLER_EVENTS, DETECT_DELAY, EVENT_ESC, EVENT_HOME, EVENT_OSK, EVENT_QAM, EVENT_SCR, FF_DELAY, HIDE_PATH, JOY_MAX, JOY_MIN
+
+# TODO: asyncio is using a deprecated method in its loop, find an alternative.
+# Suppress for now to keep journalctl output clean.
 warnings.filterwarnings("ignore", category=DeprecationWarning)
-# Declare global variables
 
-# Constants
-EVENT_OSK = [[e.EV_KEY, e.BTN_MODE], [e.EV_KEY, e.BTN_NORTH]]
-EVENT_ESC = [[e.EV_MSC, e.MSC_SCAN], [e.EV_KEY, e.KEY_ESC]]
-EVENT_QAM = [[e.EV_KEY, e.BTN_MODE], [e.EV_KEY, e.BTN_SOUTH]]
-EVENT_SCR = [[e.EV_KEY, e.BTN_MODE], [e.EV_KEY, e.BTN_TR]]
-EVENT_HOME = [[e.EV_KEY, e.BTN_MODE]]
-
-CONTROLLER_EVENTS = {
-    e.EV_KEY: [
-        e.KEY_ESC,
-        e.KEY_1,
-        e.KEY_2,
-        e.KEY_3,
-        e.KEY_4,
-        e.KEY_5,
-        e.KEY_6,
-        e.KEY_7,
-        e.KEY_8,
-        e.KEY_9,
-        e.KEY_0,
-        e.KEY_MINUS,
-        e.KEY_EQUAL,
-        e.KEY_BACKSPACE,
-        e.KEY_TAB,
-        e.KEY_Q,
-        e.KEY_W,
-        e.KEY_E,
-        e.KEY_R,
-        e.KEY_T,
-        e.KEY_Y,
-        e.KEY_U,
-        e.KEY_I,
-        e.KEY_O,
-        e.KEY_P,
-        e.KEY_LEFTBRACE,
-        e.KEY_RIGHTBRACE,
-        e.KEY_ENTER,
-        e.KEY_LEFTCTRL,
-        e.KEY_A,
-        e.KEY_S,
-        e.KEY_D,
-        e.KEY_F,
-        e.KEY_G,
-        e.KEY_H,
-        e.KEY_J,
-        e.KEY_K,
-        e.KEY_L,
-        e.KEY_SEMICOLON,
-        e.KEY_APOSTROPHE,
-        e.KEY_GRAVE,
-        e.KEY_LEFTSHIFT,
-        e.KEY_BACKSLASH,
-        e.KEY_Z,
-        e.KEY_X,
-        e.KEY_C,
-        e.KEY_V,
-        e.KEY_B,
-        e.KEY_N,
-        e.KEY_M,
-        e.KEY_COMMA,
-        e.KEY_DOT,
-        e.KEY_SLASH,
-        e.KEY_RIGHTSHIFT,
-        e.KEY_KPASTERISK,
-        e.KEY_LEFTALT,
-        e.KEY_SPACE,
-        e.KEY_CAPSLOCK,
-        e.KEY_F1,
-        e.KEY_F2,
-        e.KEY_F3,
-        e.KEY_F4,
-        e.KEY_F5,
-        e.KEY_F6,
-        e.KEY_F7,
-        e.KEY_F8,
-        e.KEY_F9,
-        e.KEY_F10,
-        e.KEY_NUMLOCK,
-        e.KEY_SCROLLLOCK,
-        e.KEY_KP7,
-        e.KEY_KP8,
-        e.KEY_KP9,
-        e.KEY_KPMINUS,
-        e.KEY_KP4,
-        e.KEY_KP5,
-        e.KEY_KP6,
-        e.KEY_KPPLUS,
-        e.KEY_KP1,
-        e.KEY_KP2,
-        e.KEY_KP3,
-        e.KEY_KP0,
-        e.KEY_KPDOT,
-        e.KEY_ZENKAKUHANKAKU,
-        e.KEY_102ND,
-        e.KEY_F11,
-        e.KEY_F12,
-        e.KEY_RO,
-        e.KEY_KATAKANA,
-        e.KEY_HIRAGANA,
-        e.KEY_HENKAN,
-        e.KEY_KATAKANAHIRAGANA,
-        e.KEY_MUHENKAN,
-        e.KEY_KPJPCOMMA,
-        e.KEY_KPENTER,
-        e.KEY_RIGHTCTRL,
-        e.KEY_KPSLASH,
-        e.KEY_SYSRQ,
-        e.KEY_RIGHTALT,
-        e.KEY_HOME,
-        e.KEY_UP,
-        e.KEY_PAGEUP,
-        e.KEY_LEFT,
-        e.KEY_RIGHT,
-        e.KEY_END,
-        e.KEY_DOWN,
-        e.KEY_PAGEDOWN,
-        e.KEY_INSERT,
-        e.KEY_DELETE,
-        e.KEY_MACRO,
-        e.KEY_MUTE,
-        e.KEY_VOLUMEDOWN,
-        e.KEY_VOLUMEUP,
-        e.KEY_POWER,
-        e.KEY_KPEQUAL,
-        e.KEY_KPPLUSMINUS,
-        e.KEY_PAUSE,
-        e.KEY_KPCOMMA,
-        e.KEY_HANGUEL,
-        e.KEY_HANJA,
-        e.KEY_YEN,
-        e.KEY_LEFTMETA,
-        e.KEY_RIGHTMETA,
-        e.KEY_COMPOSE,
-        e.KEY_STOP,
-        e.KEY_CALC,
-        e.KEY_SLEEP,
-        e.KEY_WAKEUP,
-        e.KEY_MAIL,
-        e.KEY_BOOKMARKS,
-        e.KEY_COMPUTER,
-        e.KEY_BACK,
-        e.KEY_FORWARD,
-        e.KEY_NEXTSONG,
-        e.KEY_PLAYPAUSE,
-        e.KEY_PREVIOUSSONG,
-        e.KEY_STOPCD,
-        e.KEY_HOMEPAGE,
-        e.KEY_REFRESH,
-        e.KEY_F13,
-        e.KEY_F14,
-        e.KEY_F15,
-        e.KEY_SEARCH,
-        e.KEY_MEDIA,
-        e.BTN_SOUTH,
-        e.BTN_EAST,
-        e.BTN_NORTH,
-        e.BTN_WEST,
-        e.BTN_TL,
-        e.BTN_TR,
-        e.BTN_SELECT,
-        e.BTN_START,
-        e.BTN_MODE,
-        e.BTN_THUMBL,
-        e.BTN_THUMBR,
-    ],
-    e.EV_ABS: [
-        (e.ABS_X, AbsInfo(0, -32768, 32767, 16, 128, 0)),
-        (e.ABS_Y, AbsInfo(0, -32768, 32767, 16, 128, 0)),
-        (e.ABS_Z, AbsInfo(0, 0, 255, 0, 0, 0)),
-        (e.ABS_RX, AbsInfo(0, -32768, 32767, 16, 128, 0)),
-        (e.ABS_RY, AbsInfo(0, -32768, 32767, 16, 128, 0)),
-        (e.ABS_RZ, AbsInfo(0, 0, 255, 0, 0, 0)),
-        (e.ABS_HAT0X, AbsInfo(0, -1, 1, 0, 0, 0)),
-        (e.ABS_HAT0Y, AbsInfo(0, -1, 1, 0, 0, 0)),
-    ],
-    e.EV_MSC: [
-        e.MSC_SCAN,
-    ],
-    e.EV_LED: [
-        e.LED_NUML,
-        e.LED_CAPSL,
-        e.LED_SCROLLL,
-    ],
-    e.EV_FF: [
-        e.FF_RUMBLE,
-        e.FF_PERIODIC,
-        e.FF_SQUARE,
-        e.FF_TRIANGLE,
-        e.FF_SINE,
-        e.FF_GAIN,
-    ],
-}
-
-JOY_MIN = -32767
-JOY_MAX = 32767
-
+## Declare global variables
 BUTTON_DELAY = 0.0
-DETECT_DELAY = 0.25
-FF_DELAY = 0.2
 
-HIDE_PATH = "/dev/input/.hidden/"
+# Capture the username and home path of the first user to log in. This assumes
+# the first user is the only user.
 USER = None
 cmd = "who | awk '{print $1}' | sort | head -1"
 while USER == None:
@@ -264,30 +73,31 @@ keyboard_event = None
 keyboard_path = None
 
 # Configuration
-button_map = {
-        "button1": EVENT_SCR,
-        "button2": EVENT_QAM,
-        "button3": EVENT_ESC,
-        "button4": EVENT_OSK,
-        "button5": EVENT_HOME,
-        }
+button_map = {}
+EVENT_MAP= {
+        "ESC": EVENT_ESC,
+        "HOME": EVENT_HOME,
+        "OSK": EVENT_OSK,
+        "QAM": EVENT_QAM,
+        "SCR": EVENT_SCR,
+    }
 gyro_enabled = False
-gyro_sensitivity = 20
+gyro_sensitivity = 0
 
 def __init__():
-
     global controller_device
-    global HIDE_PATH
     global keyboard_device
     global power_device
 
     id_system()
     os.makedirs(HIDE_PATH, exist_ok=True)
+    get_config()
     make_controller()
 
 def id_system():
-    global system_type
     global BUTTON_DELAY
+
+    global system_type
 
     # Identify the current device type. Kill script if not compatible.
     system_id = open("/sys/devices/virtual/dmi/id/product_name", "r").read().strip()
@@ -333,14 +143,14 @@ def id_system():
         "ONEXPLAYER GUNDAM GA72",
         "ONEXPLAYER 2 ARP23",
         ]:
-        system_type = "OXP"
+        system_type = "OXP_GEN1"
         BUTTON_DELAY = 0.09
 
     # AOK ZOE Devices. Same layout as OXP devices.
     elif system_id in [
         "AOKZOE A1 AR07"
         ]:
-        system_type = "AOK"
+        system_type = "AOK_GEN1"
         BUTTON_DELAY = 0.07
 
     # Block devices that aren't supported as this could cause issues.
@@ -351,10 +161,43 @@ please run the capture-system.py utility found on the GitHub repository and uplo
 that file with your issue.")
         exit(1)
 
-def get_controller():
-    global DETECT_DELAY
-    global HIDE_PATH
+    print("Identified host system as", system_id, "and configured defaults for", system_type)
 
+def get_config():
+    global HONE_PATH
+    global USER
+
+    global button_map
+    global gyro_sensitivity
+
+    config = configparser.ConfigParser()
+
+    # Check for an existing config file and load it.
+    config_path = HOME_PATH+"/.config/handygccs.conf"
+    if os.path.exists(config_path):
+        config.read(config_path)
+    else:
+        config["Button Map"] = {
+                "button1": "SCR",
+                "button2": "QAM",
+                "button3": "ESC",
+                "button4": "OSK",
+                "button5": "HOME",
+                }
+        config["Gyro"] = {"sensitivity": "20"}
+        with open(config_path, 'w') as config_file:
+            config.write(config_file)
+            call(["chown", USER+":"+USER, config_path])
+    button_map = {
+    "button1": EVENT_MAP[config["Button Map"]["button1"]],
+    "button2": EVENT_MAP[config["Button Map"]["button2"]],
+    "button3": EVENT_MAP[config["Button Map"]["button3"]],
+    "button4": EVENT_MAP[config["Button Map"]["button4"]],
+    "button5": EVENT_MAP[config["Button Map"]["button5"]],
+    }
+    gyro_sensitivity = int(config["Gyro"]["sensitivity"])
+
+def get_controller():
     global controller_device
     global controller_event
     global controller_path
@@ -399,9 +242,6 @@ def get_controller():
         return True
 
 def get_keyboard():
-    global DETECT_DELAY
-    global HIDE_PATH
-
     global keyboard_device
     global keyboard_event
     global keyboard_path
@@ -435,8 +275,6 @@ def get_keyboard():
         return True
 
 def get_powerkey():
-    global DETECT_DELAY
-
     global power_device
 
     # Identify system input event devices.
@@ -515,9 +353,6 @@ async def do_rumble(button=0, interval=10, length=1000, delay=0):
 
 # Captures keyboard events and translates them to virtual device events.
 async def capture_keyboard_events():
-    global DETECT_DELAY
-    global FF_DELAY
-
     # Get access to global variables. These are globalized because the function
     # is instanciated twice and need to persist accross both instances.
     global button_map
@@ -646,7 +481,7 @@ async def capture_keyboard_events():
                             elif active == [] and seed_event.code == 125 and button_on == 0 and  event_queue == [] and shutdown == True:
                                 shutdown = False
 
-                        case "OXP" | "AOK":
+                        case "OXP_GEN1" | "AOK_GEN1":
                             # BUTTON 1 (Default: Not used, dangerous fan activity!) Short press orange + |||||
                             if active == [99, 125] and button_on == 1 and button1 not in event_queue:
                                 pass
@@ -722,8 +557,6 @@ async def capture_keyboard_events():
 
 # Captures the controller_device events and passes them through.
 async def capture_controller_events():
-    global DETECT_DELAY
-
     global controller_device
     global controller_events
     global last_x_val
@@ -773,7 +606,6 @@ async def capture_controller_events():
             await asyncio.sleep(DETECT_DELAY)
 
 async def capture_gyro_events():
-
     global controller_events
     global gyro_device
     global gyro_enabled
@@ -805,7 +637,6 @@ async def capture_gyro_events():
 
 # Captures power events and handles long or short press events.
 async def capture_power_events():
-    global DETECT_DELAY
     global HOME_PATH
     global USER
 
@@ -908,6 +739,7 @@ async def emit_events(events: list):
     if len(events) == 1:
         ui_device.write_event(events[0])
         ui_device.syn()
+
     elif len(events) > 1:
         for event in events:
             ui_device.write_event(event)
@@ -916,7 +748,6 @@ async def emit_events(events: list):
 
 # Gracefull shutdown.
 async def restore_all(loop):
-
     print('Receved exit signal. Restoring Devices.')
     running = False
 
@@ -954,7 +785,6 @@ def restore_controller():
 
 # Main loop
 def main():
-
     # Attach the event loop of each device to the asyncio loop.
     asyncio.ensure_future(capture_controller_events())
     asyncio.ensure_future(capture_keyboard_events())

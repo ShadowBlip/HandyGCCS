@@ -4,6 +4,7 @@ echo "Installing HandyGCCS..."
 sudo pacman -Sy --noconfirm - < pkg_depends.list
 < pip_depends.list xargs python3 -m pip install
 echo "Enabling controller functionality. NEXT users will need to configure the Home button in steam."
+cp -v constants.py /usr/local/bin/
 cp -v handycon.py /usr/local/bin/
 cp -v handycon.service /etc/systemd/system/
 cp -v handycon.conf /etc/modules-load.d/
