@@ -60,12 +60,6 @@ system_type = None
 last_x_val = 0
 last_y_val = 0
 
-try :
-    from BMI160_i2c import Driver
-except ModuleNotFoundError:
-        print("BMI160_i2c Module was not found. Install with `python3 -m pip install BMI160-i2c`. Skipping gyro device.")
-        gyro_device = False
-
 # Paths
 controller_event = None
 controller_path = None
@@ -114,6 +108,9 @@ def id_system():
         ]:
         system_type = "AYA_GEN1"
         BUTTON_DELAY = 0.09
+        GYRO_I2C_ADDR = 0x68
+        GYRO_I2C_BUS = 1
+        GYRO_DRIVER = "BMI160_i2c"
 
     # Aya Neo NEXT and after use new keycodes and have fewer buttons.
     elif system_id in [
@@ -128,6 +125,9 @@ def id_system():
         ]:
         system_type = "AYA_GEN2"
         BUTTON_DELAY = 0.09
+        GYRO_I2C_ADDR = 0x68
+        GYRO_I2C_BUS = 1
+        GYRO_DRIVER = "BMI160_i2c"
 
     # ONE XPLAYER devices. Original BIOS have incomplete DMI data and all
     # models report as "ONE XPLAYER". OXP have provided new DMI data via BIOS
@@ -145,6 +145,9 @@ def id_system():
         ]:
         system_type = "OXP_GEN1"
         BUTTON_DELAY = 0.09
+        GYRO_I2C_ADDR = 0x68
+        GYRO_I2C_BUS = 1
+        GYRO_DRIVER = "BMI160_i2c"
 
     # AOK ZOE Devices. Same layout as OXP devices.
     elif system_id in [
@@ -152,6 +155,9 @@ def id_system():
         ]:
         system_type = "AOK_GEN1"
         BUTTON_DELAY = 0.07
+        GYRO_I2C_ADDR = 0x68
+        GYRO_I2C_BUS = 1
+        GYRO_DRIVER = "BMI160_i2c"
 
     # GPD Devices.
     elif system_id in [
@@ -159,6 +165,9 @@ def id_system():
         ]:
         system_type = "GPD_GEN1"
         BUTTON_DELAY = 0.09
+        GYRO_I2C_ADDR = 0x69
+        GYRO_I2C_BUS = 2
+        GYRO_DRIVER = IMU_WM2
 
     # Block devices that aren't supported as this could cause issues.
     else:
@@ -311,13 +320,23 @@ def get_powerkey():
         print("Found", power_device.name+".", "Capturing input data.")
         return True
 
+def load_gyro_driver():
+
+
 def get_gyro():
     global gyro_device
-    # Make a gyro_device, if it exists.
+    # Make a gyro_device, if it exists.    
     try:
-        gyro_device = Driver(0x68)
-        print("Found gyro device. Gyro support enabled.")
-
+        if GYRO_DRIVER == "BMI160_i2c":
+            try:
+                from BMI160_i2c import Driver
+                gyro_device = Driver(GYRO_I2C_ADDR, GYRO_I2C_BUS)
+                print("Found gyro device. Gyro support enabled.")
+            except ModuleNotFoundError:
+                print("BMI160_i2c Module was not found. Install with `python3 -m pip install BMI160-i2c`. Skipping gyro device.")
+                gyro_device = False        
+        elif GYRO_DRIVER == "IMU_WM2":
+            from imu_wm2 import IMU_WM2
     except (FileNotFoundError, NameError, BrokenPipeError, OSError) as err:
         print("Gyro device not initialized. Ensure bmi160_i2c and i2c_dev modules are loaded, and all python dependencies are met. Skipping gyro device setup.\n", err)
         gyro_device=False
@@ -850,3 +869,4 @@ def main():
 if __name__ == "__main__":
     __init__()
     main()
+
