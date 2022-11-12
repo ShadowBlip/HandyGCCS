@@ -21,16 +21,16 @@ class IMU_WM2:
             self._valid_accel_rates = [x for x in self._read_reg("in_accel_sampling_frequency_available").split()]
             self._valid_gyro_scales = [x for x in self._read_reg("in_anglvel_scale_available").split()]
             self._valid_accel_scale = [x for x in self._read_reg("in_accel_scale_available").split()]
-            
                 
         except (FileNotFoundError,) as err:
-            logger.error("BMI160 not detect.")
+            logger.error("BMI160 not detected.")
+            return None
     
     def _read_reg(self, reg):
         with open(self._dev / reg, 'r') as f:
             return f.read()
     
-    def _write_reg(self reg, val):
+    def _write_reg(self, reg, val):
         with open(self._dev / reg, 'r') as f:
             f.write(f"{val}")
     
@@ -67,7 +67,18 @@ class IMU_WM2:
         m.extend([int(self._read_reg(f"in_accel_{ax}_raw")) for ax in ('x', 'y', 'z')])
         return m
 
+    def getRotationX(self):
+        """ BMI160_i2c module compatibility. """
+        return [int(self._read_reg(f"in_anglvel_x_raw")),]
+    
+    def getRotationY(self):
+        """ BMI160_i2c module compatibility. """
+        return [int(self._read_reg(f"in_anglvel_y_raw")),]
+
 if __name__ == "__main__":
     imu = IMU_WM2()
     m = imu.get_gyro_accel()
     print(m)
+    print(imu.getRotationX())
+    print(imu.getRotationY())
+

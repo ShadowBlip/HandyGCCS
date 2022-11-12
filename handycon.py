@@ -1,4 +1,4 @@
-#!/sbin/python3
+#!/usr/bin/env python3
 # HandyGCCS HandyCon
 # Copyright 2022 Derek J. Clark <derekjohn dot clark at gmail dot com>
 # This will create a virtual UInput device and pull data from the built-in
@@ -7,6 +7,7 @@
 # presses that Steam understands.
 
 import asyncio
+import logging
 import os
 import signal
 import subprocess
@@ -21,12 +22,22 @@ from time import sleep, time
 
 from constants import CONTROLLER_EVENTS, DETECT_DELAY, EVENT_ESC, EVENT_HOME, EVENT_OSK, EVENT_QAM, EVENT_SCR, FF_DELAY, HIDE_PATH, JOY_MAX, JOY_MIN
 
+logging.basicConfig(format="[%(asctime)s | %(filename)s:%(lineno)s:%(funcName)s] %(message)s",
+                    datefmt="%y%m%d_%H:%M:%S",
+                    level=logging.DEBUG
+                    )
+
+logger = logging.getLogger(__name__)
+
 # TODO: asyncio is using a deprecated method in its loop, find an alternative.
 # Suppress for now to keep journalctl output clean.
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 ## Declare global variables
 BUTTON_DELAY = 0.0
+GYRO_DRIVER = None
+GYRO_I2C_ADDR = None
+GYRO_I2C_BUS = None
 
 # Capture the username and home path of the first user to log in. This assumes
 # the first user is the only user.
@@ -99,13 +110,13 @@ def id_system():
 
     # Aya Neo from Founders edition through 2021 Pro Retro Power use the same 
     # input hardware and keycodes.
-    if system_id in [
+    if system_id in (
         "AYA NEO FOUNDER",
         "AYA NEO 2021",
         "AYANEO 2021",
         "AYANEO 2021 Pro",
         "AYANEO 2021 Pro Retro Power",
-        ]:
+        ):
         system_type = "AYA_GEN1"
         BUTTON_DELAY = 0.09
         GYRO_I2C_ADDR = 0x68
@@ -113,7 +124,7 @@ def id_system():
         GYRO_DRIVER = "BMI160_i2c"
 
     # Aya Neo NEXT and after use new keycodes and have fewer buttons.
-    elif system_id in [
+    elif system_id in (
         "NEXT",
         "NEXT Pro",
         "NEXT Advance",
@@ -122,7 +133,7 @@ def id_system():
         "AYANEO NEXT Advance",
         "AIR",
         "AIR Pro",
-        ]:
+        ):
         system_type = "AYA_GEN2"
         BUTTON_DELAY = 0.09
         GYRO_I2C_ADDR = 0x68
@@ -132,7 +143,7 @@ def id_system():
     # ONE XPLAYER devices. Original BIOS have incomplete DMI data and all
     # models report as "ONE XPLAYER". OXP have provided new DMI data via BIOS
     # updates.
-    elif system_id in [
+    elif system_id in (
         "ONE XPLAYER",
         "ONEXPLAYER 1 T08",
         "ONEXPLAYER 1S A08",
@@ -142,7 +153,7 @@ def id_system():
         "ONEXPLAYER mini GT72",
         "ONEXPLAYER GUNDAM GA72",
         "ONEXPLAYER 2 ARP23",
-        ]:
+        ):
         system_type = "OXP_GEN1"
         BUTTON_DELAY = 0.09
         GYRO_I2C_ADDR = 0x68
@@ -150,9 +161,9 @@ def id_system():
         GYRO_DRIVER = "BMI160_i2c"
 
     # AOK ZOE Devices. Same layout as OXP devices.
-    elif system_id in [
+    elif system_id in (
         "AOKZOE A1 AR07"
-        ]:
+        ):
         system_type = "AOK_GEN1"
         BUTTON_DELAY = 0.07
         GYRO_I2C_ADDR = 0x68
@@ -160,14 +171,14 @@ def id_system():
         GYRO_DRIVER = "BMI160_i2c"
 
     # GPD Devices.
-    elif system_id in [
+    elif system_id in (
         "G1619-04" #WinMax2
-        ]:
+        ):
         system_type = "GPD_GEN1"
         BUTTON_DELAY = 0.09
         GYRO_I2C_ADDR = 0x69
         GYRO_I2C_BUS = 2
-        GYRO_DRIVER = IMU_WM2
+        GYRO_DRIVER = "IMU_WM2"
 
     # Block devices that aren't supported as this could cause issues.
     else:
@@ -177,7 +188,7 @@ please run the capture-system.py utility found on the GitHub repository and uplo
 that file with your issue.")
         exit(1)
 
-    print("Identified host system as", system_id, "and configured defaults for", system_type)
+    logger.info("Identified host system as", system_id, "and configured defaults for", system_type)
 
 def get_config():
     global HONE_PATH
@@ -223,21 +234,21 @@ def get_controller():
         devices_original = [InputDevice(path) for path in list_devices()]
 
     except Exception as err:
-        print("Error when scanning event devices. Restarting scan.")
+        logger.error("Error when scanning event devices. Restarting scan.")
         sleep(DETECT_DELAY)
         return False
 
-    controller_names = [
+    controller_names = (
             'Microsoft X-Box 360 pad',
             'Generic X-Box pad',
             'OneXPlayer Gamepad',
-            ]
-    controller_phys =[
+            )
+    controller_phys = (
             'usb-0000:03:00.3-4/input0',
             'usb-0000:04:00.3-4/input0',
             'usb-0000:00:14.0-9/input0',
             'usb-0000:74:00.3-3/input0',
-            ]
+            )
 
     # Grab the built-in devices. This will give us exclusive acces to the devices and their capabilities.
     for device in devices_original:
@@ -251,11 +262,11 @@ def get_controller():
 
     # Sometimes the service loads before all input devices have full initialized. Try a few times.
     if not controller_device:
-        print("Controller device not yet found. Restarting scan.")
+        logger.warn("Controller device not yet found. Restarting scan.")
         sleep(DETECT_DELAY)
         return False
     else:
-        print("Found", controller_device.name+".", "Capturing input data.")
+        logger.info("Found", controller_device.name+".", "Capturing input data.")
         return True
 
 def get_keyboard():
@@ -268,7 +279,7 @@ def get_keyboard():
         devices_original = [InputDevice(path) for path in list_devices()]
     # Some funky stuff happens sometimes when booting. Give it another shot.
     except Exception as err:
-        print("Error when scanning event devices. Restarting scan.")
+        logger.error("Error when scanning event devices. Restarting scan.")
         sleep(DETECT_DELAY)
         return False
 
@@ -284,11 +295,11 @@ def get_keyboard():
 
     # Sometimes the service loads before all input devices have full initialized. Try a few times.
     if not keyboard_device:
-        print("Keyboard device not yet found. Restarting scan.")
+        logger.warn("Keyboard device not yet found. Restarting scan.")
         sleep(DETECT_DELAY)
         return False
     else:
-        print("Found", keyboard_device.name+".", "Capturing input data.")
+        logger.info("Found", keyboard_device.name+".", "Capturing input data.")
         return True
 
 def get_powerkey():
@@ -299,7 +310,7 @@ def get_powerkey():
         devices_original = [InputDevice(path) for path in list_devices()]
     # Some funky stuff happens sometimes when booting. Give it another shot.
     except Exception as err:
-        print("Error when scanning event devices. Restarting scan.")
+        logger.error("Error when scanning event devices. Restarting scan.")
         sleep(DETECT_DELAY)
         return False
 
@@ -313,15 +324,12 @@ def get_powerkey():
             break
 
     if not power_device:
-        print("Power Button device not yet found. Restarting scan.")
+        logger.warn("Power Button device not yet found. Restarting scan.")
         sleep(DETECT_DELAY)
         return False
     else:
-        print("Found", power_device.name+".", "Capturing input data.")
+        logger.info("Found", power_device.name+".", "Capturing input data.")
         return True
-
-def load_gyro_driver():
-
 
 def get_gyro():
     global gyro_device
@@ -331,15 +339,16 @@ def get_gyro():
             try:
                 from BMI160_i2c import Driver
                 gyro_device = Driver(GYRO_I2C_ADDR, GYRO_I2C_BUS)
-                print("Found gyro device. Gyro support enabled.")
+                logger.info("Found gyro device. Gyro support enabled.")
             except ModuleNotFoundError:
-                print("BMI160_i2c Module was not found. Install with `python3 -m pip install BMI160-i2c`. Skipping gyro device.")
+                logger.error("BMI160_i2c Module was not found. Install with `python3 -m pip install BMI160-i2c`. Skipping gyro device.")
                 gyro_device = False        
         elif GYRO_DRIVER == "IMU_WM2":
             from imu_wm2 import IMU_WM2
+            gyro_device = IMU_WM2()
     except (FileNotFoundError, NameError, BrokenPipeError, OSError) as err:
-        print("Gyro device not initialized. Ensure bmi160_i2c and i2c_dev modules are loaded, and all python dependencies are met. Skipping gyro device setup.\n", err)
-        gyro_device=False
+        logger.error("Gyro device not initialized. Ensure bmi160_i2c and i2c_dev modules are loaded, and all python dependencies are met. Skipping gyro device setup.\n", err)
+        gyro_device = False
 
 def make_controller():
     global ui_device
@@ -580,7 +589,7 @@ async def capture_keyboard_events():
 
                             # This device has a full keyboard. Pass through all other events.
                             if active not in [10, 11]:
-                                emit_events([seed_event])
+                                await emit_events([seed_event])
                                 continue
 
                     # Create list of events to fire.
@@ -604,13 +613,13 @@ async def capture_keyboard_events():
                         await emit_events(events)
 
             except Exception as err:
-                print("Error reading events from", keyboard_device.name+".", err)
+                logger.error("Error reading events from", keyboard_device.name+".", err)
                 restore_keyboard()
                 keyboard_device = None
                 keyboard_event = None
                 keyboard_path = None
         else:
-            print("Attempting to grab keyboard device...")
+            logger.info("Attempting to grab keyboard device...")
             get_keyboard()
             await asyncio.sleep(DETECT_DELAY)
 
@@ -654,13 +663,13 @@ async def capture_controller_events():
                     # Output the event.
                     await emit_events([event])
             except Exception as err:
-                print("Error reading events from", controller_device.name+".", err)
+                logger.error("Error reading events from", controller_device.name+".", err)
                 restore_controller()
                 controller_device = None
                 controller_event = None
                 controller_path = None
         else:
-            print("Attempting to grab controller device...")
+            logger.info("Attempting to grab controller device...")
             get_controller()
             await asyncio.sleep(DETECT_DELAY)
 
@@ -728,10 +737,10 @@ async def capture_power_events():
                         await do_rumble(0, 150, 1000, 0)
             
             except Exception as err:
-                print("Error reading events from power device", err)
+                logger.error("Error reading events from power device", err)
                 power_device = None
         else:
-            print("Attempting to grab power device...")
+            logger.info("Attempting to grab power device...")
             get_powerkey()
             await asyncio.sleep(DETECT_DELAY)
 
@@ -774,7 +783,7 @@ async def capture_ff_events():
 
                 upload.retval = 0
             except IOError as err:
-                print("Error uploading effect", effect.id, err)
+                logger.error("Error uploading effect", effect.id, err)
                 upload.retval = -1
             
             ui_device.end_upload(upload)
@@ -787,7 +796,7 @@ async def capture_ff_events():
                 ff_effect_id_set.remove(erase.effect_id)
                 erase.retval = 0
             except IOError as err:
-                print("Error erasing effect", erase.effect_id, err)
+                logger.error("Error erasing effect", erase.effect_id, err)
                 erase.retval = -1
 
             ui_device.end_erase(erase)
@@ -807,7 +816,7 @@ async def emit_events(events: list):
 
 # Gracefull shutdown.
 async def restore_all(loop):
-    print('Receved exit signal. Restoring Devices.')
+    logger.info('Receved exit signal. Restoring Devices.')
     running = False
 
     if controller_device:
@@ -826,7 +835,7 @@ async def restore_all(loop):
         except asyncio.CancelledError:
             pass
     loop.stop()
-    print("Device restore complete. Handheld Game Console Controller Service Stopped...")
+    logger.info("Device restore complete. Handheld Game Console Controller Service Stopped...")
 
 def restore_keyboard():
     # Both devices threads will attempt this, so ignore if they have been moved.
@@ -862,7 +871,7 @@ def main():
     try:
         loop.run_forever()
     except Exception as e:
-        print("Hit exception condition:\n", e)
+        logger.error("Hit exception condition:\n", e)
     finally:
         loop.stop()
 
