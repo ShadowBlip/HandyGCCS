@@ -33,11 +33,28 @@ logger = logging.getLogger(__name__)
 # Suppress for now to keep journalctl output clean.
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
-## Declare global variables
+## Declare globals
+
+# Constants
 BUTTON_DELAY = 0.0
+
+# These determine if we take exclusive control of the device or not. Most devices
+# will be True, but some like the WinMax devices with full keyboard only need
+# gyro support.
+
+CAPTURE_CONTROLLER = None
+CAPTURE_KEYBOARD = None
+CAPTURE_POWER = None
 GYRO_I2C_ADDR = None
 GYRO_I2C_BUS = None
 
+EVENT_MAP= {
+        "ESC": EVENT_ESC,
+        "HOME": EVENT_HOME,
+        "OSK": EVENT_OSK,
+        "QAM": EVENT_QAM,
+        "SCR": EVENT_SCR,
+    }
 # Capture the username and home path of the first user to log in. This assumes
 # the first user is the only user.
 USER = None
@@ -78,13 +95,6 @@ keyboard_path = None
 
 # Configuration
 button_map = {}
-EVENT_MAP= {
-        "ESC": EVENT_ESC,
-        "HOME": EVENT_HOME,
-        "OSK": EVENT_OSK,
-        "QAM": EVENT_QAM,
-        "SCR": EVENT_SCR,
-    }
 gyro_enabled = False
 gyro_sensitivity = 0
 
@@ -99,7 +109,12 @@ def __init__():
     make_controller()
 
 def id_system():
+    global CAPTURE_CONTROLLER
+    global CAPTURE_KEYBOARD
+    global CAPTURE_POWER
     global BUTTON_DELAY
+    global GYRO_I2C_ADDR
+    global GYRO_I2C_BUS
 
     global system_type
 
@@ -116,10 +131,13 @@ def id_system():
         "AYANEO 2021 Pro",
         "AYANEO 2021 Pro Retro Power",
         ):
-        system_type = "AYA_GEN1"
+        CAPTURE_CONTROLLER = True
+        CAPTURE_KEYBOARD = True
+        CAPTURE_POWER = True
         BUTTON_DELAY = 0.09
         GYRO_I2C_ADDR = 0x68
         GYRO_I2C_BUS = 1
+        system_type = "AYA_GEN1"
 
     # Aya Neo NEXT and after use new keycodes and have fewer buttons.
     elif system_id in (
@@ -132,10 +150,13 @@ def id_system():
         "AIR",
         "AIR Pro",
         ):
-        system_type = "AYA_GEN2"
+        CAPTURE_CONTROLLER = True
+        CAPTURE_KEYBOARD = True
+        CAPTURE_POWER = True
         BUTTON_DELAY = 0.09
         GYRO_I2C_ADDR = 0x68
         GYRO_I2C_BUS = 1
+        system_type = "AYA_GEN2"
 
     # ONE XPLAYER devices. Original BIOS have incomplete DMI data and all
     # models report as "ONE XPLAYER". OXP have provided new DMI data via BIOS
@@ -151,28 +172,37 @@ def id_system():
         "ONEXPLAYER GUNDAM GA72",
         "ONEXPLAYER 2 ARP23",
         ):
-        system_type = "OXP_GEN1"
+        CAPTURE_CONTROLLER = True
+        CAPTURE_KEYBOARD = True
+        CAPTURE_POWER = True
         BUTTON_DELAY = 0.09
         GYRO_I2C_ADDR = 0x68
         GYRO_I2C_BUS = 1
+        system_type = "OXP_GEN1"
 
     # AOK ZOE Devices. Same layout as OXP devices.
     elif system_id in (
         "AOKZOE A1 AR07"
         ):
-        system_type = "AOK_GEN1"
+        CAPTURE_CONTROLLER = True
+        CAPTURE_KEYBOARD = True
+        CAPTURE_POWER = True
         BUTTON_DELAY = 0.07
         GYRO_I2C_ADDR = 0x68
         GYRO_I2C_BUS = 1
+        system_type = "AOK_GEN1"
 
     # GPD Devices.
     elif system_id in (
         "G1619-04" #WinMax2
         ):
-        system_type = "GPD_GEN1"
+        CAPTURE_CONTROLLER = True
+        CAPTURE_KEYBOARD = False
+        CAPTURE_POWER = True
         BUTTON_DELAY = 0.09
         GYRO_I2C_ADDR = 0x69
         GYRO_I2C_BUS = 2
+        system_type = "GPD_GEN1"
 
     # Block devices that aren't supported as this could cause issues.
     else:
@@ -218,7 +248,21 @@ def get_config():
     }
     gyro_sensitivity = int(config["Gyro"]["sensitivity"])
 
+def make_controller():
+    global ui_device
+
+    # Create the virtual controller.
+    ui_device = UInput(
+            CONTROLLER_EVENTS,
+            name='Handheld Controller',
+            bustype=int('3', base=16),
+            vendor=int('045e', base=16),
+            product=int('028e', base=16),
+            version=int('110', base=16)
+            )
+
 def get_controller():
+    global CAPTURE_CONTROLLER
     global controller_device
     global controller_event
     global controller_path
@@ -249,9 +293,10 @@ def get_controller():
         if device.name in controller_names and device.phys in controller_phys:
             controller_path = device.path
             controller_device = InputDevice(controller_path)
-            controller_device.grab()
-            controller_event = p(controller_path).name
-            move(controller_path, HIDE_PATH+controller_event)
+            if CAPTURE_CONTROLLER:
+                controller_device.grab()
+                controller_event = p(controller_path).name
+                move(controller_path, HIDE_PATH+controller_event)
             break
 
     # Sometimes the service loads before all input devices have full initialized. Try a few times.
@@ -264,6 +309,7 @@ def get_controller():
         return True
 
 def get_keyboard():
+    global CAPTURE_KEYBOARD
     global keyboard_device
     global keyboard_event
     global keyboard_path
@@ -282,9 +328,10 @@ def get_keyboard():
         if device.name == 'AT Translated Set 2 keyboard' and device.phys == 'isa0060/serio0/input0':
             keyboard_path = device.path
             keyboard_device = InputDevice(keyboard_path)
-            keyboard_device.grab()
-            keyboard_event = p(keyboard_path).name
-            move(keyboard_path, HIDE_PATH+keyboard_event)
+            if CAPTURE_KEYBOARD:
+                keyboard_device.grab()
+                keyboard_event = p(keyboard_path).name
+                move(keyboard_path, HIDE_PATH+keyboard_event)
             break
 
     # Sometimes the service loads before all input devices have full initialized. Try a few times.
@@ -297,6 +344,7 @@ def get_keyboard():
         return True
 
 def get_powerkey():
+    global CAPTURE_POWER
     global power_device
 
     # Identify system input event devices.
@@ -314,7 +362,8 @@ def get_powerkey():
         # Power Button
         if device.name == 'Power Button' and device.phys == "LNXPWRBN/button/input0":
             power_device = device
-            power_device.grab()
+            if CAPTURE_POWER:
+                power_device.grab()
             break
 
     if not power_device:
@@ -326,7 +375,11 @@ def get_powerkey():
         return True
 
 def get_gyro():
+    global GYRO_I2C_ADDR
+    global GYRO_I2C_BUS
+
     global gyro_device
+
     # Make a gyro_device, if it exists.
     try:
         from BMI160_i2c import Driver
@@ -335,19 +388,6 @@ def get_gyro():
     except (FileNotFoundError, NameError, BrokenPipeError, OSError) as err:
         logger.error("Gyro device not initialized. Ensure bmi160_i2c and i2c_dev modules are loaded, and all python dependencies are met. Skipping gyro device setup.\n", err)
         gyro_device = False
-
-def make_controller():
-    global ui_device
-
-    # Create the virtual controller.
-    ui_device = UInput(
-            CONTROLLER_EVENTS,
-            name='Handheld Controller',
-            bustype=int('3', base=16),
-            vendor=int('045e', base=16),
-            product=int('028e', base=16),
-            version=int('110', base=16)
-            )
 
 async def do_rumble(button=0, interval=10, length=1000, delay=0):
     global controller_device
@@ -560,23 +600,23 @@ async def capture_keyboard_events():
                                     await do_rumble(0, 100, 1000, 0)
                                 continue
 
-                            # BUTTON 2 (Default: QAM) Short press orange
-                            if active == [10] and button_on == 1 and button2 not in event_queue:
-                                event_queue.append(button2)
-                            elif active == [] and seed_event.code in [10] and button_on == 0 and button2 in event_queue:
-                                this_button = button2
-                                await do_rumble(0, 150, 1000, 0)
-
-                            # BUTTON 4 (Default: OSK) Short press KB
-                            if active == [11] and button_on == 1 and button4 not in event_queue:
-                                event_queue.append(button4)
-                            elif active == [] and seed_event.code in [11] and button_on == 0 and button4 in event_queue:
-                                this_button = button4
-
-                            # This device has a full keyboard. Pass through all other events.
-                            if active not in [10, 11]:
-                                await emit_events([seed_event])
-                                continue
+#                            # BUTTON 2 (Default: QAM) Short press orange
+#                            if active == [10] and button_on == 1 and button2 not in event_queue:
+#                                event_queue.append(button2)
+#                            elif active == [] and seed_event.code in [10] and button_on == 0 and button2 in event_queue:
+#                                this_button = button2
+#                                await do_rumble(0, 150, 1000, 0)
+#
+#                            # BUTTON 4 (Default: OSK) Short press KB
+#                            if active == [11] and button_on == 1 and button4 not in event_queue:
+#                                event_queue.append(button4)
+#                            elif active == [] and seed_event.code in [11] and button_on == 0 and button4 in event_queue:
+#                                this_button = button4
+#
+#                            # This device has a full keyboard. Pass through all other events.
+#                            if active not in [10, 11]:
+#                                await emit_events([seed_event])
+#                                continue
 
                     # Create list of events to fire.
                     # Handle new button presses.
@@ -841,10 +881,10 @@ def restore_controller():
 def main():
     # Attach the event loop of each device to the asyncio loop.
     asyncio.ensure_future(capture_controller_events())
-    asyncio.ensure_future(capture_keyboard_events())
-    asyncio.ensure_future(capture_ff_events())
-    asyncio.ensure_future(capture_power_events())
     asyncio.ensure_future(capture_gyro_events())
+    asyncio.ensure_future(capture_ff_events())
+    asyncio.ensure_future(capture_keyboard_events())
+    asyncio.ensure_future(capture_power_events())
 
     # Run asyncio loop to capture all events.
     loop = asyncio.get_event_loop()
