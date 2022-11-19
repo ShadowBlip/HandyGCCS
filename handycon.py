@@ -151,7 +151,7 @@ def id_system():
         "AOKZOE A1 AR07"
         ]:
         system_type = "AOK_GEN1"
-        BUTTON_DELAY = 0.07
+        BUTTON_DELAY = 0.08
 
     # Block devices that aren't supported as this could cause issues.
     else:
