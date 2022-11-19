@@ -327,15 +327,11 @@ def get_powerkey():
 
 def get_gyro():
     global gyro_device
-    # Make a gyro_device, if it exists.    
+    # Make a gyro_device, if it exists.
     try:
-        try:
-            from BMI160_i2c import Driver
-            gyro_device = Driver(GYRO_I2C_ADDR, GYRO_I2C_BUS)
-            logger.info("Found gyro device. Gyro support enabled.")
-        except ModuleNotFoundError:
-            logger.error("BMI160_i2c Module was not found. Install with `python3 -m pip install BMI160-i2c`. Skipping gyro device.")
-            gyro_device = False
+        from BMI160_i2c import Driver
+        gyro_device = Driver(addr=GYRO_I2C_ADDR, bus=GYRO_I2C_BUS)
+        logger.info("Found gyro device. Gyro support enabled.")
     except (FileNotFoundError, NameError, BrokenPipeError, OSError) as err:
         logger.error("Gyro device not initialized. Ensure bmi160_i2c and i2c_dev modules are loaded, and all python dependencies are met. Skipping gyro device setup.\n", err)
         gyro_device = False
