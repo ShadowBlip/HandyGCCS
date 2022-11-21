@@ -151,7 +151,7 @@ def id_system():
         "AOKZOE A1 AR07"
         ]:
         system_type = "AOK_GEN1"
-        BUTTON_DELAY = 0.07
+        BUTTON_DELAY = 0.08
 
     # Block devices that aren't supported as this could cause issues.
     else:
@@ -217,9 +217,10 @@ def get_controller():
             'OneXPlayer Gamepad',
             ]
     controller_phys =[
+            'usb-0000:00:14.0-9/input0',
             'usb-0000:03:00.3-4/input0',
             'usb-0000:04:00.3-4/input0',
-            'usb-0000:00:14.0-9/input0',
+            'usb-0000:e4:00.3-4/input0',
             ]
 
     # Grab the built-in devices. This will give us exclusive acces to the devices and their capabilities.
