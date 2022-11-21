@@ -829,7 +829,7 @@ async def capture_ff_events():
 
 # Emits passed or generated events to the virtual controller.
 async def emit_events(events: list):
-
+u
     if len(events) == 1:
         ui_device.write_event(events[0])
         ui_device.syn()
@@ -842,6 +842,7 @@ async def emit_events(events: list):
 
 # Gracefull shutdown.
 async def restore_all(loop):
+
     logger.info('Receved exit signal. Restoring Devices.')
     running = False
 
@@ -851,6 +852,8 @@ async def restore_all(loop):
     if keyboard_device:
         keyboard_device.ungrab()
         restore_keyboard()
+    if power_device & CAPTURE_POWER:
+        power_device.ungrab()
 
     # Kill all tasks. They are infinite loops so we will wait forver.
     tasks = [t for t in asyncio.all_tasks() if t is not asyncio.current_task()]
