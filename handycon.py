@@ -607,23 +607,18 @@ async def capture_keyboard_events():
                                     await do_rumble(0, 100, 1000, 0)
                                 continue
 
-#                            # BUTTON 2 (Default: QAM) Short press orange
-#                            if active == [10] and button_on == 1 and button2 not in event_queue:
-#                                event_queue.append(button2)
-#                            elif active == [] and seed_event.code in [10] and button_on == 0 and button2 in event_queue:
-#                                this_button = button2
-#                                await do_rumble(0, 150, 1000, 0)
-#
-#                            # BUTTON 4 (Default: OSK) Short press KB
-#                            if active == [11] and button_on == 1 and button4 not in event_queue:
-#                                event_queue.append(button4)
-#                            elif active == [] and seed_event.code in [11] and button_on == 0 and button4 in event_queue:
-#                                this_button = button4
-#
-#                            # This device has a full keyboard. Pass through all other events.
-#                            if active not in [10, 11]:
-#                                await emit_events([seed_event])
-#                                continue
+                            # BUTTON 2 (Default: QAM) Short press orange
+                            if active == [10] and button_on == 1 and button2 not in event_queue:
+                                event_queue.append(button2)
+                            elif active == [] and seed_event.code in [10] and button_on == 0 and button2 in event_queue:
+                                this_button = button2
+                                await do_rumble(0, 150, 1000, 0)
+
+                            # BUTTON 4 (Default: OSK) Short press KB
+                            if active == [11] and button_on == 1 and button4 not in event_queue:
+                                event_queue.append(button4)
+                            elif active == [] and seed_event.code in [11] and button_on == 0 and button4 in event_queue:
+                                this_button = button4
 
                     # Create list of events to fire.
                     # Handle new button presses.
