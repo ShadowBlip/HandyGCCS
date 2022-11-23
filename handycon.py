@@ -887,7 +887,7 @@ def restore_keyboard():
 def restore_controller():
     # Both devices threads will attempt this, so ignore if they have been moved.
     try:
-        move(HIDE_PATH / controller_event, controller_path)
+        move(str(HIDE_PATH / controller_event), controller_path)
     except FileNotFoundError:
         pass
 
