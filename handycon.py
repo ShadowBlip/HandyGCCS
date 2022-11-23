@@ -604,7 +604,7 @@ async def capture_keyboard_events():
                             if active == [11] and button_on == 1 and button3 not in event_queue:
                                 event_queue.append(button3)
                             elif active == [] and seed_event.code in [11] and button_on == 0 and button3 in event_queue:
-                                logger.debug(f"gyro_enabled: {gyro_enabled}")
+                                logger.debug(f"gyro_enabled: {not gyro_enabled}")
                                 if gyro_enabled := not gyro_enabled:
                                     await do_rumble(0, 250, 1000, 0)
                                 else:
