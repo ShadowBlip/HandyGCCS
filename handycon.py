@@ -197,7 +197,7 @@ def id_system():
         "G1619-04" #WinMax2
         ):
         CAPTURE_CONTROLLER = True
-        CAPTURE_KEYBOARD = False
+        CAPTURE_KEYBOARD = True
         CAPTURE_POWER = True
         BUTTON_DELAY = 0.09
         GYRO_I2C_ADDR = 0x69
@@ -313,6 +313,7 @@ def get_keyboard():
     global keyboard_device
     global keyboard_event
     global keyboard_path
+    global system_type
 
     # Identify system input event devices.
     try:
@@ -325,14 +326,20 @@ def get_keyboard():
 
     # Grab the built-in devices. This will give us exclusive acces to the devices and their capabilities.
     for device in devices_original:
-        if device.name == 'AT Translated Set 2 keyboard' and device.phys == 'isa0060/serio0/input0':
-            keyboard_path = device.path
-            keyboard_device = InputDevice(keyboard_path)
-            if CAPTURE_KEYBOARD:
-                keyboard_device.grab()
-                keyboard_event = p(keyboard_path).name
-                move(keyboard_path, HIDE_PATH+keyboard_event)
-            break
+        if system_type == "GPD_GEN1":
+            if device.name == '  Mouse for Windows' and device.phys == 'usb-0000:74:00.3-4/input0':
+                keyboard_path = device.path
+                keyboard_device = InputDevice(keyboard_path)
+        else:
+            if device.name == 'AT Translated Set 2 keyboard' and device.phys == 'isa0060/serio0/input0':
+                keyboard_path = device.path
+                keyboard_device = InputDevice(keyboard_path)
+
+        if CAPTURE_KEYBOARD && keyboard_device:
+            keyboard_device.grab()
+            keyboard_event = p(keyboard_path).name
+            move(keyboard_path, HIDE_PATH+keyboard_event)
+        break
 
     # Sometimes the service loads before all input devices have full initialized. Try a few times.
     if not keyboard_device:
