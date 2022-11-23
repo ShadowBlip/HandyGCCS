@@ -206,13 +206,13 @@ def id_system():
 
     # Block devices that aren't supported as this could cause issues.
     else:
-        print(system_id, "is not currently supported by this tool. Open an issue on \
+        logger.error(f"{system_id} is not currently supported by this tool. Open an issue on \
 GitHub at https://github.com/ShadowBlip/aya-neo-fixes if this is a bug. If possible, \
 please run the capture-system.py utility found on the GitHub repository and upload \
 that file with your issue.")
         exit(1)
 
-    logger.info("Identified host system as", system_id, "and configured defaults for", system_type)
+    logger.info(f"Identified host system as {system_id} and configured defaults for {system_type}.")
 
 def get_config():
     global HONE_PATH
@@ -305,7 +305,7 @@ def get_controller():
         sleep(DETECT_DELAY)
         return False
     else:
-        logger.info("Found", controller_device.name+".", "Capturing input data.")
+        logger.info(f"Found {controller_device.name}. Capturing input data.")
         return True
 
 def get_keyboard():
@@ -335,7 +335,7 @@ def get_keyboard():
                 keyboard_path = device.path
                 keyboard_device = InputDevice(keyboard_path)
 
-        if CAPTURE_KEYBOARD && keyboard_device:
+        if CAPTURE_KEYBOARD and keyboard_device:
             keyboard_device.grab()
             keyboard_event = p(keyboard_path).name
             move(keyboard_path, HIDE_PATH+keyboard_event)
@@ -347,7 +347,7 @@ def get_keyboard():
         sleep(DETECT_DELAY)
         return False
     else:
-        logger.info("Found", keyboard_device.name+".", "Capturing input data.")
+        logger.info(f"Found {keyboard_device.name}. Capturing input data.")
         return True
 
 def get_powerkey():
@@ -378,7 +378,7 @@ def get_powerkey():
         sleep(DETECT_DELAY)
         return False
     else:
-        logger.info("Found", power_device.name+".", "Capturing input data.")
+        logger.info(f"Found {power_device.name}. Capturing input data.")
         return True
 
 def get_gyro():
@@ -393,7 +393,7 @@ def get_gyro():
         gyro_device = Driver(addr=GYRO_I2C_ADDR, bus=GYRO_I2C_BUS)
         logger.info("Found gyro device. Gyro support enabled.")
     except (BrokenPipeError, FileNotFoundError, ModuleNotFoundError, NameError, OSError) as err:
-        logger.error("Gyro device not initialized. Ensure bmi160_i2c and i2c_dev modules are loaded, and all python dependencies are met. Skipping gyro device setup.\n", err)
+        logger.error(f"Gyro device not initialized. Ensure bmi160_i2c and i2c_dev modules are loaded, and all python dependencies are met. Skipping gyro device setup.\n{err}")
         gyro_device = False
 
 async def do_rumble(button=0, interval=10, length=1000, delay=0):
@@ -641,7 +641,7 @@ async def capture_keyboard_events():
                         await emit_events(events)
 
             except Exception as err:
-                logger.error("Error reading events from", keyboard_device.name+".", err)
+                logger.error(f"Error reading events from {keyboard_device.name}.\n{err}")
                 restore_keyboard()
                 keyboard_device = None
                 keyboard_event = None
@@ -691,7 +691,7 @@ async def capture_controller_events():
                     # Output the event.
                     await emit_events([event])
             except Exception as err:
-                logger.error("Error reading events from", controller_device.name+".", err)
+                logger.error(f"Error reading events from {controller_device.name}.\n{err}")
                 restore_controller()
                 controller_device = None
                 controller_event = None
@@ -811,7 +811,7 @@ async def capture_ff_events():
 
                 upload.retval = 0
             except IOError as err:
-                logger.error("Error uploading effect", effect.id, err)
+                logger.error(f"Error uploading effect {effect.id}.\n{err}")
                 upload.retval = -1
             
             ui_device.end_upload(upload)
@@ -824,14 +824,13 @@ async def capture_ff_events():
                 ff_effect_id_set.remove(erase.effect_id)
                 erase.retval = 0
             except IOError as err:
-                logger.error("Error erasing effect", erase.effect_id, err)
+                logger.error(f"Error erasing effect {erase.effect_id}.\n{err}")
                 erase.retval = -1
 
             ui_device.end_erase(erase)
 
 # Emits passed or generated events to the virtual controller.
 async def emit_events(events: list):
-u
     if len(events) == 1:
         ui_device.write_event(events[0])
         ui_device.syn()
@@ -845,7 +844,7 @@ u
 # Gracefull shutdown.
 async def restore_all(loop):
 
-    logger.info('Receved exit signal. Restoring Devices.')
+    logger.info("Receved exit signal. Restoring Devices.")
     running = False
 
     if controller_device:
@@ -902,7 +901,7 @@ def main():
     try:
         loop.run_forever()
     except Exception as e:
-        logger.error("Hit exception condition:\n", e)
+        logger.error(f"Hit exception condition.\n{e}")
     finally:
         loop.stop()
 
