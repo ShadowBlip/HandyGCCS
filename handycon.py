@@ -187,7 +187,7 @@ def id_system():
         CAPTURE_CONTROLLER = True
         CAPTURE_KEYBOARD = True
         CAPTURE_POWER = True
-        BUTTON_DELAY = 0.07
+        BUTTON_DELAY = 0.08
         GYRO_I2C_ADDR = 0x68
         GYRO_I2C_BUS = 1
         system_type = "AOK_GEN1"
@@ -284,10 +284,11 @@ def get_controller():
             'OneXPlayer Gamepad',
             )
     controller_phys = (
+            'usb-0000:00:14.0-9/input0',
             'usb-0000:03:00.3-4/input0',
             'usb-0000:04:00.3-4/input0',
-            'usb-0000:00:14.0-9/input0',
             'usb-0000:74:00.3-3/input0',
+            'usb-0000:e4:00.3-4/input0',
             )
 
     # Grab the built-in devices. This will give us exclusive acces to the devices and their capabilities.
