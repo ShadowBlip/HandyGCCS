@@ -8,20 +8,19 @@
 
 import asyncio
 import configparser
-from evdev import InputDevice, InputEvent, UInput, ecodes as e, list_devices, ff
 import logging
 import os
-from pathlib import Path
 import platform
-from shutil import move
+import re
 import signal
-from subprocess import call
 import sys
-from time import sleep, time
 import warnings
 
-
 from constants import CONTROLLER_EVENTS, DETECT_DELAY, EVENT_ESC, EVENT_HOME, EVENT_OSK, EVENT_QAM, EVENT_SCR, FF_DELAY, HIDE_PATH, JOY_MAX, JOY_MIN
+from evdev import InputDevice, InputEvent, UInput, ecodes as e, list_devices, ff
+from pathlib import Path
+from shutil import move
+from time import sleep, time
 
 logging.basicConfig(format="[%(asctime)s | %(filename)s:%(lineno)s:%(funcName)s] %(message)s",
                     datefmt="%y%m%d_%H:%M:%S",
@@ -61,10 +60,10 @@ HIDE_PATH = Path(HIDE_PATH)
 # Capture the username and home path of the user who has been logged in the longest.
 USER = None
 HOME_PATH = Path('/home')
-cmd = "who | awk '{print $1}' | sort | head -1"
 while USER is None:
-    who = [w.split() for w in os.popen('who').read().strip().split('\n')]
-    who.sort(key=lambda row: (row[2], row[3]))
+    who = [w.split(' ', maxsplit=1) for w in os.popen('who').read().strip().split('\n')]
+    who = [(w[0], re.search(r"(\d{4}-\d{2}-\d{2}\s\d{2}:\d{2})", w[1]).groups()[0]) for w in who]
+    who.sort(key=lambda row: row[1])
     USER = who[0][0]
     sleep(.1)
 logger.debug(f"USER: {USER}")
@@ -122,7 +121,6 @@ def id_system():
 
     # Identify the current device type. Kill script if not compatible.
     system_id = open("/sys/devices/virtual/dmi/id/product_name", "r").read().strip()
-    system_cpu = platform.processor()
 
     # Aya Neo from Founders edition through 2021 Pro Retro Power use the same 
     # input hardware and keycodes.
@@ -241,7 +239,7 @@ def get_config():
         config["Gyro"] = {"sensitivity": "20"}
         with open(config_path, 'w') as config_file:
             config.write(config_file)
-            call(["chown", f"{USER}:{USER}", config_path])
+            os.chown(config_path, USER, USER)
             logger.info(f"Created new config: {config_path}")
     button_map = {
     "button1": EVENT_MAP[config["Button Map"]["button1"]],
