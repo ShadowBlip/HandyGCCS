@@ -1,4 +1,4 @@
-#!/sbin/python3
+#!/usr/bin/env python3
 # HandyGCCS HandyCon
 # Copyright 2022 Derek J. Clark <derekjohn dot clark at gmail dot com>
 # This will create a virtual UInput device and pull data from the built-in
@@ -7,40 +7,68 @@
 # presses that Steam understands.
 
 import asyncio
-import os
-import signal
-import subprocess
-import warnings
 import configparser
-
-from evdev import InputDevice, InputEvent, UInput, ecodes as e, list_devices, ff
-from pathlib import PurePath as p
-from shutil import move
-from subprocess import call
-from time import sleep, time
+import logging
+import os
+import platform
+import re
+import signal
+import sys
+import warnings
 
 from constants import CONTROLLER_EVENTS, DETECT_DELAY, EVENT_ESC, EVENT_HOME, EVENT_OSK, EVENT_QAM, EVENT_SCR, FF_DELAY, HIDE_PATH, JOY_MAX, JOY_MIN
+from evdev import InputDevice, InputEvent, UInput, ecodes as e, list_devices, ff
+from pathlib import Path
+from shutil import move
+from time import sleep, time
+
+logging.basicConfig(format="[%(asctime)s | %(filename)s:%(lineno)s:%(funcName)s] %(message)s",
+                    datefmt="%y%m%d_%H:%M:%S",
+                    level=logging.DEBUG
+                    )
+
+logger = logging.getLogger(__name__)
 
 # TODO: asyncio is using a deprecated method in its loop, find an alternative.
 # Suppress for now to keep journalctl output clean.
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
-## Declare global variables
+## Declare globals
+
+# Constants
 BUTTON_DELAY = 0.0
 
-# Capture the username and home path of the first user to log in. This assumes
-# the first user is the only user.
+# These determine if we take exclusive control of the device or not. Most devices
+# will be True, but some like the WinMax devices with full keyboard only need
+# gyro support.
+
+CAPTURE_CONTROLLER = False
+CAPTURE_KEYBOARD = None
+CAPTURE_POWER = None
+GYRO_I2C_ADDR = None
+GYRO_I2C_BUS = None
+
+EVENT_MAP= {
+        "ESC": EVENT_ESC,
+        "HOME": EVENT_HOME,
+        "OSK": EVENT_OSK,
+        "QAM": EVENT_QAM,
+        "SCR": EVENT_SCR,
+    }
+
+HIDE_PATH = Path(HIDE_PATH)
+# Capture the username and home path of the user who has been logged in the longest.
 USER = None
-cmd = "who | awk '{print $1}' | sort | head -1"
-while USER == None:
-    USER_LIST = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout = subprocess.PIPE, stderr = subprocess.PIPE, shell=True)
-    for get_first in USER_LIST.stdout:
-        name = get_first.decode().strip()
-        if name is not None:
-            USER = name
-        break
+HOME_PATH = Path('/home')
+while USER is None:
+    who = [w.split(' ', maxsplit=1) for w in os.popen('who').read().strip().split('\n')]
+    who = [(w[0], re.search(r"(\d{4}-\d{2}-\d{2}\s\d{2}:\d{2})", w[1]).groups()[0]) for w in who]
+    who.sort(key=lambda row: row[1])
+    USER = who[0][0]
     sleep(.1)
-HOME_PATH = "/home/"+USER
+logger.debug(f"USER: {USER}")
+HOME_PATH /= USER
+logger.debug(f"HOME_PATH: {HOME_PATH}")
 
 # Functionality Variables
 event_queue = [] # Stores incoming button presses to block spam
@@ -60,12 +88,6 @@ system_type = None
 last_x_val = 0
 last_y_val = 0
 
-try :
-    from BMI160_i2c import Driver
-except ModuleNotFoundError:
-        print("BMI160_i2c Module was not found. Install with `python3 -m pip install BMI160-i2c`. Skipping gyro device.")
-        gyro_device = False
-
 # Paths
 controller_event = None
 controller_path = None
@@ -74,13 +96,6 @@ keyboard_path = None
 
 # Configuration
 button_map = {}
-EVENT_MAP= {
-        "ESC": EVENT_ESC,
-        "HOME": EVENT_HOME,
-        "OSK": EVENT_OSK,
-        "QAM": EVENT_QAM,
-        "SCR": EVENT_SCR,
-    }
 gyro_enabled = False
 gyro_sensitivity = 0
 
@@ -90,33 +105,42 @@ def __init__():
     global power_device
 
     id_system()
-    os.makedirs(HIDE_PATH, exist_ok=True)
+    Path(HIDE_PATH).mkdir(parents=True, exist_ok=True)
     get_config()
     make_controller()
 
 def id_system():
+    global CAPTURE_CONTROLLER
+    global CAPTURE_KEYBOARD
+    global CAPTURE_POWER
     global BUTTON_DELAY
+    global GYRO_I2C_ADDR
+    global GYRO_I2C_BUS
 
     global system_type
 
     # Identify the current device type. Kill script if not compatible.
     system_id = open("/sys/devices/virtual/dmi/id/product_name", "r").read().strip()
-    system_cpu = subprocess.check_output("lscpu | grep \"Vendor ID\" | cut -d : -f 2 | xargs", shell=True, universal_newlines=True).strip()
 
     # Aya Neo from Founders edition through 2021 Pro Retro Power use the same 
     # input hardware and keycodes.
-    if system_id in [
+    if system_id in (
         "AYA NEO FOUNDER",
         "AYA NEO 2021",
         "AYANEO 2021",
         "AYANEO 2021 Pro",
         "AYANEO 2021 Pro Retro Power",
-        ]:
-        system_type = "AYA_GEN1"
+        ):
+        CAPTURE_CONTROLLER = True
+        CAPTURE_KEYBOARD = True
+        CAPTURE_POWER = True
         BUTTON_DELAY = 0.09
+        GYRO_I2C_ADDR = 0x68
+        GYRO_I2C_BUS = 1
+        system_type = "AYA_GEN1"
 
     # Aya Neo NEXT and after use new keycodes and have fewer buttons.
-    elif system_id in [
+    elif system_id in (
         "NEXT",
         "NEXT Pro",
         "NEXT Advance",
@@ -125,14 +149,19 @@ def id_system():
         "AYANEO NEXT Advance",
         "AIR",
         "AIR Pro",
-        ]:
-        system_type = "AYA_GEN2"
+        ):
+        CAPTURE_CONTROLLER = True
+        CAPTURE_KEYBOARD = True
+        CAPTURE_POWER = True
         BUTTON_DELAY = 0.09
+        GYRO_I2C_ADDR = 0x68
+        GYRO_I2C_BUS = 1
+        system_type = "AYA_GEN2"
 
     # ONE XPLAYER devices. Original BIOS have incomplete DMI data and all
     # models report as "ONE XPLAYER". OXP have provided new DMI data via BIOS
     # updates.
-    elif system_id in [
+    elif system_id in (
         "ONE XPLAYER",
         "ONEXPLAYER 1 T08",
         "ONEXPLAYER 1S A08",
@@ -142,26 +171,48 @@ def id_system():
         "ONEXPLAYER mini GT72",
         "ONEXPLAYER GUNDAM GA72",
         "ONEXPLAYER 2 ARP23",
-        ]:
-        system_type = "OXP_GEN1"
+        ):
+        CAPTURE_CONTROLLER = True
+        CAPTURE_KEYBOARD = True
+        CAPTURE_POWER = True
         BUTTON_DELAY = 0.09
+        GYRO_I2C_ADDR = 0x68
+        GYRO_I2C_BUS = 1
+        system_type = "OXP_GEN1"
 
     # AOK ZOE Devices. Same layout as OXP devices.
-    elif system_id in [
+    elif system_id in (
         "AOKZOE A1 AR07"
-        ]:
-        system_type = "AOK_GEN1"
+        ):
+        CAPTURE_CONTROLLER = True
+        CAPTURE_KEYBOARD = True
+        CAPTURE_POWER = True
         BUTTON_DELAY = 0.08
+        GYRO_I2C_ADDR = 0x68
+        GYRO_I2C_BUS = 1
+        system_type = "AOK_GEN1"
+
+    # GPD Devices.
+    elif system_id in (
+        "G1619-04" #WinMax2
+        ):
+        CAPTURE_CONTROLLER = True
+        CAPTURE_KEYBOARD = True
+        CAPTURE_POWER = True
+        BUTTON_DELAY = 0.09
+        GYRO_I2C_ADDR = 0x69
+        GYRO_I2C_BUS = 2
+        system_type = "GPD_GEN1"
 
     # Block devices that aren't supported as this could cause issues.
     else:
-        print(system_id, "is not currently supported by this tool. Open an issue on \
+        logger.error(f"{system_id} is not currently supported by this tool. Open an issue on \
 GitHub at https://github.com/ShadowBlip/aya-neo-fixes if this is a bug. If possible, \
 please run the capture-system.py utility found on the GitHub repository and upload \
 that file with your issue.")
-        exit(1)
+        sys.exit(-1)
 
-    print("Identified host system as", system_id, "and configured defaults for", system_type)
+    logger.info(f"Identified host system as {system_id} and configured defaults for {system_type}.")
 
 def get_config():
     global HONE_PATH
@@ -173,8 +224,9 @@ def get_config():
     config = configparser.ConfigParser()
 
     # Check for an existing config file and load it.
-    config_path = HOME_PATH+"/.config/handygccs.conf"
+    config_path = HOME_PATH / ".config/handygccs.conf"
     if os.path.exists(config_path):
+        logger.info(f"Loading existing config: {config_path}")
         config.read(config_path)
     else:
         config["Button Map"] = {
@@ -187,7 +239,8 @@ def get_config():
         config["Gyro"] = {"sensitivity": "20"}
         with open(config_path, 'w') as config_file:
             config.write(config_file)
-            call(["chown", USER+":"+USER, config_path])
+            os.chown(config_path, USER, USER)
+            logger.info(f"Created new config: {config_path}")
     button_map = {
     "button1": EVENT_MAP[config["Button Map"]["button1"]],
     "button2": EVENT_MAP[config["Button Map"]["button2"]],
@@ -197,7 +250,21 @@ def get_config():
     }
     gyro_sensitivity = int(config["Gyro"]["sensitivity"])
 
+def make_controller():
+    global ui_device
+
+    # Create the virtual controller.
+    ui_device = UInput(
+            CONTROLLER_EVENTS,
+            name='Handheld Controller',
+            bustype=0x3,
+            vendor=0x045e,
+            product=0x028e,
+            version=0x110
+            )
+
 def get_controller():
+    global CAPTURE_CONTROLLER
     global controller_device
     global controller_event
     global controller_path
@@ -207,75 +274,86 @@ def get_controller():
         devices_original = [InputDevice(path) for path in list_devices()]
 
     except Exception as err:
-        print("Error when scanning event devices. Restarting scan.")
+        logger.error("Error when scanning event devices. Restarting scan.")
         sleep(DETECT_DELAY)
         return False
 
-    controller_names = [
+    controller_names = (
             'Microsoft X-Box 360 pad',
             'Generic X-Box pad',
             'OneXPlayer Gamepad',
-            ]
-    controller_phys =[
+            )
+    controller_phys = (
             'usb-0000:00:14.0-9/input0',
             'usb-0000:03:00.3-4/input0',
             'usb-0000:04:00.3-4/input0',
+            'usb-0000:74:00.3-3/input0',
             'usb-0000:e4:00.3-4/input0',
-            ]
+            )
 
     # Grab the built-in devices. This will give us exclusive acces to the devices and their capabilities.
     for device in devices_original:
         if device.name in controller_names and device.phys in controller_phys:
             controller_path = device.path
             controller_device = InputDevice(controller_path)
-            controller_device.grab()
-            controller_event = p(controller_path).name
-            move(controller_path, HIDE_PATH+controller_event)
+            if CAPTURE_CONTROLLER:
+                controller_device.grab()
+                controller_event = Path(controller_path).name
+                move(controller_path, str(HIDE_PATH / controller_event))
             break
 
     # Sometimes the service loads before all input devices have full initialized. Try a few times.
     if not controller_device:
-        print("Controller device not yet found. Restarting scan.")
+        logger.warn("Controller device not yet found. Restarting scan.")
         sleep(DETECT_DELAY)
         return False
     else:
-        print("Found", controller_device.name+".", "Capturing input data.")
+        logger.info(f"Found {controller_device.name}. Capturing input data.")
         return True
 
 def get_keyboard():
+    global CAPTURE_KEYBOARD
     global keyboard_device
     global keyboard_event
     global keyboard_path
+    global system_type
 
-    # Identify system input event devices.
     try:
-        devices_original = [InputDevice(path) for path in list_devices()]
+        # Grab the built-in devices. This will give us exclusive acces to the devices and their capabilities.
+        for device in [InputDevice(path) for path in list_devices()]:
+            if system_type == "GPD_GEN1":
+                logger.debug(f"{device.name}, {device.phys}")
+                if device.name == '  Mouse for Windows' and device.phys == 'usb-0000:74:00.3-4/input1':
+                    keyboard_path = device.path
+                    keyboard_device = InputDevice(keyboard_path)
+            else:
+                if device.name == 'AT Translated Set 2 keyboard' and device.phys == 'isa0060/serio0/input0':
+                    keyboard_path = device.path
+                    keyboard_device = InputDevice(keyboard_path)
+
+            if CAPTURE_KEYBOARD and keyboard_device:
+                keyboard_device.grab()
+                keyboard_event = Path(keyboard_path).name
+                move(keyboard_path, str(HIDE_PATH / keyboard_event))
+                break
+
+        # Sometimes the service loads before all input devices have full initialized. Try a few times.
+        if not keyboard_device:
+            logger.warn("Keyboard device not yet found. Restarting scan.")
+            sleep(DETECT_DELAY)
+            return False
+        else:
+            logger.info(f"Found {keyboard_device.name}. Capturing input data.")
+            return True
+
     # Some funky stuff happens sometimes when booting. Give it another shot.
     except Exception as err:
-        print("Error when scanning event devices. Restarting scan.")
+        logger.error("Error when scanning event devices. Restarting scan.")
         sleep(DETECT_DELAY)
         return False
-
-    # Grab the built-in devices. This will give us exclusive acces to the devices and their capabilities.
-    for device in devices_original:
-        if device.name == 'AT Translated Set 2 keyboard' and device.phys == 'isa0060/serio0/input0':
-            keyboard_path = device.path
-            keyboard_device = InputDevice(keyboard_path)
-            keyboard_device.grab()
-            keyboard_event = p(keyboard_path).name
-            move(keyboard_path, HIDE_PATH+keyboard_event)
-            break
-
-    # Sometimes the service loads before all input devices have full initialized. Try a few times.
-    if not keyboard_device:
-        print("Keyboard device not yet found. Restarting scan.")
-        sleep(DETECT_DELAY)
-        return False
-    else:
-        print("Found", keyboard_device.name+".", "Capturing input data.")
-        return True
 
 def get_powerkey():
+    global CAPTURE_POWER
     global power_device
 
     # Identify system input event devices.
@@ -283,7 +361,7 @@ def get_powerkey():
         devices_original = [InputDevice(path) for path in list_devices()]
     # Some funky stuff happens sometimes when booting. Give it another shot.
     except Exception as err:
-        print("Error when scanning event devices. Restarting scan.")
+        logger.error("Error when scanning event devices. Restarting scan.")
         sleep(DETECT_DELAY)
         return False
 
@@ -293,40 +371,35 @@ def get_powerkey():
         # Power Button
         if device.name == 'Power Button' and device.phys == "LNXPWRBN/button/input0":
             power_device = device
-            power_device.grab()
+            if CAPTURE_POWER:
+                power_device.grab()
             break
 
     if not power_device:
-        print("Power Button device not yet found. Restarting scan.")
+        logger.warn("Power Button device not yet found. Restarting scan.")
         sleep(DETECT_DELAY)
         return False
     else:
-        print("Found", power_device.name+".", "Capturing input data.")
+        logger.info(f"Found {power_device.name}. Capturing input data.")
         return True
 
 def get_gyro():
+    global GYRO_I2C_ADDR
+    global GYRO_I2C_BUS
+
     global gyro_device
+
     # Make a gyro_device, if it exists.
     try:
-        gyro_device = Driver(0x68)
-        print("Found gyro device. Gyro support enabled.")
-
-    except (FileNotFoundError, NameError, BrokenPipeError, OSError) as err:
-        print("Gyro device not initialized. Ensure bmi160_i2c and i2c_dev modules are loaded, and all python dependencies are met. Skipping gyro device setup.\n", err)
-        gyro_device=False
-
-def make_controller():
-    global ui_device
-
-    # Create the virtual controller.
-    ui_device = UInput(
-            CONTROLLER_EVENTS,
-            name='Handheld Controller',
-            bustype=int('3', base=16),
-            vendor=int('045e', base=16),
-            product=int('028e', base=16),
-            version=int('110', base=16)
-            )
+        from BMI160_i2c import Driver
+        gyro_device = Driver(addr=GYRO_I2C_ADDR, bus=GYRO_I2C_BUS)
+        logger.info("Found gyro device. Gyro support enabled.")
+    except ModuleNotFoundError as err:
+        logger.error(f"{err} | Gyro device not initialized. Skipping gyro device setup.")
+        gyro_device = False
+    except (BrokenPipeError, FileNotFoundError, NameError, OSError) as err:
+        logger.error(f"{err} | Gyro device not initialized. Ensure bmi160_i2c and i2c_dev modules are loaded. Skipping gyro device setup.")
+        gyro_device = False
 
 async def do_rumble(button=0, interval=10, length=1000, delay=0):
     global controller_device
@@ -349,7 +422,7 @@ async def do_rumble(button=0, interval=10, length=1000, delay=0):
     # Upload and transmit the effect.
     effect_id = controller_device.upload_effect(effect)
     controller_device.write(e.EV_FF, effect_id, 1)
-    await asyncio.sleep(interval/1000)
+    await asyncio.sleep(interval / 1000)
     controller_device.erase_effect(effect_id)
 
 # Captures keyboard events and translates them to virtual device events.
@@ -384,10 +457,10 @@ async def capture_keyboard_events():
                     button_on = seed_event.value
 
                     # Debugging variables
-                    #if active != []:
-                    #    print("Active Keys:", keyboard_device.active_keys(verbose=True), "Seed Value", seed_event.value, "Seed Code:", seed_event.code, "Seed Type:", seed_event.type, "Button pressed", button_on)
-                    #if event_queue != []:
-                    #    print("Queued events:", event_queue)
+                    # if active != []:
+                    #     logging.debug(f"Active Keys: {keyboard_device.active_keys(verbose=True)}, Seed Value: {seed_event.value}, Seed Code: {seed_event.code}, Seed Type: {seed_event.type}, Button pressed: {button_on}.")
+                    # if event_queue != []:
+                    #     logging.debug(f"Queued events: {event_queue}")
 
                     # Automatically pass default keycodes we dont intend to replace.
                     if seed_event.code in [e.KEY_VOLUMEDOWN, e.KEY_VOLUMEUP]:
@@ -525,6 +598,28 @@ async def capture_keyboard_events():
                             elif active == [] and seed_event.code == 125 and button_on == 0 and  event_queue == [] and shutdown == True:
                                 shutdown = False
 
+                        case "GPD_GEN1":
+                            # Toggle gyro.
+                            if active == [11] and button_on == 1 and button3 not in event_queue:
+                                event_queue.append(button3)
+                            elif active == [] and seed_event.code in [11] and button_on == 0 and button3 in event_queue:
+                                logger.debug(f"gyro_enabled: {not gyro_enabled}")
+                                if gyro_enabled := not gyro_enabled:
+                                    await do_rumble(0, 250, 1000, 0)
+                                else:
+                                    await do_rumble(0, 100, 1000, 0)
+                                    await asyncio.sleep(FF_DELAY)
+                                    await do_rumble(0, 100, 1000, 0)
+                                continue
+
+                            # BUTTON 2 (Default: QAM) Short press orange
+                            if active == [10] and button_on == 1 and button2 not in event_queue:
+                                event_queue.append(button2)
+                            elif active == [] and seed_event.code in [10] and button_on == 0 and button2 in event_queue:
+                                this_button = button2
+                                await do_rumble(0, 150, 1000, 0)
+                                logger.debug("QAM")
+
                     # Create list of events to fire.
                     # Handle new button presses.
                     if this_button and not last_button:
@@ -546,13 +641,13 @@ async def capture_keyboard_events():
                         await emit_events(events)
 
             except Exception as err:
-                print("Error reading events from", keyboard_device.name+".", err)
+                logger.error(f"{err} | Error reading events from {keyboard_device.name}")
                 restore_keyboard()
                 keyboard_device = None
                 keyboard_event = None
                 keyboard_path = None
         else:
-            print("Attempting to grab keyboard device...")
+            logger.info("Attempting to grab keyboard device...")
             get_keyboard()
             await asyncio.sleep(DETECT_DELAY)
 
@@ -596,13 +691,13 @@ async def capture_controller_events():
                     # Output the event.
                     await emit_events([event])
             except Exception as err:
-                print("Error reading events from", controller_device.name+".", err)
+                logger.error(f"{err} | Error reading events from {controller_device.name}.")
                 restore_controller()
                 controller_device = None
                 controller_event = None
                 controller_path = None
         else:
-            print("Attempting to grab controller device...")
+            logger.info("Attempting to grab controller device...")
             get_controller()
             await asyncio.sleep(DETECT_DELAY)
 
@@ -651,15 +746,16 @@ async def capture_power_events():
                     active_keys = keyboard_device.active_keys()
                     if event.type == e.EV_KEY and event.code == 116: # KEY_POWER
                         if event.value == 0:
+                            steam_path = HOME_PATH / '.steam/root/ubuntu12_32/steam'
                             if active_keys == [125]:
                                 # For DeckUI Sessions
                                 shutdown = True
-                                cmd = 'su {} -c "{}/.steam/root/ubuntu12_32/steam -ifrunning steam://longpowerpress"'.format(USER, HOME_PATH)
+                                cmd = f'su {USER} -c "{steam_path} -ifrunning steam://longpowerpress"'
                                 os.system(cmd)
 
                             else:
                                 # For DeckUI Sessions
-                                cmd = 'su {} -c "{}/.steam/root/ubuntu12_32/steam -ifrunning steam://shortpowerpress"'.format(USER, HOME_PATH)
+                                cmd = f'su {USER} -c "{steam_path} -ifrunning steam://shortpowerpress"'
                                 os.system(cmd)
 
                                 # For BPM and Desktop sessions
@@ -670,10 +766,10 @@ async def capture_power_events():
                         await do_rumble(0, 150, 1000, 0)
             
             except Exception as err:
-                print("Error reading events from power device", err)
+                logger.error(f"{err} | Error reading events from power device.")
                 power_device = None
         else:
-            print("Attempting to grab power device...")
+            logger.info("Attempting to grab power device...")
             get_powerkey()
             await asyncio.sleep(DETECT_DELAY)
 
@@ -716,7 +812,7 @@ async def capture_ff_events():
 
                 upload.retval = 0
             except IOError as err:
-                print("Error uploading effect", effect.id, err)
+                logger.error(f"{err} | Error uploading effect {effect.id}.")
                 upload.retval = -1
             
             ui_device.end_upload(upload)
@@ -729,14 +825,13 @@ async def capture_ff_events():
                 ff_effect_id_set.remove(erase.effect_id)
                 erase.retval = 0
             except IOError as err:
-                print("Error erasing effect", erase.effect_id, err)
+                logger.error(f"{err} | Error erasing effect {erase.effect_id}.")
                 erase.retval = -1
 
             ui_device.end_erase(erase)
 
 # Emits passed or generated events to the virtual controller.
 async def emit_events(events: list):
-
     if len(events) == 1:
         ui_device.write_event(events[0])
         ui_device.syn()
@@ -749,38 +844,49 @@ async def emit_events(events: list):
 
 # Gracefull shutdown.
 async def restore_all(loop):
-    print('Receved exit signal. Restoring Devices.')
+    logger.info("Receved exit signal. Restoring devices.")
     running = False
 
     if controller_device:
-        controller_device.ungrab()
+        try:
+            controller_device.ungrab()
+        except IOError as err:
+            logger.warn(f"{err} | Device wasn't grabbed.")
         restore_controller()
     if keyboard_device:
-        keyboard_device.ungrab()
+        try:
+            keyboard_device.ungrab()
+        except IOError as err:
+            logger.warn(f"{err} | Device wasn't grabbed.")
         restore_keyboard()
+    if power_device and CAPTURE_POWER:
+        try:
+            power_device.ungrab()
+        except IOError as err:
+            logger.warn(f"{err} | Device wasn't grabbed.")
+    logger.info("Devices restored.")
 
     # Kill all tasks. They are infinite loops so we will wait forver.
-    tasks = [t for t in asyncio.all_tasks() if t is not asyncio.current_task()]
-    for task in tasks:
+    for task in [t for t in asyncio.all_tasks() if t is not asyncio.current_task()]:
         task.cancel()
         try:
             await task
         except asyncio.CancelledError:
             pass
     loop.stop()
-    print("Device restore complete. Handheld Game Console Controller Service Stopped...")
+    logger.info("Handheld Game Console Controller Service stopped.")
 
 def restore_keyboard():
     # Both devices threads will attempt this, so ignore if they have been moved.
     try:
-        move(HIDE_PATH+keyboard_event, keyboard_path)
+        move(str(HIDE_PATH / keyboard_event), keyboard_path)
     except FileNotFoundError:
         pass
 
 def restore_controller():
     # Both devices threads will attempt this, so ignore if they have been moved.
     try:
-        move(HIDE_PATH+controller_event, controller_path)
+        move(str(HIDE_PATH / controller_event), controller_path)
     except FileNotFoundError:
         pass
 
@@ -788,26 +894,34 @@ def restore_controller():
 def main():
     # Attach the event loop of each device to the asyncio loop.
     asyncio.ensure_future(capture_controller_events())
-    asyncio.ensure_future(capture_keyboard_events())
-    asyncio.ensure_future(capture_ff_events())
-    asyncio.ensure_future(capture_power_events())
     asyncio.ensure_future(capture_gyro_events())
+    asyncio.ensure_future(capture_ff_events())
+    asyncio.ensure_future(capture_keyboard_events())
+    asyncio.ensure_future(capture_power_events())
+
+    logger.info("Handheld Game Console Controller Service started.")
 
     # Run asyncio loop to capture all events.
     loop = asyncio.get_event_loop()
 
     # Establish signaling to handle gracefull shutdown.
-    signals = (signal.SIGHUP, signal.SIGTERM, signal.SIGINT, signal.SIGQUIT)
-    for s in signals:
+    for s in (signal.SIGHUP, signal.SIGTERM, signal.SIGINT, signal.SIGQUIT):
         loop.add_signal_handler(s, lambda s=s: asyncio.create_task(restore_all(loop)))
 
     try:
         loop.run_forever()
-    except Exception as e:
-        print("Hit exception condition:\n", e)
+        exit_code = 0
+    except KeyboardInterrupt:
+        logger.info("Keyboard interrupt.")
+        exit_code = 1
+    except Exception as err:
+        logger.error(f"{err} | Hit exception condition.")
+        exit_code = 2
     finally:
         loop.stop()
+        sys.exit(exit_code)
 
 if __name__ == "__main__":
     __init__()
     main()
+
