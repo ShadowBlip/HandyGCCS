@@ -36,11 +36,11 @@ def capture_system():
     for device in devices:
         
         # Xbox 360 Controller
-        if device.name in ['Microsoft X-Box 360 pad', 'Generic X-Box pad'] and device.phys in ['usb-0000:03:00.3-4/input0', 'usb-0000:00:14.0-9/input0']:
+        if device.name in ['Microsoft X-Box 360 pad', 'Generic X-Box pad', 'OneXPlayer Gamepad',]:
             xb_path = device.path
 
         # Keyboard Device
-        elif device.name == 'AT Translated Set 2 keyboard' and device.phys == 'isa0060/serio0/input0':
+        elif device.name == 'AT Translated Set 2 keyboard':
             kb_path = device.path
     
     # Catch if devices weren't found.
@@ -148,7 +148,7 @@ def save_capture():
             f.write(str(keymap))
             f.write('\n')
     print('Capture complete. Please upload the file titled "capture_file.txt" in \
-a new GitHub issue to https://github.com/ShadowBlip/aya-neo-fixes/issues and any \
+a new GitHub issue to https://github.com/ShadowBlip/HandyGCCS/issues and any \
 additional information you have.')
 
 

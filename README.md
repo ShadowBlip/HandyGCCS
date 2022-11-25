@@ -2,11 +2,41 @@
 Handheld Game Console Controller Support (Handy Geeks) for Linux
 
 Designed to bring the full controller functionality to handheld game consoles including:
-- Programmable extra buttons.
-- Gyroscope joystick support.
-- Support for all Aya Neo and OneXPlayer devices.
+- Programmable extra buttons
+- Gyroscope joystick input
+- Rumble effects
 
-### Under active development, check back later!
+## Background
+Many of the handheld game consoles designed for windows have buttons on then in addition to the normal "X-Box" style controls. These controls are typically keyboard macros for built in windows functions (such as CTRL+ALT+DEL). This software captures all input from these devices, as well as the built in controller, hides them from the system, and creates a new virtual controller that acts as a single input device. This ensures that input isn't duplicated, and all buttons appear to come from the same controller.
+
+## Emulated Buttons
+Most of the buttons are mapped to the steam shortcuts for various functions in the new GamepadUI, to include:
+- Quick Access Menu
+- The Guide (Steam/Xbox/Playstion) button
+- On Screen Keyboard
+- Screenshot
+- Escape
+
+More functions can be added as possible configuration if desired for your personal cofiguration, submit an issue or pull request to ge them added. 
+
+## Supported Devices
+
+### Aya Neo
+- Founders Edition
+- 2021 and 2021 Pro
+- Next and Next Pro
+- Air and Air Pro
+
+### OneNetBook
+- OneXPlayer 1S
+- OneXPlayer Mini
+- OneXPlayer Mini Pro
+
+### AOK ZOE
+- AOK ZOE A1 
+
+### GPD
+- GPD WinMax2
 
 ## Installation
 
