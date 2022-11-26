@@ -122,8 +122,11 @@ def id_system():
     # Identify the current device type. Kill script if not compatible.
     system_id = open("/sys/devices/virtual/dmi/id/product_name", "r").read().strip()
 
-    # Aya Neo from Founders edition through 2021 Pro Retro Power use the same 
+    ## Aya Neo Devices
+    # Aya Neo from Founders edition through 2021 Pro Retro Power use the same
     # input hardware and keycodes.
+    # Aya Neo NEXT and AIR use new keycodes and have fewer buttons.
+    # Aya Neo 2 and Geek use different keycodes than NEXT/AIR with same buttons
     if system_id in (
         "AYA NEO FOUNDER",
         "AYA NEO 2021",
@@ -139,7 +142,6 @@ def id_system():
         GYRO_I2C_BUS = 1
         system_type = "AYA_GEN1"
 
-    # Aya Neo NEXT and AIR use new keycodes and have fewer buttons.
     elif system_id in (
         "NEXT",
         "NEXT Pro",
@@ -158,9 +160,9 @@ def id_system():
         GYRO_I2C_BUS = 1
         system_type = "AYA_GEN2"
 
-    # ONEXPLAYER devices. Original BIOS have incomplete DMI data and all
-    # models report as "ONE XPLAYER". OXP have provided new DMI data via BIOS
-    # updates.
+    ## ONEXPLAYER and AOKZOE devices.
+    # Original BIOS have incomplete DMI data and all models report as
+    # "ONE XPLAYER". OXP have provided new DMI data via BIOS updates.
     elif system_id in (
         "ONE XPLAYER",
         "ONEXPLAYER 1 T08",
@@ -180,7 +182,6 @@ def id_system():
         GYRO_I2C_BUS = 1
         system_type = "OXP_GEN1"
 
-    # AOK ZOE Devices. Same layout as OXP devices.
     elif system_id in (
         "ONEXPLAYER Mini Pro",
         "AOKZOE A1 AR07"
@@ -193,7 +194,8 @@ def id_system():
         GYRO_I2C_BUS = 1
         system_type = "OXP_GEN2"
 
-    # GPD Devices.
+    ## GPD Devices.
+    # Has 2 buttons with 3 modes (left, right, both)
     elif system_id in (
         "G1619-04" #WinMax2
         ):
@@ -601,7 +603,14 @@ async def capture_keyboard_events():
                                 shutdown = False
 
                         case "GPD_GEN1":
-                            # Toggle gyro.
+                            # BUTTON 2 (Default: QAM)
+                            if active == [10] and button_on == 1 and button2 not in event_queue:
+                                event_queue.append(button2)
+                            elif active == [] and seed_event.code in [10] and button_on == 0 and button2 in event_queue:
+                                this_button = button2
+                                await do_rumble(0, 150, 1000, 0)
+
+                            # BUTTON 3 Toggle gyro.
                             if active == [11] and button_on == 1 and button3 not in event_queue:
                                 event_queue.append(button3)
                             elif active == [] and seed_event.code in [11] and button_on == 0 and button3 in event_queue:
@@ -614,13 +623,11 @@ async def capture_keyboard_events():
                                     await do_rumble(0, 100, 1000, 0)
                                 continue
 
-                            # BUTTON 2 (Default: QAM) Short press orange
-                            if active == [10] and button_on == 1 and button2 not in event_queue:
-                                event_queue.append(button2)
-                            elif active == [] and seed_event.code in [10] and button_on == 0 and button2 in event_queue:
-                                this_button = button2
-                                await do_rumble(0, 150, 1000, 0)
-                                logger.debug("QAM")
+                            # BUTTON 1 (Both buttons pressed, Default: Screenshot)
+                            if active == [10, 11] and button_on == 1 and button1 not in event_queue:
+                                event_queue.append(button1)
+                            elif active == [] and seed_event.code in [10, 11] and button_on == 0 and button1 in event_queue:
+                                this_button = button1
 
                     # Create list of events to fire.
                     # Handle new button presses.
