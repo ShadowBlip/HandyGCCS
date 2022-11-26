@@ -139,7 +139,7 @@ def id_system():
         GYRO_I2C_BUS = 1
         system_type = "AYA_GEN1"
 
-    # Aya Neo NEXT and after use new keycodes and have fewer buttons.
+    # Aya Neo NEXT and AIR use new keycodes and have fewer buttons.
     elif system_id in (
         "NEXT",
         "NEXT Pro",
@@ -158,7 +158,7 @@ def id_system():
         GYRO_I2C_BUS = 1
         system_type = "AYA_GEN2"
 
-    # ONE XPLAYER devices. Original BIOS have incomplete DMI data and all
+    # ONEXPLAYER devices. Original BIOS have incomplete DMI data and all
     # models report as "ONE XPLAYER". OXP have provided new DMI data via BIOS
     # updates.
     elif system_id in (
@@ -170,6 +170,7 @@ def id_system():
         "ONEXPLAYER mini GA72",
         "ONEXPLAYER mini GT72",
         "ONEXPLAYER GUNDAM GA72",
+        "ONEXPLAYER Mini Pro",
         "ONEXPLAYER 2 ARP23",
         ):
         CAPTURE_CONTROLLER = True
@@ -288,6 +289,7 @@ def get_controller():
             'usb-0000:03:00.3-4/input0',
             'usb-0000:04:00.3-4/input0',
             'usb-0000:74:00.3-3/input0',
+            'usb-0000:e3:00.3-4/input0',
             'usb-0000:e4:00.3-4/input0',
             )
 
