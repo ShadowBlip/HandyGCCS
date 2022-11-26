@@ -170,7 +170,6 @@ def id_system():
         "ONEXPLAYER mini GA72",
         "ONEXPLAYER mini GT72",
         "ONEXPLAYER GUNDAM GA72",
-        "ONEXPLAYER Mini Pro",
         "ONEXPLAYER 2 ARP23",
         ):
         CAPTURE_CONTROLLER = True
@@ -183,6 +182,7 @@ def id_system():
 
     # AOK ZOE Devices. Same layout as OXP devices.
     elif system_id in (
+        "ONEXPLAYER Mini Pro",
         "AOKZOE A1 AR07"
         ):
         CAPTURE_CONTROLLER = True
@@ -191,7 +191,7 @@ def id_system():
         BUTTON_DELAY = 0.08
         GYRO_I2C_ADDR = 0x68
         GYRO_I2C_BUS = 1
-        system_type = "AOK_GEN1"
+        system_type = "OXP_GEN2"
 
     # GPD Devices.
     elif system_id in (
@@ -557,7 +557,7 @@ async def capture_keyboard_events():
                             elif active == [] and seed_event.code == 125 and button_on == 0 and  event_queue == [] and shutdown == True:
                                 shutdown = False
 
-                        case "OXP_GEN1" | "AOK_GEN1":
+                        case "OXP_GEN1" | "OXP_GEN2":
                             # BUTTON 1 (Default: Not used, dangerous fan activity!) Short press orange + |||||
                             if active == [99, 125] and button_on == 1 and button1 not in event_queue:
                                 pass
