@@ -56,7 +56,7 @@ EVENT_MAP= {
         "KILL": EVENT_KILL,
         "OSK": EVENT_OSK,
         "QAM": EVENT_QAM,
-        "SCR": EVENT_SCR,        
+        "SCR": EVENT_SCR,
     }
 
 HIDE_PATH = Path(HIDE_PATH)
