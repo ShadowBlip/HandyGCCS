@@ -17,7 +17,7 @@ import subprocess
 import sys
 import warnings
 
-from constants import CONTROLLER_EVENTS, DETECT_DELAY, EVENT_ESC, EVENT_HOME, EVENT_OSK, EVENT_QAM, EVENT_SCR, FF_DELAY, HIDE_PATH, JOY_MAX, JOY_MIN
+from constants import CONTROLLER_EVENTS, DETECT_DELAY, EVENT_ALT_TAB, EVENT_ESC, EVENT_HOME, EVENT_KILL, EVENT_OSK, EVENT_QAM, EVENT_SCR, FF_DELAY, HIDE_PATH, JOY_MAX, JOY_MIN
 from evdev import InputDevice, InputEvent, UInput, ecodes as e, list_devices, ff
 from pathlib import Path
 from shutil import move
@@ -50,8 +50,10 @@ GYRO_I2C_ADDR = None
 GYRO_I2C_BUS = None
 
 EVENT_MAP= {
+        "ALT_TAB": EVENT_ALT_TAB,
         "ESC": EVENT_ESC,
         "HOME": EVENT_HOME,
+        "KILL": EVENT_KILL,
         "OSK": EVENT_OSK,
         "QAM": EVENT_QAM,
         "SCR": EVENT_SCR,
