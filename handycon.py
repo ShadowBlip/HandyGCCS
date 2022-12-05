@@ -228,20 +228,23 @@ that file with your issue.")
     logger.info(f"Identified host system as {system_id} and configured defaults for {system_type}.")
 
 def get_config():
-    global HONE_PATH
-    global USER
-
     global button_map
     global gyro_sensitivity
 
     config = configparser.ConfigParser()
 
     # Check for an existing config file and load it.
-    config_path = HOME_PATH / ".config/handygccs.conf"
+    config_dir = "/etc/handygccs/"
+    config_path = config_dir+"handygccs.conf"
     if os.path.exists(config_path):
         logger.info(f"Loading existing config: {config_path}")
         config.read(config_path)
     else:
+        # Make the HandyGCCS directory if it doesn't exist.
+        if not os.path.exists(config_dir):
+            os.mkdir(config_dir)
+
+        # Write a basic config file.
         config["Button Map"] = {
                 "button1": "SCR",
                 "button2": "QAM",
@@ -252,8 +255,9 @@ def get_config():
         config["Gyro"] = {"sensitivity": "20"}
         with open(config_path, 'w') as config_file:
             config.write(config_file)
-            os.chown(config_path, USER, USER)
             logger.info(f"Created new config: {config_path}")
+
+    # Assign config file values
     button_map = {
     "button1": EVENT_MAP[config["Button Map"]["button1"]],
     "button2": EVENT_MAP[config["Button Map"]["button2"]],
