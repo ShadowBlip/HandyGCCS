@@ -595,9 +595,10 @@ async def capture_keyboard_events():
                             elif active == [] and seed_event.code in [88, 96, 97, 105, 125, 133] and button_on == 0 and button5 in event_queue:
                                 this_button = button5
 
-                            if active == [32, 87, 97, 125] and button_on == 1 and button6 not in event_queue:
+                            # BUTTON 6 (Default: Toggle RyzenAdj) Big button + Small Button
+                            if active == [32, 88, 97, 125] and button_on == 1 and button6 not in event_queue:
                                 event_queue.append(button6)
-                            elif active == [] and seed_event.code in [32, 87, 97, 125] and button_on == 0 and button6 in event_queue:
+                            elif active == [] and seed_event.code in [32, 88, 97, 125] and button_on == 0 and button6 in event_queue:
                                 event_queue.remove(button6)
                                 await toggle_performance()
 
