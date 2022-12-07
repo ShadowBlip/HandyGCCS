@@ -108,7 +108,11 @@ keyboard_path = None
 button_map = {}
 gyro_enabled = False
 gyro_sensitivity = 0
-performance_mode = None
+
+# RyzenAdj settings
+performance_mode = "--power-saving"
+selected_performance = None
+RYZENADJ_DELAY = 5.0
 
 def __init__():
     global controller_device
@@ -420,22 +424,48 @@ def get_gyro():
         logger.error(f"{err} | Gyro device not initialized. Ensure bmi160_i2c and i2c_dev modules are loaded. Skipping gyro device setup.")
         gyro_device = False
 
+# RYZENADJ
 def toggle_performance():
     global performance_mode
 
-    if performance_mode in [None, "--max-performance"]:
+    if performance_mode == "--max-performance":
         performance_mode = "--power-saving"
-
     else:
         performance_mode = "--max-performance"
 
+async def set_performance():
+    global performance_mode
+    global selected_performance
+
     ryzenadj_cmd = f"ryzenadj {performance_mode}"
     logger.info(os.popen(ryzenadj_cmd, 'r', 1).read().strip())
+    selected_performance = performance_mode
+    await do_performance_rumble()
+
+async def check_power_modes():
+    global performance_mode
+    global selected_performance
+
+    while running:
+        # Ensure safe temp ctl settings. Ensures OXP devices dont fry themselves.
+        run = os.popen("ryzenadj -i", 'r', 1).read().splitlines()
+        tctl = [i for i in run if "THM LIMIT CORE" in i][0].split()[5]
+        if tctl != "95.000":
+            logger.info(f"found tctl set to {tctl}")
+            ryzenadj_cmd = f"ryzenadj -f 95"
+            logger.info(os.popen(ryzenadj_cmd, 'r', 1).read().strip())
+
+       # Ensure performance mode is what we selected.
+        if selected_performance != performance_mode:
+            selected_performance = performance_mode
+
+        await asyncio.sleep(RYZENADJ_DELAY)
+
 
 async def do_performance_rumble():
     global performance_mode
 
-    if performance_mode in [None, "--max-performance"]:
+    if performance_mode == "--max-performance":
         await do_rumble(0, 500, 1000, 0)
         await asyncio.sleep(FF_DELAY)
         await do_rumble(0, 75, 1000, 0)
@@ -523,7 +553,7 @@ async def capture_keyboard_events():
                             elif active == [] and seed_event.code == 125 and button_on == 0 and button6 in event_queue:
                                 event_queue.remove(button6)
                                 toggle_performance()
-                                await do_performance_rumble()
+                                await set_performance()
 
                             # BUTTON 2 (Default: QAM) TM Button
                             if active == [97, 100, 111] and button_on == 1 and button2 not in event_queue:
@@ -608,7 +638,7 @@ async def capture_keyboard_events():
                             elif active == [] and seed_event.code in [32, 88, 97, 125] and button_on == 0 and button6 in event_queue:
                                 event_queue.remove(button6)
                                 toggle_performance()
-                                await do_performance_rumble()
+                                await set_performance()
 
                             # Handle L_META from power button
                             elif active == [] and seed_event.code == 125 and button_on == 0 and  event_queue == [] and shutdown == True:
@@ -622,7 +652,7 @@ async def capture_keyboard_events():
                             elif active == [] and seed_event.code in [99, 125] and button_on == 0 and button6 in event_queue:
                                 event_queue.remove(button6)
                                 toggle_performance()
-                                await do_performance_rumble()
+                                await set_performance()
 
                             # BUTTON 2 (Default: QAM) Short press orange
                             if active == [32, 125] and button_on == 1 and button2 not in event_queue:
@@ -687,7 +717,7 @@ async def capture_keyboard_events():
                             elif active == [] and seed_event.code in [10, 11] and button_on == 0 and button6 in event_queue:
                                 event_queue.remove(button6)
                                 toggle_performance()
-                                await do_performance_rumble()
+                                await set_performance()
 
                     # Create list of events to fire.
                     # Handle new button presses.
@@ -967,9 +997,9 @@ def main():
     asyncio.ensure_future(capture_ff_events())
     asyncio.ensure_future(capture_keyboard_events())
     asyncio.ensure_future(capture_power_events())
-
+    asyncio.ensure_future(check_power_modes())
     logger.info("Handheld Game Console Controller Service started.")
-    toggle_performance()
+
     # Run asyncio loop to capture all events.
     loop = asyncio.get_event_loop()
 
