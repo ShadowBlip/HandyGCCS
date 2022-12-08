@@ -153,8 +153,8 @@ def id_system():
         CAPTURE_KEYBOARD = True
         CAPTURE_POWER = True
         BUTTON_DELAY = 0.09
-        GYRO_I2C_ADDR = 0x68
-        GYRO_I2C_BUS = 1
+        #GYRO_I2C_ADDR = 0x68
+        #GYRO_I2C_BUS = 1
         system_type = "AYA_GEN1"
 
     elif system_id in (
@@ -425,8 +425,6 @@ def get_gyro():
         logger.info(f"Gyro device not configured for this system. Skipping gyro device setup.")
         gyro_device = False
         return
-
-    global gyro_device
 
     # Make a gyro_device, if it exists.
     try:
