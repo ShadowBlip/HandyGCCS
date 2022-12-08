@@ -230,8 +230,7 @@ def id_system():
         CAPTURE_KEYBOARD = True
         CAPTURE_POWER = True
         BUTTON_DELAY = 0.08
-        gyro_device = False
-        system_type = "ABR_GEN1"
+        system_type = "ABN_GEN1"
     # Block devices that aren't supported as this could cause issues.
     else:
         logger.error(f"{system_id} is not currently supported by this tool. Open an issue on \
@@ -420,9 +419,11 @@ def get_powerkey():
 def get_gyro():
     global GYRO_I2C_ADDR
     global GYRO_I2C_BUS
+    global gyro_device
 
     if not GYRO_I2C_BUS or not GYRO_I2C_ADDR:
-        logger.warn(f"Gyro device not detected. Skipping gyro device setup.")
+        logger.info(f"Gyro device not configured for this system. Skipping gyro device setup.")
+        gyro_device = False
         return
 
     global gyro_device
@@ -734,7 +735,7 @@ async def capture_keyboard_events():
                                 toggle_performance()
                                 await set_performance()
 
-                        case "ABR_GEN1":
+                        case "ABN_GEN1":
 
                             # BUTTON 1 (Default: Screenshot) Home + KB.
                             if active == [24, 29, 34, 125] and button_on == 1 and button1 not in event_queue:
@@ -774,7 +775,7 @@ async def capture_keyboard_events():
                                 this_button = button5
 
                             # BUTTON 5 ALT mode, toggle performance_mode
-                            elif active == [1, 29, 42] and button_on == 2 and button5 in event_queue:
+                            elif active == [1, 29, 42] and button_on == 1 and button5 in event_queue:
                                 event_queue.remove(button5)
                                 toggle_performance()
                                 await set_performance()
@@ -814,6 +815,7 @@ async def capture_keyboard_events():
 async def capture_controller_events():
     global controller_device
     global controller_events
+    global gyro_device
     global last_x_val
     global last_y_val
 
@@ -1053,7 +1055,7 @@ def restore_controller():
 def main():
     # Attach the event loop of each device to the asyncio loop.
     asyncio.ensure_future(capture_controller_events())
-    #asyncio.ensure_future(capture_gyro_events())
+    asyncio.ensure_future(capture_gyro_events())
     asyncio.ensure_future(capture_ff_events())
     asyncio.ensure_future(capture_keyboard_events())
     asyncio.ensure_future(capture_power_events())
