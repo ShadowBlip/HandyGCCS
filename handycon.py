@@ -736,11 +736,11 @@ async def capture_keyboard_events():
 
                         case "ABR_GEN1":
 
-                            # BUTTON 1 (Default: Toggle RyzenAdj) Home + KB.
+                            # BUTTON 1 (Default: Screenshot) Home + KB.
                             if active == [24, 29, 34, 125] and button_on == 1 and button1 not in event_queue:
                                 event_queue.append(button1)
                             elif active == [] and seed_event.code in [24, 29, 34, 125] and button_on == 0 and button1 in event_queue:
-                                event_queue.remove(button1)
+                                this_button = button1
 
                             # BUTTON 2 (Default: QAM) Home key.
                             if active == [34, 125] and button_on == 1 and button2 not in event_queue:
@@ -748,7 +748,13 @@ async def capture_keyboard_events():
                             elif active == [] and seed_event.code in [34, 125] and button_on == 0 and button2 in event_queue:
                                 this_button = button2
 
-                            # BUTTON 3 Doesn't exist
+                            # BUTTON 3, BUTTON 2 ALt mode (Defalt ESC)
+                            elif active == [1] and button_on == 1 and button2 in event_queue:
+                                event_queue.remove(button2)
+                                event_queue.append(button3)
+                                await do_rumble(0, 75, 1000, 0)
+                            elif active == [] and seed_event.code == 1 and button_on == 0 and button3 in event_queue:
+                                this_button = button3
 
                             # BUTTON 4 (Default: OSK) Short press KB
                             if active == [24, 29, 125] and button_on == 1 and button4 not in event_queue:
@@ -756,11 +762,22 @@ async def capture_keyboard_events():
                             elif active == [] and seed_event.code in [24, 29, 125] and button_on == 0 and button4 in event_queue:
                                 this_button = button4
 
+                            # BUTTON 4 ALT Mode (No current action) Long press KB
+                            #if active == [24, 29, 125] and button_on == 2 and button4 in event_queue:
+                            #    event_queue.remove(button4)
+                                #do something
+
                             # BUTTON 5 (Default: Home) Meta/Windows key.
                             if active == [125] and button_on == 1 and button5 not in event_queue:
                                 event_queue.append(button5)
                             elif active == [] and seed_event.code == 125 and button_on == 0 and button5 in event_queue:
                                 this_button = button5
+
+                            # BUTTON 5 ALT mode, toggle performance_mode
+                            elif active == [1, 29, 42] and button_on == 2 and button5 in event_queue:
+                                event_queue.remove(button5)
+                                toggle_performance()
+                                await set_performance()
 
                     # Create list of events to fire.
                     # Handle new button presses.
