@@ -1053,7 +1053,7 @@ def restore_controller():
 def main():
     # Attach the event loop of each device to the asyncio loop.
     asyncio.ensure_future(capture_controller_events())
-    asyncio.ensure_future(capture_gyro_events())
+    #asyncio.ensure_future(capture_gyro_events())
     asyncio.ensure_future(capture_ff_events())
     asyncio.ensure_future(capture_keyboard_events())
     asyncio.ensure_future(capture_power_events())
