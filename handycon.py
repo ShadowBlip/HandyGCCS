@@ -212,7 +212,7 @@ def id_system():
     ## GPD Devices.
     # Has 2 buttons with 3 modes (left, right, both)
     elif system_id in (
-        "G1619-04" #WinMax2
+        "G1619-04", #WinMax2
         ):
         CAPTURE_CONTROLLER = True
         CAPTURE_KEYBOARD = True
@@ -222,6 +222,16 @@ def id_system():
         GYRO_I2C_BUS = 2
         system_type = "GPD_GEN1"
 
+    ## ABERNIC Devices
+    elif system_id in (
+            "Win600",
+            ):
+        CAPTURE_CONTROLLER = True
+        CAPTURE_KEYBOARD = True
+        CAPTURE_POWER = True
+        BUTTON_DELAY = 0.08
+        gyro_device = False
+        system_type = "ABR_GEN1"
     # Block devices that aren't supported as this could cause issues.
     else:
         logger.error(f"{system_id} is not currently supported by this tool. Open an issue on \
@@ -307,6 +317,7 @@ def get_controller():
             )
     controller_phys = (
             'usb-0000:00:14.0-9/input0',
+            'usb-0000:02:00.3-5/input0',
             'usb-0000:03:00.3-4/input0',
             'usb-0000:04:00.3-4/input0',
             'usb-0000:74:00.3-3/input0',
@@ -409,6 +420,10 @@ def get_powerkey():
 def get_gyro():
     global GYRO_I2C_ADDR
     global GYRO_I2C_BUS
+
+    if not GYRO_I2C_BUS or not GYRO_I2C_ADDR:
+        logger.warn(f"Gyro device not detected. Skipping gyro device setup.")
+        return
 
     global gyro_device
 
@@ -718,6 +733,34 @@ async def capture_keyboard_events():
                                 event_queue.remove(button6)
                                 toggle_performance()
                                 await set_performance()
+
+                        case "ABR_GEN1":
+
+                            # BUTTON 1 (Default: Toggle RyzenAdj) Home + KB.
+                            if active == [24, 29, 34, 125] and button_on == 1 and button1 not in event_queue:
+                                event_queue.append(button1)
+                            elif active == [] and seed_event.code in [24, 29, 34, 125] and button_on == 0 and button1 in event_queue:
+                                event_queue.remove(button1)
+
+                            # BUTTON 2 (Default: QAM) Home key.
+                            if active == [34, 125] and button_on == 1 and button2 not in event_queue:
+                                event_queue.append(button2)
+                            elif active == [] and seed_event.code in [34, 125] and button_on == 0 and button2 in event_queue:
+                                this_button = button2
+
+                            # BUTTON 3 Doesn't exist
+
+                            # BUTTON 4 (Default: OSK) Short press KB
+                            if active == [24, 29, 125] and button_on == 1 and button4 not in event_queue:
+                                event_queue.append(button4)
+                            elif active == [] and seed_event.code in [24, 29, 125] and button_on == 0 and button4 in event_queue:
+                                this_button = button4
+
+                            # BUTTON 5 (Default: Home) Meta/Windows key.
+                            if active == [125] and button_on == 1 and button5 not in event_queue:
+                                event_queue.append(button5)
+                            elif active == [] and seed_event.code == 125 and button_on == 0 and button5 in event_queue:
+                                this_button = button5
 
                     # Create list of events to fire.
                     # Handle new button presses.
