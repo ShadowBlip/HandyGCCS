@@ -549,10 +549,10 @@ async def capture_keyboard_events():
                     button_on = seed_event.value
 
                     # Debugging variables
-                    # if active != []:
-                    #     logging.debug(f"Active Keys: {keyboard_device.active_keys(verbose=True)}, Seed Value: {seed_event.value}, Seed Code: {seed_event.code}, Seed Type: {seed_event.type}, Button pressed: {button_on}.")
-                    # if event_queue != []:
-                    #     logging.debug(f"Queued events: {event_queue}")
+                     if active != []:
+                         logging.debug(f"Active Keys: {keyboard_device.active_keys(verbose=True)}, Seed Value: {seed_event.value}, Seed Code: {seed_event.code}, Seed Type: {seed_event.type}, Button pressed: {button_on}.")
+                     if event_queue != []:
+                         logging.debug(f"Queued events: {event_queue}")
 
                     # Automatically pass default keycodes we dont intend to replace.
                     if seed_event.code in [e.KEY_VOLUMEDOWN, e.KEY_VOLUMEUP]:
