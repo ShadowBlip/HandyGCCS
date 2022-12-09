@@ -553,6 +553,8 @@ async def capture_keyboard_events():
                     if active != []:
                         logging.debug(f"Active Keys: {keyboard_device.active_keys(verbose=True)}, Seed Value: {seed_event.value}, Seed Code: {seed_event.code}, Seed Type: {seed_event.type}, Button pressed: {button_on}.")
                         logging.debug(f"Queued events: {event_queue}")
+                    elif active == [] and event_queue != []:
+                        logging.debug(f"Queued events: {event_queue}")
 
                     # Automatically pass default keycodes we dont intend to replace.
                     if seed_event.code in [e.KEY_VOLUMEDOWN, e.KEY_VOLUMEUP]:
@@ -735,7 +737,7 @@ async def capture_keyboard_events():
 
                         case "ABN_GEN1":
 
-                            # BUTTON 1 (Default: Screenshot) Home + KB.
+                            # BUTTON 1 (Default: Unused) Home + KB.
                             if active == [24, 29, 34, 125] and button_on == 1 and button1 not in event_queue:
                                 if button2 in event_queue:
                                     event_queue.remove(button2)
@@ -743,9 +745,14 @@ async def capture_keyboard_events():
                                     event_queue.remove(button4)
                                 if button5 in event_queue:
                                     event_queue.remove(button5)
-                                event_queue.append(button1)
+
+                                await do_rumble(0, 75, 1000, 0)
                             elif active == [] and seed_event.code in [24, 29, 34, 125] and button_on == 0 and button1 in event_queue:
-                                this_button = button1
+                                event_queue.remove(button1)
+                                await do_rumble(0, 75, 1000, 0)
+                                await(FF_DELAY * 2)
+                                await do_rumble(0, 75, 1000, 0)
+
 
                             # BUTTON 2 (Default: QAM) Home key.
                             if active == [34, 125] and button_on == 1 and button2 not in event_queue:
@@ -772,10 +779,15 @@ async def capture_keyboard_events():
                             elif active == [] and seed_event.code in [24, 29, 125] and button_on == 0 and button4 in event_queue:
                                 this_button = button4
 
-                            # BUTTON 4 ALT Mode (No current action) Long press KB
-                            #if active == [24, 29, 125] and button_on == 2 and button4 in event_queue:
-                            #    event_queue.remove(button4)
-                                #do something
+                            # BUTTON 4 ALT Mode (Default: Screenshot) Long press KB
+                            if active == [23, 29, 125] and button_on == 2 and button1 not in event_queue:
+                                if button4 in event_queue:
+                                    event_queue.remove(button4)
+                                if button5 in event_queue:
+                                    event_queue.remove(button5)
+                                event_queue.append(button1)
+                            elif active == [] and seed_event.code in [23,, 29, 125] and button_on == 0 and button1 in event_queue:
+                                this_button = button1
 
                             # BUTTON 5 (Default: GUIDE) Meta/Windows key.
                             if active == [125] and button_on == 1 and button5 not in event_queue:
