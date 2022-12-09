@@ -786,7 +786,7 @@ async def capture_keyboard_events():
                                 if button5 in event_queue:
                                     event_queue.remove(button5)
                                 event_queue.append(button1)
-                            elif active == [] and seed_event.code in [23,, 29, 125] and button_on == 0 and button1 in event_queue:
+                            elif active == [] and seed_event.code in [23, 29, 125] and button_on == 0 and button1 in event_queue:
                                 this_button = button1
 
                             # BUTTON 5 (Default: GUIDE) Meta/Windows key.
