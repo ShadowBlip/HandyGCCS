@@ -230,7 +230,7 @@ def id_system():
         CAPTURE_CONTROLLER = True
         CAPTURE_KEYBOARD = True
         CAPTURE_POWER = True
-        BUTTON_DELAY = 0.08
+        BUTTON_DELAY = 0.04
         system_type = "ABN_GEN1"
     # Block devices that aren't supported as this could cause issues.
     else:
