@@ -737,12 +737,20 @@ async def capture_keyboard_events():
 
                             # BUTTON 1 (Default: Screenshot) Home + KB.
                             if active == [24, 29, 34, 125] and button_on == 1 and button1 not in event_queue:
+                                if button2 in event_queue:
+                                    event_queue.remove(button2)
+                                if button4 in event_queue:
+                                    event_queue.remove(button4)
+                                if button5 in event_queue:
+                                    event_queue.remove(button5)
                                 event_queue.append(button1)
                             elif active == [] and seed_event.code in [24, 29, 34, 125] and button_on == 0 and button1 in event_queue:
                                 this_button = button1
 
                             # BUTTON 2 (Default: QAM) Home key.
                             if active == [34, 125] and button_on == 1 and button2 not in event_queue:
+                                if button5 in event_queue:
+                                    event_queue.remove(button5)
                                 event_queue.append(button2)
                             elif active == [] and seed_event.code in [34, 125] and button_on == 0 and button2 in event_queue:
                                 this_button = button2
@@ -757,6 +765,8 @@ async def capture_keyboard_events():
 
                             # BUTTON 4 (Default: OSK) Short press KB
                             if active == [24, 29, 125] and button_on == 1 and button4 not in event_queue:
+                                if button5 in event_queue:
+                                    event_queue.remove(button5)
                                 event_queue.append(button4)
                             elif active == [] and seed_event.code in [24, 29, 125] and button_on == 0 and button4 in event_queue:
                                 this_button = button4
