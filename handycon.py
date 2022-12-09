@@ -738,7 +738,7 @@ async def capture_keyboard_events():
                         case "ABN_GEN1":
 
                             # BUTTON 1 (Default: Unused) Home + KB.
-                            if active == [24, 29, 34, 125] and button_on == 1 and button1 not in event_queue:
+                            if active == [24, 29, 34, 125] and button_on == 1 and button6 not in event_queue:
                                 if button2 in event_queue:
                                     event_queue.remove(button2)
                                 if button4 in event_queue:
@@ -746,13 +746,13 @@ async def capture_keyboard_events():
                                 if button5 in event_queue:
                                     event_queue.remove(button5)
 
+                                event_queue.append(button6)
                                 await do_rumble(0, 75, 1000, 0)
-                            elif active == [] and seed_event.code in [24, 29, 34, 125] and button_on == 0 and button1 in event_queue:
-                                event_queue.remove(button1)
+                            elif active == [] and seed_event.code in [24, 29, 34, 125] and button_on == 0 and button6 in event_queue:
+                                event_queue.remove(button6)
                                 await do_rumble(0, 75, 1000, 0)
                                 await(FF_DELAY * 2)
                                 await do_rumble(0, 75, 1000, 0)
-
 
                             # BUTTON 2 (Default: QAM) Home key.
                             if active == [34, 125] and button_on == 1 and button2 not in event_queue:
