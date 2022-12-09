@@ -17,7 +17,7 @@ import subprocess
 import sys
 import warnings
 
-from constants import CONTROLLER_EVENTS, DETECT_DELAY, EVENT_ALT_TAB, EVENT_ESC, EVENT_HOME, EVENT_KILL, EVENT_OSK, EVENT_QAM, EVENT_SCR, FF_DELAY, HIDE_PATH, JOY_MAX, JOY_MIN
+from constants import CONTROLLER_EVENTS, DETECT_DELAY, EVENT_ALT_TAB, EVENT_ESC, EVENT_MODE, EVENT_KILL, EVENT_OSK, EVENT_QAM, EVENT_SCR, FF_DELAY, HIDE_PATH, JOY_MAX, JOY_MIN
 from evdev import InputDevice, InputEvent, UInput, ecodes as e, list_devices, ff
 from pathlib import Path
 from shutil import move
@@ -52,7 +52,8 @@ GYRO_I2C_BUS = None
 EVENT_MAP= {
         "ALT_TAB": EVENT_ALT_TAB,
         "ESC": EVENT_ESC,
-        "HOME": EVENT_HOME,
+        "MODE": EVENT_MODE,
+        "HOME": EVENT_MODE,
         "KILL": EVENT_KILL,
         "OSK": EVENT_OSK,
         "QAM": EVENT_QAM,
@@ -264,7 +265,7 @@ def get_config():
                 "button2": "QAM",
                 "button3": "ESC",
                 "button4": "OSK",
-                "button5": "HOME",
+                "button5": "MODE",
                 }
         config["Gyro"] = {"sensitivity": "20"}
         with open(config_path, 'w') as config_file:
@@ -551,7 +552,6 @@ async def capture_keyboard_events():
                     # Debugging variables
                     if active != []:
                         logging.debug(f"Active Keys: {keyboard_device.active_keys(verbose=True)}, Seed Value: {seed_event.value}, Seed Code: {seed_event.code}, Seed Type: {seed_event.type}, Button pressed: {button_on}.")
-                    if event_queue != []:
                         logging.debug(f"Queued events: {event_queue}")
 
                     # Automatically pass default keycodes we dont intend to replace.
@@ -640,7 +640,7 @@ async def capture_keyboard_events():
                             elif active == [] and seed_event.code in [68, 97, 125] and button_on == 0 and button4 in event_queue:
                                 this_button = button4
 
-                            # BUTTON 5 (Default: Home) Big button
+                            # BUTTON 5 (Default: MODE) Big button
                             if active in [[96, 105, 133], [88, 97, 125]] and button_on == 1 and button5 not in event_queue:
                                 event_queue.append(button5)
                             elif active == [] and seed_event.code in [88, 96, 97, 105, 125, 133] and button_on == 0 and button5 in event_queue:
@@ -694,7 +694,7 @@ async def capture_keyboard_events():
                             elif active == [] and seed_event.code in [24, 97, 125] and button_on == 0 and button4 in event_queue:
                                 this_button = button4
 
-                            # BUTTON 5 (Default: Home) Long press orange
+                            # BUTTON 5 (Default: MODE) Long press orange
                             if active == [34, 125] and button_on == 1 and button5 not in event_queue:
                                 event_queue.append(button5)
                             elif active == [] and seed_event.code in [34, 125] and button_on == 0 and button5 in event_queue:
@@ -756,8 +756,9 @@ async def capture_keyboard_events():
                                 this_button = button2
 
                             # BUTTON 3, BUTTON 2 ALt mode (Defalt ESC)
-                            elif active == [1] and button_on == 1 and button2 in event_queue:
-                                event_queue.remove(button2)
+                            elif active == [1] and button_on == 1 and button3 not in event_queue:
+                                if button2 in event_queue:
+                                    event_queue.remove(button2)
                                 event_queue.append(button3)
                                 await do_rumble(0, 75, 1000, 0)
                             elif active == [] and seed_event.code == 1 and button_on == 0 and button3 in event_queue:
@@ -776,17 +777,21 @@ async def capture_keyboard_events():
                             #    event_queue.remove(button4)
                                 #do something
 
-                            # BUTTON 5 (Default: Home) Meta/Windows key.
+                            # BUTTON 5 (Default: GUIDE) Meta/Windows key.
                             if active == [125] and button_on == 1 and button5 not in event_queue:
                                 event_queue.append(button5)
                             elif active == [] and seed_event.code == 125 and button_on == 0 and button5 in event_queue:
                                 this_button = button5
 
                             # BUTTON 5 ALT mode, toggle performance_mode
-                            elif active == [1, 29, 42] and button_on == 1 and button5 in event_queue:
-                                event_queue.remove(button5)
+                            if active == [1, 29, 42] and button_on == 1 and button6 not in event_queue:
+                                if button5 in event_queue:
+                                    event_queue.remove(button5)
+                                event_queue.append(button6)
                                 toggle_performance()
                                 await set_performance()
+                            elif active == [] and seed_event in [1, 29, 42] and button_on == 0 and button6 in event_queue:
+                                event_queue.remove(button6)
 
                     # Create list of events to fire.
                     # Handle new button presses.
