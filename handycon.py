@@ -25,7 +25,7 @@ from time import sleep, time
 
 logging.basicConfig(format="[%(asctime)s | %(filename)s:%(lineno)s:%(funcName)s] %(message)s",
                     datefmt="%y%m%d_%H:%M:%S",
-                    level=logging.DEBUG
+                    level=logging.INFO
                     )
 
 logger = logging.getLogger(__name__)
@@ -116,7 +116,7 @@ gyro_sensitivity = 0
 # RyzenAdj settings
 performance_mode = "--power-saving"
 protocol = None
-RYZENADJ_DELAY = 5.0
+RYZENADJ_DELAY = 0.5
 selected_performance = None
 transport = None
 
@@ -978,6 +978,7 @@ async def emit_events(events: list):
 # RYZENADJ
 async def toggle_performance():
     global performance_mode
+    global protocol
     global transport
 
     if not transport:
@@ -999,6 +1000,9 @@ async def toggle_performance():
         await do_rumble(0, 75, 1000, 0)
 
     transport.write(bytes(performance_mode, 'utf-8'))
+    transport.close()
+    transport = None
+    protocol = None
 
 async def ryzenadj_control(loop):
     global transport
@@ -1014,23 +1018,12 @@ async def ryzenadj_control(loop):
         if not transport or not protocol:
             try:
                 transport, protocol = await loop.create_unix_connection(asyncio.Protocol, path=server_address)
-                logger.info(f"got {transport}, {protocol}")
-                #asyncio.ensure_future(handle_transport(loop, transport))
-                #asyncio.ensure_future(handle_protocol(loop, protocol))
+                logger.debug(f"got {transport}, {protocol}")
             except ConnectionRefusedError:
                 logger.debug('Could not connect to RyzenaAdj Control')
                 await asyncio.sleep(RYZENADJ_DELAY)
                 continue
         await asyncio.sleep(RYZENADJ_DELAY)
-
-
-#async def handle_transport(loop, transport):
-#    while running:
-#        await asyncio.sleep(RYZENADJ_DELAY)
-#
-#async def handle_protocol(loop, protocol):
-#    while running:
-#        await asyncio.sleep(RYZENADJ_DELAY)
 
 # Gracefull shutdown.
 async def restore_all(loop):
