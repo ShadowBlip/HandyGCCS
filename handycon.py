@@ -61,6 +61,9 @@ EVENT_MAP= {
     }
 
 HIDE_PATH = Path(HIDE_PATH)
+
+server_address = '/tmp/ryzenadj_socket'
+
 # Capture the username and home path of the user who has been logged in the longest.
 USER = None
 HOME_PATH = Path('/home')
@@ -112,8 +115,10 @@ gyro_sensitivity = 0
 
 # RyzenAdj settings
 performance_mode = "--power-saving"
-selected_performance = None
+protocol = None
 RYZENADJ_DELAY = 5.0
+selected_performance = None
+transport = None
 
 def __init__():
     global controller_device
@@ -439,60 +444,6 @@ def get_gyro():
         logger.error(f"{err} | Gyro device not initialized. Ensure bmi160_i2c and i2c_dev modules are loaded. Skipping gyro device setup.")
         gyro_device = False
 
-# RYZENADJ
-def toggle_performance():
-    global performance_mode
-
-    if performance_mode == "--max-performance":
-        performance_mode = "--power-saving"
-    else:
-        performance_mode = "--max-performance"
-
-async def set_performance():
-    global performance_mode
-    global selected_performance
-
-    ryzenadj_cmd = f"ryzenadj {performance_mode}"
-    logger.info(os.popen(ryzenadj_cmd, 'r', 1).read().strip())
-    selected_performance = performance_mode
-    await do_performance_rumble()
-
-async def check_power_modes():
-    global performance_mode
-    global selected_performance
-
-    while running:
-        # Ensure safe temp ctl settings. Ensures OXP devices dont fry themselves.
-        run = os.popen("ryzenadj -i", 'r', 1).read().splitlines()
-        tctl = [i for i in run if "THM LIMIT CORE" in i][0].split()[5]
-        if tctl != "95.000":
-            logger.info(f"found tctl set to {tctl}")
-            ryzenadj_cmd = f"ryzenadj -f 95"
-            logger.info(os.popen(ryzenadj_cmd, 'r', 1).read().strip())
-
-       # Ensure performance mode is what we selected.
-        if selected_performance != performance_mode:
-            selected_performance = performance_mode
-
-        await asyncio.sleep(RYZENADJ_DELAY)
-
-
-async def do_performance_rumble():
-    global performance_mode
-
-    if performance_mode == "--max-performance":
-        await do_rumble(0, 500, 1000, 0)
-        await asyncio.sleep(FF_DELAY)
-        await do_rumble(0, 75, 1000, 0)
-        await asyncio.sleep(FF_DELAY)
-        await do_rumble(0, 75, 1000, 0)
-    else:
-        await do_rumble(0, 75, 1000, 0)
-        await asyncio.sleep(FF_DELAY)
-        await do_rumble(0, 75, 1000, 0)
-        await asyncio.sleep(FF_DELAY)
-        await do_rumble(0, 75, 1000, 0)
-
 async def do_rumble(button=0, interval=10, length=1000, delay=0):
     global controller_device
 
@@ -568,8 +519,7 @@ async def capture_keyboard_events():
                                 event_queue.append(button6)
                             elif active == [] and seed_event.code == 125 and button_on == 0 and button6 in event_queue:
                                 event_queue.remove(button6)
-                                toggle_performance()
-                                await set_performance()
+                                await toggle_performance()
 
                             # BUTTON 2 (Default: QAM) TM Button
                             if active == [97, 100, 111] and button_on == 1 and button2 not in event_queue:
@@ -653,8 +603,7 @@ async def capture_keyboard_events():
                                 event_queue.append(button6)
                             elif active == [] and seed_event.code in [32, 88, 97, 125] and button_on == 0 and button6 in event_queue:
                                 event_queue.remove(button6)
-                                toggle_performance()
-                                await set_performance()
+                                await toggle_performance()
 
                             # Handle L_META from power button
                             elif active == [] and seed_event.code == 125 and button_on == 0 and  event_queue == [] and shutdown == True:
@@ -667,8 +616,7 @@ async def capture_keyboard_events():
                                 event_queue.append(button6)
                             elif active == [] and seed_event.code in [99, 125] and button_on == 0 and button6 in event_queue:
                                 event_queue.remove(button6)
-                                toggle_performance()
-                                await set_performance()
+                                await toggle_performance()
 
                             # BUTTON 2 (Default: QAM) Short press orange
                             if active == [32, 125] and button_on == 1 and button2 not in event_queue:
@@ -732,8 +680,7 @@ async def capture_keyboard_events():
                                 event_queue.append(button6)
                             elif active == [] and seed_event.code in [10, 11] and button_on == 0 and button6 in event_queue:
                                 event_queue.remove(button6)
-                                toggle_performance()
-                                await set_performance()
+                                await toggle_performance()
 
                         case "ABN_GEN1":
 
@@ -783,8 +730,8 @@ async def capture_keyboard_events():
                                 if button5 in event_queue:
                                     event_queue.remove(button5)
                                 event_queue.append(button6)
-                                toggle_performance()
-                                await set_performance()
+                                await toggle_performance()
+
                             elif active == [] and seed_event in [1, 29, 42] and button_on == 0 and button6 in event_queue:
                                 event_queue.remove(button6)
                             
@@ -1028,6 +975,63 @@ async def emit_events(events: list):
             ui_device.syn()
             await asyncio.sleep(BUTTON_DELAY)
 
+# RYZENADJ
+async def toggle_performance():
+    global performance_mode
+    global transport
+
+    if not transport:
+        return
+
+    if performance_mode == "--max-performance":
+        performance_mode = "--power-saving"
+        await do_rumble(0, 75, 1000, 0)
+        await asyncio.sleep(FF_DELAY)
+        await do_rumble(0, 75, 1000, 0)
+        await asyncio.sleep(FF_DELAY)
+        await do_rumble(0, 75, 1000, 0)
+    else:
+        performance_mode = "--max-performance"
+        await do_rumble(0, 500, 1000, 0)
+        await asyncio.sleep(FF_DELAY)
+        await do_rumble(0, 75, 1000, 0)
+        await asyncio.sleep(FF_DELAY)
+        await do_rumble(0, 75, 1000, 0)
+
+    transport.write(bytes(performance_mode, 'utf-8'))
+
+async def ryzenadj_control(loop):
+    global transport
+    global protocol
+
+    while running:
+        # Wait for a server to be launched
+        if not os.path.exists(server_address):
+            await asyncio.sleep(RYZENADJ_DELAY)
+            continue
+
+        # Wait for a connection to the server
+        if not transport or not protocol:
+            try:
+                transport, protocol = await loop.create_unix_connection(asyncio.Protocol, path=server_address)
+                logger.info(f"got {transport}, {protocol}")
+                #asyncio.ensure_future(handle_transport(loop, transport))
+                #asyncio.ensure_future(handle_protocol(loop, protocol))
+            except ConnectionRefusedError:
+                logger.debug('Could not connect to RyzenaAdj Control')
+                await asyncio.sleep(RYZENADJ_DELAY)
+                continue
+        await asyncio.sleep(RYZENADJ_DELAY)
+
+
+#async def handle_transport(loop, transport):
+#    while running:
+#        await asyncio.sleep(RYZENADJ_DELAY)
+#
+#async def handle_protocol(loop, protocol):
+#    while running:
+#        await asyncio.sleep(RYZENADJ_DELAY)
+
 # Gracefull shutdown.
 async def restore_all(loop):
     logger.info("Receved exit signal. Restoring devices.")
@@ -1078,17 +1082,17 @@ def restore_controller():
 
 # Main loop
 def main():
+    # Run asyncio loop to capture all events.
+    loop = asyncio.get_event_loop()
+
     # Attach the event loop of each device to the asyncio loop.
     asyncio.ensure_future(capture_controller_events())
     asyncio.ensure_future(capture_gyro_events())
     asyncio.ensure_future(capture_ff_events())
     asyncio.ensure_future(capture_keyboard_events())
     asyncio.ensure_future(capture_power_events())
-    asyncio.ensure_future(check_power_modes())
+    asyncio.ensure_future(ryzenadj_control(loop))
     logger.info("Handheld Game Console Controller Service started.")
-
-    # Run asyncio loop to capture all events.
-    loop = asyncio.get_event_loop()
 
     # Establish signaling to handle gracefull shutdown.
     for s in (signal.SIGHUP, signal.SIGTERM, signal.SIGINT, signal.SIGQUIT):
