@@ -17,7 +17,7 @@ import subprocess
 import sys
 import warnings
 
-from constants import CONTROLLER_EVENTS, DETECT_DELAY, EVENT_ALT_TAB, EVENT_ESC, EVENT_HOME, EVENT_KILL, EVENT_OSK, EVENT_QAM, EVENT_SCR, FF_DELAY, HIDE_PATH, JOY_MAX, JOY_MIN
+from constants import CONTROLLER_EVENTS, DETECT_DELAY, EVENT_ALT_TAB, EVENT_ESC, EVENT_MODE, EVENT_KILL, EVENT_OSK, EVENT_QAM, EVENT_SCR, FF_DELAY, HIDE_PATH, JOY_MAX, JOY_MIN
 from evdev import InputDevice, InputEvent, UInput, ecodes as e, list_devices, ff
 from pathlib import Path
 from shutil import move
@@ -52,7 +52,8 @@ GYRO_I2C_BUS = None
 EVENT_MAP= {
         "ALT_TAB": EVENT_ALT_TAB,
         "ESC": EVENT_ESC,
-        "HOME": EVENT_HOME,
+        "MODE": EVENT_MODE,
+        "HOME": EVENT_MODE,
         "KILL": EVENT_KILL,
         "OSK": EVENT_OSK,
         "QAM": EVENT_QAM,
@@ -60,6 +61,9 @@ EVENT_MAP= {
     }
 
 HIDE_PATH = Path(HIDE_PATH)
+
+server_address = '/tmp/ryzenadj_socket'
+
 # Capture the username and home path of the user who has been logged in the longest.
 USER = None
 HOME_PATH = Path('/home')
@@ -109,6 +113,13 @@ button_map = {}
 gyro_enabled = False
 gyro_sensitivity = 0
 
+# RyzenAdj settings
+performance_mode = "--power-saving"
+protocol = None
+RYZENADJ_DELAY = 0.5
+selected_performance = None
+transport = None
+
 def __init__():
     global controller_device
     global keyboard_device
@@ -148,8 +159,8 @@ def id_system():
         CAPTURE_KEYBOARD = True
         CAPTURE_POWER = True
         BUTTON_DELAY = 0.09
-        GYRO_I2C_ADDR = 0x68
-        GYRO_I2C_BUS = 1
+        #GYRO_I2C_ADDR = 0x68
+        #GYRO_I2C_BUS = 1
         system_type = "AYA_GEN1"
 
     elif system_id in (
@@ -207,7 +218,7 @@ def id_system():
     ## GPD Devices.
     # Has 2 buttons with 3 modes (left, right, both)
     elif system_id in (
-        "G1619-04" #WinMax2
+        "G1619-04", #WinMax2
         ):
         CAPTURE_CONTROLLER = True
         CAPTURE_KEYBOARD = True
@@ -217,6 +228,15 @@ def id_system():
         GYRO_I2C_BUS = 2
         system_type = "GPD_GEN1"
 
+    ## ABERNIC Devices
+    elif system_id in (
+            "Win600",
+            ):
+        CAPTURE_CONTROLLER = True
+        CAPTURE_KEYBOARD = True
+        CAPTURE_POWER = True
+        BUTTON_DELAY = 0.04
+        system_type = "ABN_GEN1"
     # Block devices that aren't supported as this could cause issues.
     else:
         logger.error(f"{system_id} is not currently supported by this tool. Open an issue on \
@@ -250,7 +270,7 @@ def get_config():
                 "button2": "QAM",
                 "button3": "ESC",
                 "button4": "OSK",
-                "button5": "HOME",
+                "button5": "MODE",
                 }
         config["Gyro"] = {"sensitivity": "20"}
         with open(config_path, 'w') as config_file:
@@ -302,6 +322,7 @@ def get_controller():
             )
     controller_phys = (
             'usb-0000:00:14.0-9/input0',
+            'usb-0000:02:00.3-5/input0',
             'usb-0000:03:00.3-4/input0',
             'usb-0000:04:00.3-4/input0',
             'usb-0000:74:00.3-3/input0',
@@ -404,8 +425,12 @@ def get_powerkey():
 def get_gyro():
     global GYRO_I2C_ADDR
     global GYRO_I2C_BUS
-
     global gyro_device
+
+    if not GYRO_I2C_BUS or not GYRO_I2C_ADDR:
+        logger.info(f"Gyro device not configured for this system. Skipping gyro device setup.")
+        gyro_device = False
+        return
 
     # Make a gyro_device, if it exists.
     try:
@@ -460,6 +485,7 @@ async def capture_keyboard_events():
     button3 = button_map["button3"]
     button4 = button_map["button4"]
     button5 = button_map["button5"]
+    button6 = ["RyzenAdj Toggle"]
     last_button = None
 
     # Capture keyboard events and translate them to mapped events.
@@ -475,10 +501,11 @@ async def capture_keyboard_events():
                     button_on = seed_event.value
 
                     # Debugging variables
-                    # if active != []:
-                    #     logging.debug(f"Active Keys: {keyboard_device.active_keys(verbose=True)}, Seed Value: {seed_event.value}, Seed Code: {seed_event.code}, Seed Type: {seed_event.type}, Button pressed: {button_on}.")
-                    # if event_queue != []:
-                    #     logging.debug(f"Queued events: {event_queue}")
+                    if active != []:
+                        logging.debug(f"Active Keys: {keyboard_device.active_keys(verbose=True)}, Seed Value: {seed_event.value}, Seed Code: {seed_event.code}, Seed Type: {seed_event.type}, Button pressed: {button_on}.")
+                        logging.debug(f"Queued events: {event_queue}")
+                    elif active == [] and event_queue != []:
+                        logging.debug(f"Queued events: {event_queue}")
 
                     # Automatically pass default keycodes we dont intend to replace.
                     if seed_event.code in [e.KEY_VOLUMEDOWN, e.KEY_VOLUMEUP]:
@@ -487,10 +514,12 @@ async def capture_keyboard_events():
 
                         case "AYA_GEN1":
                             # BUTTON 1 (Default: Screenshot) WIN button
-                            if active == [125] and button_on == 1 and button1 not in event_queue and shutdown == False:
-                                event_queue.append(button1)
-                            elif active == [] and seed_event.code == 125 and button_on == 0 and button1 in event_queue:
-                                this_button = button1
+                            # Temporarily RyzenAdj toggle/button6
+                            if active == [125] and button_on == 1 and button6 not in event_queue and shutdown == False:
+                                event_queue.append(button6)
+                            elif active == [] and seed_event.code == 125 and button_on == 0 and button6 in event_queue:
+                                event_queue.remove(button6)
+                                await toggle_performance()
 
                             # BUTTON 2 (Default: QAM) TM Button
                             if active == [97, 100, 111] and button_on == 1 and button2 not in event_queue:
@@ -563,11 +592,18 @@ async def capture_keyboard_events():
                             elif active == [] and seed_event.code in [68, 97, 125] and button_on == 0 and button4 in event_queue:
                                 this_button = button4
 
-                            # BUTTON 5 (Default: Home) Big button
+                            # BUTTON 5 (Default: MODE) Big button
                             if active in [[96, 105, 133], [88, 97, 125]] and button_on == 1 and button5 not in event_queue:
                                 event_queue.append(button5)
                             elif active == [] and seed_event.code in [88, 96, 97, 105, 125, 133] and button_on == 0 and button5 in event_queue:
                                 this_button = button5
+
+                            # BUTTON 6 (Default: Toggle RyzenAdj) Big button + Small Button
+                            if active == [32, 88, 97, 125] and button_on == 1 and button6 not in event_queue:
+                                event_queue.append(button6)
+                            elif active == [] and seed_event.code in [32, 88, 97, 125] and button_on == 0 and button6 in event_queue:
+                                event_queue.remove(button6)
+                                await toggle_performance()
 
                             # Handle L_META from power button
                             elif active == [] and seed_event.code == 125 and button_on == 0 and  event_queue == [] and shutdown == True:
@@ -575,10 +611,12 @@ async def capture_keyboard_events():
 
                         case "OXP_GEN1" | "OXP_GEN2":
                             # BUTTON 1 (Default: Not used, dangerous fan activity!) Short press orange + |||||
-                            if active == [99, 125] and button_on == 1 and button1 not in event_queue:
-                                pass
-                            elif active == [] and seed_event.code in [99, 125] and button_on == 0 and button1 in event_queue:
-                                pass
+                            # Temporarily RyzenAdj toggle/button6
+                            if active == [99, 125] and button_on == 1 and button6 not in event_queue:
+                                event_queue.append(button6)
+                            elif active == [] and seed_event.code in [99, 125] and button_on == 0 and button6 in event_queue:
+                                event_queue.remove(button6)
+                                await toggle_performance()
 
                             # BUTTON 2 (Default: QAM) Short press orange
                             if active == [32, 125] and button_on == 1 and button2 not in event_queue:
@@ -606,7 +644,7 @@ async def capture_keyboard_events():
                             elif active == [] and seed_event.code in [24, 97, 125] and button_on == 0 and button4 in event_queue:
                                 this_button = button4
 
-                            # BUTTON 5 (Default: Home) Long press orange
+                            # BUTTON 5 (Default: MODE) Long press orange
                             if active == [34, 125] and button_on == 1 and button5 not in event_queue:
                                 event_queue.append(button5)
                             elif active == [] and seed_event.code in [34, 125] and button_on == 0 and button5 in event_queue:
@@ -637,11 +675,82 @@ async def capture_keyboard_events():
                                     await do_rumble(0, 100, 1000, 0)
                                 continue
 
-                            # BUTTON 1 (Both buttons pressed, Default: Screenshot)
-                            if active == [10, 11] and button_on == 1 and button1 not in event_queue:
+                            # BUTTON 6 (Both buttons pressed, Default: Toggle RyzenAdj)
+                            if active == [10, 11] and button_on == 1 and button6 not in event_queue:
+                                event_queue.append(button6)
+                            elif active == [] and seed_event.code in [10, 11] and button_on == 0 and button6 in event_queue:
+                                event_queue.remove(button6)
+                                await toggle_performance()
+
+                        case "ABN_GEN1":
+
+                            # BUTTON 1 (BUTTON 4 ALT Mode) (Default: Screenshot) Long press KB
+                            if active == [24, 29, 125] and button_on == 2 and button1 not in event_queue:
+                                if button4 in event_queue:
+                                    event_queue.remove(button4)
+                                if button5 in event_queue:
+                                    event_queue.remove(button5)
                                 event_queue.append(button1)
-                            elif active == [] and seed_event.code in [10, 11] and button_on == 0 and button1 in event_queue:
+                            elif active == [] and seed_event.code in [24, 29, 125] and button_on == 0 and button1 in event_queue:
                                 this_button = button1
+
+                            # BUTTON 2 (Default: QAM) Home key.
+                            if active == [34, 125] and button_on == 1 and button2 not in event_queue:
+                                if button5 in event_queue:
+                                    event_queue.remove(button5)
+                                event_queue.append(button2)
+                            elif active == [] and seed_event.code in [34, 125] and button_on == 0 and button2 in event_queue:
+                                this_button = button2
+
+                            # BUTTON 3, BUTTON 2 ALt mode (Defalt ESC)
+                            elif active == [1] and button_on == 1 and button3 not in event_queue:
+                                if button2 in event_queue:
+                                    event_queue.remove(button2)
+                                event_queue.append(button3)
+                                await do_rumble(0, 75, 1000, 0)
+                            elif active == [] and seed_event.code == 1 and button_on == 0 and button3 in event_queue:
+                                this_button = button3
+
+                            # BUTTON 4 (Default: OSK) Short press KB
+                            if active == [24, 29, 125] and button_on == 1 and button4 not in event_queue:
+                                if button5 in event_queue:
+                                    event_queue.remove(button5)
+                                event_queue.append(button4)
+                            elif active == [] and seed_event.code in [24, 29, 125] and button_on == 0 and button4 in event_queue:
+                                this_button = button4
+
+                            # BUTTON 5 (Default: GUIDE) Meta/Windows key.
+                            if active == [125] and button_on == 1 and button5 not in event_queue:
+                                event_queue.append(button5)
+                            elif active == [] and seed_event.code == 125 and button_on == 0 and button5 in event_queue:
+                                this_button = button5
+
+                            # BUTTON 5 ALT mode, toggle performance_mode
+                            if active == [1, 29, 42] and button_on == 1 and button6 not in event_queue:
+                                if button5 in event_queue:
+                                    event_queue.remove(button5)
+                                event_queue.append(button6)
+                                await toggle_performance()
+
+                            elif active == [] and seed_event in [1, 29, 42] and button_on == 0 and button6 in event_queue:
+                                event_queue.remove(button6)
+                            
+                            # BUTTON 6 (UNUSED)
+                            if active == [24, 29, 34, 125] and button_on == 1 and button6 not in event_queue:
+                                if button2 in event_queue:
+                                    event_queue.remove(button2)
+                                if button4 in event_queue:
+                                    event_queue.remove(button4)
+                                if button5 in event_queue:
+                                    event_queue.remove(button5)
+
+                                event_queue.append(button6)
+                                await do_rumble(0, 75, 1000, 0)
+                            elif active == [] and seed_event.code in [24, 29, 34, 125] and button_on == 0 and button6 in event_queue:
+                                event_queue.remove(button6)
+                                await do_rumble(0, 75, 1000, 0)
+                                await(FF_DELAY * 2)
+                                await do_rumble(0, 75, 1000, 0)
 
                     # Create list of events to fire.
                     # Handle new button presses.
@@ -678,6 +787,7 @@ async def capture_keyboard_events():
 async def capture_controller_events():
     global controller_device
     global controller_events
+    global gyro_device
     global last_x_val
     global last_y_val
 
@@ -865,6 +975,56 @@ async def emit_events(events: list):
             ui_device.syn()
             await asyncio.sleep(BUTTON_DELAY)
 
+# RYZENADJ
+async def toggle_performance():
+    global performance_mode
+    global protocol
+    global transport
+
+    if not transport:
+        return
+
+    if performance_mode == "--max-performance":
+        performance_mode = "--power-saving"
+        await do_rumble(0, 75, 1000, 0)
+        await asyncio.sleep(FF_DELAY)
+        await do_rumble(0, 75, 1000, 0)
+        await asyncio.sleep(FF_DELAY)
+        await do_rumble(0, 75, 1000, 0)
+    else:
+        performance_mode = "--max-performance"
+        await do_rumble(0, 500, 1000, 0)
+        await asyncio.sleep(FF_DELAY)
+        await do_rumble(0, 75, 1000, 0)
+        await asyncio.sleep(FF_DELAY)
+        await do_rumble(0, 75, 1000, 0)
+
+    transport.write(bytes(performance_mode, 'utf-8'))
+    transport.close()
+    transport = None
+    protocol = None
+
+async def ryzenadj_control(loop):
+    global transport
+    global protocol
+
+    while running:
+        # Wait for a server to be launched
+        if not os.path.exists(server_address):
+            await asyncio.sleep(RYZENADJ_DELAY)
+            continue
+
+        # Wait for a connection to the server
+        if not transport or not protocol:
+            try:
+                transport, protocol = await loop.create_unix_connection(asyncio.Protocol, path=server_address)
+                logger.debug(f"got {transport}, {protocol}")
+            except ConnectionRefusedError:
+                logger.debug('Could not connect to RyzenaAdj Control')
+                await asyncio.sleep(RYZENADJ_DELAY)
+                continue
+        await asyncio.sleep(RYZENADJ_DELAY)
+
 # Gracefull shutdown.
 async def restore_all(loop):
     logger.info("Receved exit signal. Restoring devices.")
@@ -915,17 +1075,17 @@ def restore_controller():
 
 # Main loop
 def main():
+    # Run asyncio loop to capture all events.
+    loop = asyncio.get_event_loop()
+
     # Attach the event loop of each device to the asyncio loop.
     asyncio.ensure_future(capture_controller_events())
     asyncio.ensure_future(capture_gyro_events())
     asyncio.ensure_future(capture_ff_events())
     asyncio.ensure_future(capture_keyboard_events())
     asyncio.ensure_future(capture_power_events())
-
+    asyncio.ensure_future(ryzenadj_control(loop))
     logger.info("Handheld Game Console Controller Service started.")
-
-    # Run asyncio loop to capture all events.
-    loop = asyncio.get_event_loop()
 
     # Establish signaling to handle gracefull shutdown.
     for s in (signal.SIGHUP, signal.SIGTERM, signal.SIGINT, signal.SIGQUIT):
