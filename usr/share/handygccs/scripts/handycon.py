@@ -219,6 +219,7 @@ def id_system():
     # Has 2 buttons with 3 modes (left, right, both)
     elif system_id in (
         "G1619-04", #WinMax2
+        "", #Win4, apparently.
         ):
         CAPTURE_CONTROLLER = True
         CAPTURE_KEYBOARD = True
@@ -325,6 +326,7 @@ def get_controller():
             'usb-0000:02:00.3-5/input0',
             'usb-0000:03:00.3-4/input0',
             'usb-0000:04:00.3-4/input0',
+            'usb-0000:73:00.3-4/input0',
             'usb-0000:74:00.3-3/input0',
             'usb-0000:e3:00.3-4/input0',
             'usb-0000:e4:00.3-4/input0',
@@ -362,7 +364,7 @@ def get_keyboard():
         for device in [InputDevice(path) for path in list_devices()]:
             if system_type == "GPD_GEN1":
                 logger.debug(f"{device.name}, {device.phys}")
-                if device.name == '  Mouse for Windows' and device.phys == 'usb-0000:74:00.3-4/input1':
+                if device.name == '  Mouse for Windows' and device.phys in ['usb-0000:73:00.4-2/input1', 'usb-0000:74:00.3-4/input1']:
                     keyboard_path = device.path
                     keyboard_device = InputDevice(keyboard_path)
             else:
