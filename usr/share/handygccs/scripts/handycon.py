@@ -855,8 +855,10 @@ async def capture_gyro_events():
                 adjusted_y = max(min(int(angular_velocity_y * gyro_sensitivity) + last_y_val, JOY_MAX), JOY_MIN)
                 y_event = InputEvent(0, 0, e.EV_ABS, e.ABS_RY, adjusted_y)
 
-                await emit_events([x_event, y_event])
+                await emit_events([x_event])
+                await emit_events([y_event])
                 await asyncio.sleep(0.01)
+
             else:
                 # Slow down the loop so we don't waste millions of cycles and overheat our controller.
                 await asyncio.sleep(.5)
