@@ -302,7 +302,7 @@ def make_controller():
 
 def get_controller():
     global CAPTURE_CONTROLLER
-    global controller_device3
+    global controller_device
     global controller_event
     global controller_path
 
