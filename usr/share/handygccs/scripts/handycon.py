@@ -25,7 +25,7 @@ from time import sleep, time
 
 logging.basicConfig(format="[%(asctime)s | %(filename)s:%(lineno)s:%(funcName)s] %(message)s",
                     datefmt="%y%m%d_%H:%M:%S",
-                    level=logging.INFO
+                    level=logging.DEBUG
                     )
 
 logger = logging.getLogger(__name__)
@@ -238,12 +238,12 @@ def id_system():
         BUTTON_DELAY = 0.04
         system_type = "ABN_GEN1"
     # Block devices that aren't supported as this could cause issues.
-    else:
-        logger.error(f"{system_id} is not currently supported by this tool. Open an issue on \
-GitHub at https://github.com/ShadowBlip/aya-neo-fixes if this is a bug. If possible, \
-please run the capture-system.py utility found on the GitHub repository and upload \
-that file with your issue.")
-        sys.exit(-1)
+#    else:
+#        logger.error(f"{system_id} is not currently supported by this tool. Open an issue on \
+#GitHub at https://github.com/ShadowBlip/aya-neo-fixes if this is a bug. If possible, \
+#please run the capture-system.py utility found on the GitHub repository and upload \
+#that file with your issue.")
+#        sys.exit(0)
 
     logger.info(f"Identified host system as {system_id} and configured defaults for {system_type}.")
 
@@ -302,7 +302,7 @@ def make_controller():
 
 def get_controller():
     global CAPTURE_CONTROLLER
-    global controller_device
+    global controller_device3
     global controller_event
     global controller_path
 
