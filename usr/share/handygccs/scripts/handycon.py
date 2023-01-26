@@ -514,7 +514,7 @@ async def capture_keyboard_events():
 
                     # Debugging variables
                     if active != []:
-                        logging.debug(f"Active Keys: {keyboard_device.active_keys(verbose=True)}, Seed Value: {seed_event.value}, Seed Code: {seed_event.code}, Seed Type: {seed_event.type}, Button pressed: {button_on}.")
+                        logging.debug(f"Active Keys: {active}, Seed Value: {seed_event.value}, Seed Code: {seed_event.code}, Seed Type: {seed_event.type}.")
                         logging.debug(f"Queued events: {event_queue}")
                     elif active == [] and event_queue != []:
                         logging.debug(f"Queued events: {event_queue}")
@@ -625,11 +625,6 @@ async def capture_keyboard_events():
                             # This device class uses the same active events with different values for AYA SPACE, LC, and RC.
                             if active == [97, 125]:
 
-                                # Clear out event queue if button released:
-                                if  button_on == 0 and event_queue != []:
-                                    logger.debug('released ', event_queue[0])
-                                    this_button == event_queue[0]
-
                                 # LC | Default: Screenshot
                                 elif button_on == 102 and event_queue == []:
                                     logger.debug('pressed LC')
@@ -642,6 +637,11 @@ async def capture_keyboard_events():
                                 elif button_on == 104 and event_queue == []:
                                     logger.debug('pressed AYASPACE')
                                     event_queue.append(button5)
+
+                            elif active == [] and seed_event.code in [97, 125] and button_on == 0 and event_queue != []:
+                                # Clear out event queue if button released:
+                                logger.debug('released ', str(event_queue[0]))
+                                this_button == event_queue[0]
 
                             # Small button | Default: QAM
                             if active == [32, 125] and button_on == 1 and button2 not in event_queue:
