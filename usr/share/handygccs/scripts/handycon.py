@@ -25,7 +25,7 @@ from time import sleep, time
 
 logging.basicConfig(format="[%(asctime)s | %(filename)s:%(lineno)s:%(funcName)s] %(message)s",
                     datefmt="%y%m%d_%H:%M:%S",
-                    level=logging.DEBUG
+                    level=logging.INFO
                     )
 
 logger = logging.getLogger(__name__)
@@ -250,12 +250,12 @@ def id_system():
         BUTTON_DELAY = 0.04
         system_type = "ABN_GEN1"
     # Block devices that aren't supported as this could cause issues.
-#    else:
-#        logger.error(f"{system_id} is not currently supported by this tool. Open an issue on \
-#GitHub at https://github.com/ShadowBlip/aya-neo-fixes if this is a bug. If possible, \
-#please run the capture-system.py utility found on the GitHub repository and upload \
-#that file with your issue.")
-#        sys.exit(0)
+    else:
+        logger.error(f"{system_id} is not currently supported by this tool. Open an issue on \
+GitHub at https://github.com/ShadowBlip/aya-neo-fixes if this is a bug. If possible, \
+please run the capture-system.py utility found on the GitHub repository and upload \
+that file with your issue.")
+        sys.exit(0)
 
     logger.info(f"Identified host system as {system_id} and configured defaults for {system_type}.")
 
@@ -627,24 +627,16 @@ async def capture_keyboard_events():
 
                                 # LC | Default: Screenshot
                                 if button_on == 102 and event_queue == []:
-                                    logger.debug('pressed LC')
                                     event_queue.append(button1)
                                     this_button = button1
                                 # RC | Default: OSK
                                 elif button_on == 103 and event_queue == []:
-                                    logger.debug('pressed RC')
                                     event_queue.append(button4)
                                     this_button = button4
                                 # AYA Space | Default: MODE
                                 elif button_on == 104 and event_queue == []:
-                                    logger.debug('pressed AYASPACE')
                                     event_queue.append(button5)
                                     this_button = button5
-
-                            #elif active == [] and seed_event.code in [97, 125] and button_on == 0 and event_queue != []:
-                            #    # Clear out event queue if button released:
-                            #    logger.debug('released ', str(event_queue[0]))
-                            #    this_button == event_queue[0]
 
                             # Small button | Default: QAM
                             if active == [32, 125] and button_on == 1 and button2 not in event_queue:
