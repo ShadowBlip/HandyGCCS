@@ -628,14 +628,17 @@ async def capture_keyboard_events():
                                 # LC | Default: Screenshot
                                 if button_on == 102 and event_queue == []:
                                     logger.debug('pressed LC')
+                                    event_queue.append(button1)
                                     this_button = button1
                                 # RC | Default: OSK
                                 elif button_on == 103 and event_queue == []:
                                     logger.debug('pressed RC')
+                                    event_queue.append(button4)
                                     this_button = button4
                                 # AYA Space | Default: MODE
                                 elif button_on == 104 and event_queue == []:
                                     logger.debug('pressed AYASPACE')
+                                    event_queue.append(button5)
                                     this_button = button5
 
                             #elif active == [] and seed_event.code in [97, 125] and button_on == 0 and event_queue != []:
