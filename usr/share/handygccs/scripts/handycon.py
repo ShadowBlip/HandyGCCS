@@ -626,22 +626,22 @@ async def capture_keyboard_events():
                             if active == [97, 125]:
 
                                 # LC | Default: Screenshot
-                                elif button_on == 102 and event_queue == []:
+                                if button_on == 102 and event_queue == []:
                                     logger.debug('pressed LC')
-                                    event_queue.append(button1)
+                                    this_button = button1
                                 # RC | Default: OSK
                                 elif button_on == 103 and event_queue == []:
                                     logger.debug('pressed RC')
-                                    event_queue.append(button4)
+                                    this_button = button4
                                 # AYA Space | Default: MODE
                                 elif button_on == 104 and event_queue == []:
                                     logger.debug('pressed AYASPACE')
-                                    event_queue.append(button5)
+                                    this_button = button5
 
-                            elif active == [] and seed_event.code in [97, 125] and button_on == 0 and event_queue != []:
-                                # Clear out event queue if button released:
-                                logger.debug('released ', str(event_queue[0]))
-                                this_button == event_queue[0]
+                            #elif active == [] and seed_event.code in [97, 125] and button_on == 0 and event_queue != []:
+                            #    # Clear out event queue if button released:
+                            #    logger.debug('released ', str(event_queue[0]))
+                            #    this_button == event_queue[0]
 
                             # Small button | Default: QAM
                             if active == [32, 125] and button_on == 1 and button2 not in event_queue:
