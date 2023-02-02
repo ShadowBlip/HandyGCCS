@@ -320,6 +320,9 @@ def get_controller():
 
     # Identify system input event devices.
     try:
+        if (controller_path is not None and controller_event is not None) and os.path.exists(controller_path) and not os.path.exists(str(HIDE_PATH / controller_event)):
+         logger.error(f" move({controller_path},{str(HIDE_PATH / controller_event)})")
+         move(controller_path, str(HIDE_PATH / controller_event))
         devices_original = [InputDevice(path) for path in list_devices()]
 
     except Exception as err:
