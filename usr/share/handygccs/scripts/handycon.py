@@ -180,6 +180,18 @@ def id_system():
         GYRO_I2C_ADDR = 0x68
         GYRO_I2C_BUS = 1
         system_type = "AYA_GEN2"
+    
+    elif system_id in (
+        "AYANEO 2",
+        ):
+        CAPTURE_CONTROLLER = True
+        CAPTURE_KEYBOARD = True
+        CAPTURE_POWER = True
+        BUTTON_DELAY = 0.09
+        GYRO_I2C_ADDR = 0x68
+        GYRO_I2C_BUS = 1
+        system_type = "AYA_GEN3"
+
 
     ## ONEXPLAYER and AOKZOE devices.
     # Original BIOS have incomplete DMI data and all models report as
@@ -243,7 +255,7 @@ def id_system():
 GitHub at https://github.com/ShadowBlip/aya-neo-fixes if this is a bug. If possible, \
 please run the capture-system.py utility found on the GitHub repository and upload \
 that file with your issue.")
-        sys.exit(-1)
+        sys.exit(0)
 
     logger.info(f"Identified host system as {system_id} and configured defaults for {system_type}.")
 
@@ -502,7 +514,7 @@ async def capture_keyboard_events():
 
                     # Debugging variables
                     if active != []:
-                        logging.debug(f"Active Keys: {keyboard_device.active_keys(verbose=True)}, Seed Value: {seed_event.value}, Seed Code: {seed_event.code}, Seed Type: {seed_event.type}, Button pressed: {button_on}.")
+                        logging.debug(f"Active Keys: {active}, Seed Value: {seed_event.value}, Seed Code: {seed_event.code}, Seed Type: {seed_event.type}.")
                         logging.debug(f"Queued events: {event_queue}")
                     elif active == [] and event_queue != []:
                         logging.debug(f"Queued events: {event_queue}")
@@ -608,6 +620,44 @@ async def capture_keyboard_events():
                             # Handle L_META from power button
                             elif active == [] and seed_event.code == 125 and button_on == 0 and  event_queue == [] and shutdown == True:
                                 shutdown = False
+
+                        case "AYA_GEN3":
+                            # This device class uses the same active events with different values for AYA SPACE, LC, and RC.
+                            if active == [97, 125]:
+
+                                # LC | Default: Screenshot
+                                if button_on == 102 and event_queue == []:
+                                    event_queue.append(button1)
+                                    this_button = button1
+                                # RC | Default: OSK
+                                elif button_on == 103 and event_queue == []:
+                                    event_queue.append(button4)
+                                    this_button = button4
+                                # AYA Space | Default: MODE
+                                elif button_on == 104 and event_queue == []:
+                                    event_queue.append(button5)
+                                    this_button = button5
+
+                            # Small button | Default: QAM
+                            if active == [32, 125] and button_on == 1 and button2 not in event_queue:
+                                event_queue.append(button2)
+                            elif active == [] and seed_event.code in [32, 125] and button_on == 0 and button2 in event_queue:
+                                this_button = button2
+
+                            # Small Button + big button | Default: Toggle Gyro
+                            if active == [32, 97, 125] and button_on == 1 and button3 not in event_queue:
+                                if button2 in event_queue:
+                                    event_queue.remove(button2)
+                                event_queue.append(button3)
+                            elif active == [] and seed_event.code in [32, 97, 125] and button_on == 0 and button3 in event_queue:
+                                event_queue.remove(button3)
+                                gyro_enabled = not gyro_enabled
+                                if gyro_enabled:
+                                    await do_rumble(0, 250, 1000, 0)
+                                else:
+                                    await do_rumble(0, 100, 1000, 0)
+                                    await asyncio.sleep(FF_DELAY)
+                                    await do_rumble(0, 100, 1000, 0)
 
                         case "OXP_GEN1" | "OXP_GEN2":
                             # BUTTON 1 (Possible dangerous fan activity!) Short press orange + |||||
