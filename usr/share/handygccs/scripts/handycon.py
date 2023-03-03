@@ -95,6 +95,7 @@ gyro_device = None
 keyboard_device = None
 ui_device = None
 power_device = None
+power_device_extra = None
 system_type = None
 
 # Last right joystick X and Y value
@@ -409,6 +410,7 @@ def get_keyboard():
 def get_powerkey():
     global CAPTURE_POWER
     global power_device
+    global power_device_extra
 
     # Identify system input event devices.
     try:
@@ -427,7 +429,13 @@ def get_powerkey():
             power_device = device
             if CAPTURE_POWER:
                 power_device.grab()
-            break
+
+        # Some devices (e.g. AYANEO GEEK) have an extra power input device corresponding to the same
+        # physical button that needs to be grabbed.
+        if device.name == 'Power Button' and device.phys == "PNP0C0C/button/input0":
+            power_device_extra = device
+            if CAPTURE_POWER:
+                power_device_extra.grab()
 
     if not power_device:
         logger.warn("Power Button device not yet found. Restarting scan.")
@@ -1100,6 +1108,11 @@ async def restore_all(loop):
     if power_device and CAPTURE_POWER:
         try:
             power_device.ungrab()
+        except IOError as err:
+            logger.warn(f"{err} | Device wasn't grabbed.")
+    if power_device_extra and CAPTURE_POWER:
+        try:
+            power_device_extra.ungrab()
         except IOError as err:
             logger.warn(f"{err} | Device wasn't grabbed.")
     logger.info("Devices restored.")
