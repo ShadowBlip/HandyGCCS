@@ -1,2 +1,5 @@
-# Aya Neo Fixes Controller
-KERNEL=="event*", SUBSYSTEM=="input", ATTRS{name}=="Handheld Controller", MODE="0660", TAG+="uaccess", ENV{ID_INPUT_JOYSTICK}="1"
+# Adds uaccess to Handheld Controller and makes it act like a joystick.
+ACTION=="add|change", KERNEL=="event[0-9]*", SUBSYSTEM=="input", ATTRS{name}=="Handheld Controller", MODE="0660", TAG+="uaccess", ENV{ID_INPUT_JOYSTICK}="1"
+
+# Adds necessary keycodes to GPD devices for the back buttons.
+ACTION=="add|change", KERNEL=="event[0-9]*", ATTRS{idVendor}=="2f24", ATTRS{idProduct}=="0135", ENV{ID_INPUT_KEYBOARD}="1"
