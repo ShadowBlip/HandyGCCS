@@ -736,19 +736,27 @@ async def capture_keyboard_events():
                                 shutdown = False
 
                         case "GPD_GEN1":
+                            # BUTTON 1 (Default: Screenshot)
+                            if active == [29, 56, 111] and button_on == 1 and button1 not in event_queue:
+                                event_queue.append(button1)
+                            elif active == [] and seed_event.code in [29, 56, 111] and button_on == 0 and button1 in event_queue:
+                                this_button = button1
+
                             # BUTTON 2 (Default: QAM)
                             if active == [1] and button_on == 1 and button2 not in event_queue:
                                 event_queue.append(button2)
                             elif active == [] and seed_event.code in [1] and button_on == 0 and button2 in event_queue:
                                 this_button = button2
-                                await do_rumble(0, 150, 1000, 0)
-
-                            # BUTTON 6 (Default: Toggle RyzenAdj)
-                            if active == [29, 56, 111] and button_on == 1 and button6 not in event_queue:
+                        
+                            # BUTTON 6 (Default: Nothing)
+                            if active == [1, 29, 56, 111] and button_on == 1 and button6 not in event_queue:
+                                if button1 in event_queue:
+                                    event_queue.remove(button1)
+                                if button2 in event_queue:
+                                    event_queue.remove(button2)
                                 event_queue.append(button6)
                             elif active == [] and seed_event.code in [1, 29, 56, 111] and button_on == 0 and button6 in event_queue:
                                 event_queue.remove(button6)
-                                await toggle_performance()
 
                         case "GPD_GEN2":
                             # BUTTON 2 (Default: QAM)
