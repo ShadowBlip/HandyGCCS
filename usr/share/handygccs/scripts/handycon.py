@@ -975,8 +975,8 @@ async def capture_power_events():
                                 # For DeckUI Sessions
                                 is_deckui = steam_ifrunning_deckui("steam://shortpowerpress")
                                 if not is_deckui:
-                                  # For BPM and Desktop sessions
-                                  os.system('systemctl suspend')
+                                    # For BPM and Desktop sessions
+                                    os.system('systemctl suspend')
 
                     if active_keys == [125]:
                         await do_rumble(0, 150, 1000, 0)
