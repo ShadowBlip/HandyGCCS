@@ -925,6 +925,33 @@ async def capture_gyro_events():
             elif gyro_device == False:
                 break
 
+def steam_ifrunning_deckui(cmd):
+    steampid_path = HOME_PATH / '.steam/steam.pid'
+    try:
+        with open(steampid_path) as f:
+            pid = f.read()
+    except Exception as err:
+        logger.error(f"{err} | Error getting steam PID.")
+        return False
+
+    try:
+        steam_cmd = subprocess.run(f"ps -fp {pid}", stdin=subprocess.PIPE, capture_output=True, shell=True, check=True).stdout
+    except Exception as err:
+        logger.error(f"{err} | Error getting steam cmdline.")
+        return False
+
+    is_deckui = b"-gamepadui" in steam_cmd
+    if not is_deckui:
+        return False
+
+    steam_path = HOME_PATH / '.steam/root/ubuntu12_32/steam'
+    try:
+        result = subprocess.run(["su", USER, "-c", f"{steam_path} -ifrunning {cmd}"])
+        return result.returncode == 0
+    except Exception as err:
+        logger.error(f"{err} | Error sending command to Steam.")
+        return False
+
 # Captures power events and handles long or short press events.
 async def capture_power_events():
     global HOME_PATH
@@ -940,21 +967,16 @@ async def capture_power_events():
                     active_keys = keyboard_device.active_keys()
                     if event.type == e.EV_KEY and event.code == 116: # KEY_POWER
                         if event.value == 0:
-                            steam_path = HOME_PATH / '.steam/root/ubuntu12_32/steam'
                             if active_keys == [125]:
                                 # For DeckUI Sessions
                                 shutdown = True
-                                cmd = f'su {USER} -c "{steam_path} -ifrunning steam://longpowerpress"'
-                                os.system(cmd)
-
+                                steam_ifrunning_deckui("steam://longpowerpress")
                             else:
                                 # For DeckUI Sessions
-                                cmd = f'su {USER} -c "{steam_path} -ifrunning steam://shortpowerpress"'
-                                os.system(cmd)
-
-                                # For BPM and Desktop sessions
-                                await asyncio.sleep(1)
-                                os.system('systemctl suspend')
+                                is_deckui = steam_ifrunning_deckui("steam://shortpowerpress")
+                                if not is_deckui:
+                                  # For BPM and Desktop sessions
+                                  os.system('systemctl suspend')
 
                     if active_keys == [125]:
                         await do_rumble(0, 150, 1000, 0)
