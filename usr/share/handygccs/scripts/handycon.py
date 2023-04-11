@@ -926,6 +926,7 @@ async def capture_gyro_events():
                 break
 
 def steam_ifrunning_deckui(cmd):
+    # Get the currently running Steam PID.
     steampid_path = HOME_PATH / '.steam/steam.pid'
     try:
         with open(steampid_path) as f:
@@ -934,12 +935,15 @@ def steam_ifrunning_deckui(cmd):
         logger.error(f"{err} | Error getting steam PID.")
         return False
 
+    # Use `ps -fp PID` to extract the full Steam commandline.
     try:
         steam_cmd = subprocess.run(f"ps -fp {pid}", stdin=subprocess.PIPE, capture_output=True, shell=True, check=True).stdout
     except Exception as err:
         logger.error(f"{err} | Error getting steam cmdline.")
         return False
 
+    # Use this commandline to determine if Steam is running in DeckUI mode.
+    # e.g. "steam://shortpowerpress" only work in DeckUI.
     is_deckui = b"-gamepadui" in steam_cmd
     if not is_deckui:
         return False
