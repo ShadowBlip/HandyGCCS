@@ -930,7 +930,7 @@ def steam_ifrunning_deckui(cmd):
     steampid_path = HOME_PATH / '.steam/steam.pid'
     try:
         with open(steampid_path) as f:
-            pid = f.read()
+            pid = f.read().strip()
     except Exception as err:
         logger.error(f"{err} | Error getting steam PID.")
         return False
