@@ -935,15 +935,21 @@ def steam_ifrunning_deckui(cmd):
         logger.error(f"{err} | Error getting steam PID.")
         return False
 
-    # Use `ps -fp PID` to extract the full Steam commandline.
+    # Get the commandline for the Steam process by checking /proc.
+    steam_cmd_path = f"/proc/{pid}/cmdline"
+    if not os.path.exists(steam_cmd_path):
+        # Steam not running.
+        return False
+
     try:
-        steam_cmd = subprocess.run(f"ps -fp {pid}", stdin=subprocess.PIPE, capture_output=True, shell=True, check=True).stdout
+        with open(steam_cmd_path, "rb") as f:
+            steam_cmd = f.read()
     except Exception as err:
         logger.error(f"{err} | Error getting steam cmdline.")
         return False
 
     # Use this commandline to determine if Steam is running in DeckUI mode.
-    # e.g. "steam://shortpowerpress" only work in DeckUI.
+    # e.g. "steam://shortpowerpress" only works in DeckUI.
     is_deckui = b"-gamepadui" in steam_cmd
     if not is_deckui:
         return False
