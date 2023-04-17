@@ -231,14 +231,14 @@ def id_system():
 
     ## GPD Devices.
     # Have 2 buttons with 3 modes (left, right, both)
-    elif system_id in (
-        "G1618-03", #Win3
-        ):
-        CAPTURE_CONTROLLER = True
-        CAPTURE_KEYBOARD = True
-        CAPTURE_POWER = True
-        BUTTON_DELAY = 0.09
-        system_type = "GPD_GEN1"
+    #elif system_id in (
+    #    "G1618-03", #Win3
+    #    ):
+    #    CAPTURE_CONTROLLER = True
+    #    CAPTURE_KEYBOARD = True
+    #    CAPTURE_POWER = True
+    #    BUTTON_DELAY = 0.09
+    #    system_type = "GPD_GEN1"
 
     elif system_id in (
         "G1618-04", #WinMax2
