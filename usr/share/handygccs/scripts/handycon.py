@@ -233,9 +233,18 @@ def id_system():
         system_type = "OXP_GEN2"
 
     ## GPD Devices.
-    # Has 2 buttons with 3 modes (left, right, both)
+    # Have 2 buttons with 3 modes (left, right, both)
+    #elif system_id in (
+    #    "G1618-03", #Win3
+    #    ):
+    #    CAPTURE_CONTROLLER = True
+    #    CAPTURE_KEYBOARD = True
+    #    CAPTURE_POWER = True
+    #    BUTTON_DELAY = 0.09
+    #    system_type = "GPD_GEN1"
+
     elif system_id in (
-        "G1619-04", #WinMax2
+        "G1618-04", #WinMax2
         ):
         CAPTURE_CONTROLLER = True
         CAPTURE_KEYBOARD = True
@@ -243,7 +252,18 @@ def id_system():
         BUTTON_DELAY = 0.09
         GYRO_I2C_ADDR = 0x69
         GYRO_I2C_BUS = 2
-        system_type = "GPD_GEN1"
+        system_type = "GPD_GEN2"
+
+    elif system_id in (
+        "G1619-04", #Win4
+        ):
+        CAPTURE_CONTROLLER = True
+        CAPTURE_KEYBOARD = True
+        CAPTURE_POWER = True
+        BUTTON_DELAY = 0.09
+        GYRO_I2C_ADDR = 0x68
+        GYRO_I2C_BUS = 1
+        system_type = "GPD_GEN3"
 
     ## ABERNIC Devices
     elif system_id in (
@@ -338,10 +358,12 @@ def get_controller():
             'OneXPlayer Gamepad',
             )
     controller_phys = (
+            'usb-0000:00:14.0-7/input0',
             'usb-0000:00:14.0-9/input0',
             'usb-0000:02:00.3-5/input0',
             'usb-0000:03:00.3-4/input0',
             'usb-0000:04:00.3-4/input0',
+            'usb-0000:73:00.3-4/input0',
             'usb-0000:74:00.3-3/input0',
             'usb-0000:e3:00.3-4/input0',
             'usb-0000:e4:00.3-4/input0',
@@ -379,7 +401,7 @@ def get_keyboard():
         for device in [InputDevice(path) for path in list_devices()]:
             if system_type == "GPD_GEN1":
                 logger.debug(f"{device.name}, {device.phys}")
-                if device.name == '  Mouse for Windows' and device.phys == 'usb-0000:74:00.3-4/input1':
+                if device.name == '  Mouse for Windows' and device.phys in ['usb-0000:00:14.0-5/input0', 'usb-0000:73:00.4-2/input1', 'usb-0000:74:00.3-4/input1']:
                     keyboard_path = device.path
                     keyboard_device = InputDevice(keyboard_path)
             else:
@@ -504,11 +526,11 @@ async def capture_keyboard_events():
     global shutdown
 
     # Button map shortcuts for easy reference.
-    button1 = button_map["button1"]
-    button2 = button_map["button2"]
-    button3 = button_map["button3"]
-    button4 = button_map["button4"]
-    button5 = button_map["button5"]
+    button1 = button_map["button1"]  # Default Screenshot
+    button2 = button_map["button2"]  # Default QAM
+    button3 = button_map["button3"]  # Default ESC
+    button4 = button_map["button4"]  # Default OSK
+    button5 = button_map["button5"]  # Default MODE
     button6 = ["RyzenAdj Toggle"]
     button7 = ["Open Chimera"]
     last_button = None
@@ -734,6 +756,29 @@ async def capture_keyboard_events():
                                 shutdown = False
 
                         case "GPD_GEN1":
+                            # BUTTON 1 (Default: Screenshot)
+                            if active == [29, 56, 111] and button_on == 1 and button1 not in event_queue:
+                                event_queue.append(button1)
+                            elif active == [] and seed_event.code in [29, 56, 111] and button_on == 0 and button1 in event_queue:
+                                this_button = button1
+
+                            # BUTTON 2 (Default: QAM)
+                            if active == [1] and button_on == 1 and button2 not in event_queue:
+                                event_queue.append(button2)
+                            elif active == [] and seed_event.code in [1] and button_on == 0 and button2 in event_queue:
+                                this_button = button2
+                        
+                            # BUTTON 6 (Default: Nothing)
+                            if active == [1, 29, 56, 111] and button_on == 1 and button6 not in event_queue:
+                                if button1 in event_queue:
+                                    event_queue.remove(button1)
+                                if button2 in event_queue:
+                                    event_queue.remove(button2)
+                                event_queue.append(button6)
+                            elif active == [] and seed_event.code in [1, 29, 56, 111] and button_on == 0 and button6 in event_queue:
+                                event_queue.remove(button6)
+
+                        case "GPD_GEN2":
                             # BUTTON 2 (Default: QAM)
                             if active == [10] and button_on == 1 and button2 not in event_queue:
                                 event_queue.append(button2)
@@ -758,6 +803,34 @@ async def capture_keyboard_events():
                             if active == [10, 11] and button_on == 1 and button6 not in event_queue:
                                 event_queue.append(button6)
                             elif active == [] and seed_event.code in [10, 11] and button_on == 0 and button6 in event_queue:
+                                event_queue.remove(button6)
+                                await toggle_performance()
+
+                        case "GPD_GEN3":
+                            # BUTTON 2 (Default: QAM)
+                            if active == [99] and button_on == 1 and button2 not in event_queue:
+                                event_queue.append(button2)
+                            elif active == [] and seed_event.code in [99] and button_on == 0 and button2 in event_queue:
+                                this_button = button2
+                                await do_rumble(0, 150, 1000, 0)
+
+                            # BUTTON 3 Toggle gyro.
+                            if active == [119] and button_on == 1 and button3 not in event_queue:
+                                event_queue.append(button3)
+                            elif active == [] and seed_event.code in [119] and button_on == 0 and button3 in event_queue:
+                                logger.debug(f"gyro_enabled: {not gyro_enabled}")
+                                if gyro_enabled := not gyro_enabled:
+                                    await do_rumble(0, 250, 1000, 0)
+                                else:
+                                    await do_rumble(0, 100, 1000, 0)
+                                    await asyncio.sleep(FF_DELAY)
+                                    await do_rumble(0, 100, 1000, 0)
+                                continue
+
+                            # BUTTON 6 (Both buttons pressed, Default: Toggle RyzenAdj)
+                            if active == [99, 119] and button_on == 1 and button6 not in event_queue:
+                                event_queue.append(button6)
+                            elif active == [] and seed_event.code in [99, 119] and button_on == 0 and button6 in event_queue:
                                 event_queue.remove(button6)
                                 await toggle_performance()
 
