@@ -62,6 +62,9 @@ EVENT_MAP= {
 
 HIDE_PATH = Path(HIDE_PATH)
 
+CHIMERA_LAUNCHER_PATH='/usr/share/chimera/bin/chimera-web-launcher'
+HAS_CHIMERA_LAUNCHER=os.path.isfile(CHIMERA_LAUNCHER_PATH)
+
 server_address = '/tmp/ryzenadj_socket'
 
 # Capture the username and home path of the user who has been logged in the longest.
@@ -656,10 +659,13 @@ async def capture_keyboard_events():
                             # This device class uses the same active events with different values for AYA SPACE, LC, and RC.
                             if active == [97, 125]:
 
-                                # LC | Default: Screenshot
+                                # LC | Default: Screenshot / Launch Chimera
                                 if button_on == 102 and event_queue == []:
-                                    event_queue.append(button1)
-                                    this_button = button1
+                                    if HAS_CHIMERA_LAUNCHER:
+                                        launch_chimera()
+                                    else:
+                                        event_queue.append(button1)
+                                        this_button = button1
                                 # RC | Default: OSK
                                 elif button_on == 103 and event_queue == []:
                                     event_queue.append(button4)
@@ -1190,6 +1196,11 @@ async def ryzenadj_control(loop):
                 await asyncio.sleep(RYZENADJ_DELAY)
                 continue
         await asyncio.sleep(RYZENADJ_DELAY)
+
+def launch_chimera():
+    if not HAS_CHIMERA_LAUNCHER:
+        return
+    subprocess.run([ "su", USER, "-c", CHIMERA_LAUNCHER_PATH ])
 
 # Gracefull shutdown.
 async def restore_all(loop):
