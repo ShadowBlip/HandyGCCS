@@ -510,6 +510,7 @@ async def capture_keyboard_events():
     button4 = button_map["button4"]
     button5 = button_map["button5"]
     button6 = ["RyzenAdj Toggle"]
+    button7 = ["Open Chimera"]
     last_button = None
 
     # Capture keyboard events and translate them to mapped events.
@@ -579,11 +580,17 @@ async def capture_keyboard_events():
                                 shutdown = False
 
                         case "AYA_GEN2":
-                            # BUTTON 1 (Default: Screenshot) LC Button
+                            # BUTTON 1 (Default: Screenshot/Launch Chiumera) LC Button
                             if active == [87, 97, 125] and button_on == 1 and button1 not in event_queue and shutdown == False:
-                                event_queue.append(button1)
+                                if HAS_CHIMERA_LAUNCHER:
+                                    event_queue.append(button7)
+                                else:
+                                    event_queue.append(button1)
                             elif active == [] and seed_event.code in [87, 97, 125] and button_on == 0 and button1 in event_queue:
                                 this_button = button1
+                            elif active == [] and seed_event.code in [87, 97, 125] and button_on == 0 and button7 in event_queue:
+                                event_queue.remove(button7)
+                                launch_chimera()
 
                             # BUTTON 2 (Default: QAM) Small button
                             if active in [[40, 133], [32, 125]] and button_on == 1 and button2 not in event_queue:
@@ -640,17 +647,24 @@ async def capture_keyboard_events():
                                 # LC | Default: Screenshot / Launch Chimera
                                 if button_on == 102 and event_queue == []:
                                     if HAS_CHIMERA_LAUNCHER:
-                                        launch_chimera()
+                                        event_queue.append(button7)
                                     else:
                                         event_queue.append(button1)
-                                        this_button = button1
                                 # RC | Default: OSK
                                 elif button_on == 103 and event_queue == []:
                                     event_queue.append(button4)
-                                    this_button = button4
                                 # AYA Space | Default: MODE
                                 elif button_on == 104 and event_queue == []:
                                     event_queue.append(button5)
+                            elif active == [] and seed_event.code in [97, 125] and button_on == 0 and event_queue != []:
+                                if button7 in event_queue:
+                                    event_queue.remove(button7)
+                                    launch_chimera()
+                                if button1 in event_queue:
+                                    this_button = button1
+                                if button4 in event_queue:
+                                    this_button = button4
+                                if button5 in event_queue:
                                     this_button = button5
 
                             # Small button | Default: QAM
