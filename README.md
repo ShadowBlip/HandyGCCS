@@ -20,16 +20,20 @@ Most of the buttons are mapped to the steam shortcuts for various functions in t
 More functions can be added as possible configuration if desired for your personal cofiguration, submit an issue or pull request to ge them added. 
 
 ## Supported Devices
+### Anbernic
+- Win600
 
-### Aya Neo
+### AYANEOeo
 - Founders Edition
 - 2021 and 2021 Pro
 - Next and Next Pro
 - Air and Air Pro
 - 2 and GEEK
 
-### OneNetBook
+### OneXPlayer
 - OneXPlayer 1S
+- OneXPlayer Gundam
+- OneXPlayer AMD
 - OneXPlayer Mini
 - OneXPlayer Mini Pro
 
@@ -38,6 +42,8 @@ More functions can be added as possible configuration if desired for your person
 
 ### GPD
 - GPD WinMax2
+- GPD Win3 (Experimental)
+- GPD Win4 (Experimental)
 
 ## Installation
 
