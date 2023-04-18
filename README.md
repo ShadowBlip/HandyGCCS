@@ -23,7 +23,7 @@ More functions can be added as possible configuration if desired for your person
 ### Anbernic
 - Win600
 
-### AYANEOeo
+### AYANEO
 - Founders Edition
 - 2021 and 2021 Pro
 - Next and Next Pro
