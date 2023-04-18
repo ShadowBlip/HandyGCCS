@@ -135,8 +135,6 @@ def __init__():
     global power_device
     global cpu_vendor
 
-    cpu_vendor = get_cpu_vendor()
-    logger.info(f"Found CPU Vendor: {cpu_vendor}")
     id_system()
     Path(HIDE_PATH).mkdir(parents=True, exist_ok=True)
     get_config()
@@ -158,6 +156,8 @@ def id_system():
     global system_type
 
     system_id = open("/sys/devices/virtual/dmi/id/product_name", "r").read().strip()
+    cpu_vendor = get_cpu_vendor()
+    logger.debug(f"Found CPU Vendor: {cpu_vendor}")
 
     ## Aya Neo Devices
     if system_id in (
@@ -243,17 +243,19 @@ def id_system():
         CAPTURE_CONTROLLER = True
         CAPTURE_KEYBOARD = True
         CAPTURE_POWER = True
-        GAMEPAD_ADDRESS = 'usb-0000:03:00.3-4/input0'
-        GAMEPAD_NAME = 'Microsoft X-Box 360 pad'
         GYRO_I2C_ADDR = 0x68
         GYRO_I2C_BUS = 1
         KEYBOARD_ADDRESS = 'isa0060/serio0/input0'
         KEYBOARD_NAME = 'AT Translated Set 2 keyboard'
-        system_type = "OXP_GEN2"
         if cpu_vendor == "GenuineIntel":
             GAMEPAD_ADDRESS = 'usb-0000:00:14.0-9/input0'
             GAMEPAD_NAME = 'OneXPlayer Gamepad'
             system_type = "OXP_GEN1"
+        else:
+            GAMEPAD_ADDRESS = 'usb-0000:03:00.3-4/input0'
+            GAMEPAD_NAME = 'Microsoft X-Box 360 pad'
+            system_type = "OXP_GEN2"
+        logger.info(f"Found {system_type} with {GAMEPAD_NAME}.")
 
     elif system_id in (
         "ONEXPLAYER Mini Pro",
@@ -345,7 +347,7 @@ def get_cpu_vendor():
     all_info = subprocess.check_output(command, shell=True).decode().strip()
     for line in all_info.split("\n"):
         if "vendor_id" in line:
-                return re.sub( ".*vendor_id.*:", "", line,1)
+                return re.sub( ".*vendor_id.*:", "", line,1).strip()
 
 def get_config():
     global button_map
