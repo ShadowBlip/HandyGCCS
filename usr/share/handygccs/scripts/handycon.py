@@ -402,8 +402,8 @@ def make_controller():
 
 def get_controller():
     global CAPTURE_CONTROLLER
-    global CONTROLLER_ADDRESS
-    global CONTROLLER_NAME
+    global GAMEPAD_ADDRESS
+    global GAMEPAD_NAME
     global controller_device
     global controller_event
     global controller_path
@@ -419,7 +419,7 @@ def get_controller():
 
     # Grab the built-in devices. This will give us exclusive acces to the devices and their capabilities.
     for device in devices_original:
-        if device.name == CONTROLLER_NAME and device.phys == CONTROLLER_ADDRESS:
+        if device.name == GAMEPAD_NAME and device.phys == GAMEPAD_ADDRESS:
             controller_path = device.path
             controller_device = InputDevice(controller_path)
             if CAPTURE_CONTROLLER:
