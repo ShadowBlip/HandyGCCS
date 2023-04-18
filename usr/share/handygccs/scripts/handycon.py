@@ -46,8 +46,12 @@ BUTTON_DELAY = 0.0
 CAPTURE_CONTROLLER = False
 CAPTURE_KEYBOARD = None
 CAPTURE_POWER = None
+GAMEPAD_ADDRESS = None
+GAMEPAD_NAME = None
 GYRO_I2C_ADDR = None
 GYRO_I2C_BUS = None
+KEYBOARD_ADDRESS = None
+KEYBOARD_NAME = None
 
 EVENT_MAP= {
         "ALT_TAB": EVENT_ALT_TAB,
@@ -94,12 +98,13 @@ shutdown = False
 
 # Devices
 controller_device = None
+cpu_vendor = None
 gyro_device = None
 keyboard_device = None
-ui_device = None
 power_device = None
 power_device_extra = None
 system_type = None
+ui_device = None
 
 # Last right joystick X and Y value
 # Holding the last value allows us to maintain motion while a joystick is held.
@@ -128,30 +133,33 @@ def __init__():
     global controller_device
     global keyboard_device
     global power_device
+    global cpu_vendor
 
+    cpu_vendor = get_cpu_vendor()
+    logger.info(f"Found CPU Vendor: {cpu_vendor}")
     id_system()
     Path(HIDE_PATH).mkdir(parents=True, exist_ok=True)
     get_config()
     make_controller()
 
+# Identify the current device type. Kill script if not compatible.
 def id_system():
+    global BUTTON_DELAY
     global CAPTURE_CONTROLLER
     global CAPTURE_KEYBOARD
     global CAPTURE_POWER
-    global BUTTON_DELAY
+    global GAMEPAD_ADDRESS
+    global GAMEPAD_NAME
     global GYRO_I2C_ADDR
     global GYRO_I2C_BUS
-
+    global KEYBOARD_ADDRESS
+    global KEYBOARD_NAME
+    global cpu_vendor
     global system_type
 
-    # Identify the current device type. Kill script if not compatible.
     system_id = open("/sys/devices/virtual/dmi/id/product_name", "r").read().strip()
 
     ## Aya Neo Devices
-    # Aya Neo from Founders edition through 2021 Pro Retro Power use the same
-    # input hardware and keycodes.
-    # Aya Neo NEXT and AIR use new keycodes and have fewer buttons.
-    # Aya Neo 2 and Geek use different keycodes than NEXT/AIR with same buttons
     if system_id in (
         "AYA NEO FOUNDER",
         "AYA NEO 2021",
@@ -159,12 +167,16 @@ def id_system():
         "AYANEO 2021 Pro",
         "AYANEO 2021 Pro Retro Power",
         ):
+        BUTTON_DELAY = 0.09
         CAPTURE_CONTROLLER = True
         CAPTURE_KEYBOARD = True
         CAPTURE_POWER = True
-        BUTTON_DELAY = 0.09
-        #GYRO_I2C_ADDR = 0x68
-        #GYRO_I2C_BUS = 1
+        GAMEPAD_ADDRESS = 'usb-0000:03:00.3-4/input0'
+        GAMEPAD_NAME = 'Microsoft X-Box 360 pad'
+        GYRO_I2C_ADDR = 0x68
+        GYRO_I2C_BUS = 1
+        KEYBOARD_ADDRESS = 'isa0060/serio0/input0'
+        KEYBOARD_NAME = 'AT Translated Set 2 keyboard'
         system_type = "AYA_GEN1"
 
     elif system_id in (
@@ -174,98 +186,137 @@ def id_system():
         "AYANEO NEXT",
         "AYANEO NEXT Pro",
         "AYANEO NEXT Advance",
-        "AIR",
-        "AIR Pro",
         ):
+        BUTTON_DELAY = 0.09
         CAPTURE_CONTROLLER = True
         CAPTURE_KEYBOARD = True
         CAPTURE_POWER = True
-        BUTTON_DELAY = 0.09
+        GAMEPAD_ADDRESS = 'usb-0000:03:00.3-4/input0'
+        GAMEPAD_NAME = 'Microsoft X-Box 360 pad'
         GYRO_I2C_ADDR = 0x68
         GYRO_I2C_BUS = 1
+        KEYBOARD_ADDRESS = 'isa0060/serio0/input0'
+        KEYBOARD_NAME = 'AT Translated Set 2 keyboard'
         system_type = "AYA_GEN2"
+
+    elif system_id in (
+        "AIR",
+        "AIR Pro",
+        ):
+        BUTTON_DELAY = 0.09
+        CAPTURE_CONTROLLER = True
+        CAPTURE_KEYBOARD = True
+        CAPTURE_POWER = True
+        GAMEPAD_ADDRESS = 'usb-0000:04:00.3-4/input0'
+        GAMEPAD_NAME = 'Microsoft X-Box 360 pad'
+        GYRO_I2C_ADDR = 0x68
+        GYRO_I2C_BUS = 1
+        KEYBOARD_ADDRESS = 'isa0060/serio0/input0'
+        KEYBOARD_NAME = 'AT Translated Set 2 keyboard'
+        system_type = "AYA_GEN3"
     
     elif system_id in (
         "AYANEO 2",
         "GEEK",
         ):
+        BUTTON_DELAY = 0.09
         CAPTURE_CONTROLLER = True
         CAPTURE_KEYBOARD = True
         CAPTURE_POWER = True
-        BUTTON_DELAY = 0.09
+        GAMEPAD_ADDRESS = 'usb-0000:e4:00.3-4/input0'
+        GAMEPAD_NAME = 'Microsoft X-Box 360 pad'
         GYRO_I2C_ADDR = 0x68
         GYRO_I2C_BUS = 1
-        system_type = "AYA_GEN3"
+        KEYBOARD_ADDRESS = 'isa0060/serio0/input0'
+        KEYBOARD_NAME = 'AT Translated Set 2 keyboard'
+        system_type = "AYA_GEN4"
 
 
     ## ONEXPLAYER and AOKZOE devices.
-    # Original BIOS have incomplete DMI data and all models report as
-    # "ONE XPLAYER". OXP have provided new DMI data via BIOS updates.
+    # BIOS have incomplete DMI data and most models report as "ONE XPLAYER" or "ONEXPLAYER".
     elif system_id in (
         "ONE XPLAYER",
-        "ONEXPLAYER 1 T08",
-        "ONEXPLAYER 1S A08",
-        "ONEXPLAYER 1S T08",
+        "ONEXPLAYER",
         "ONEXPLAYER mini A07",
-        "ONEXPLAYER mini GA72",
-        "ONEXPLAYER mini GT72",
-        "ONEXPLAYER GUNDAM GA72",
-        "ONEXPLAYER 2 ARP23",
         ):
+        BUTTON_DELAY = 0.09
         CAPTURE_CONTROLLER = True
         CAPTURE_KEYBOARD = True
         CAPTURE_POWER = True
-        BUTTON_DELAY = 0.09
+        GAMEPAD_ADDRESS = 'usb-0000:03:00.3-4/input0'
+        GAMEPAD_NAME = 'Microsoft X-Box 360 pad'
         GYRO_I2C_ADDR = 0x68
         GYRO_I2C_BUS = 1
-        system_type = "OXP_GEN1"
+        KEYBOARD_ADDRESS = 'isa0060/serio0/input0'
+        KEYBOARD_NAME = 'AT Translated Set 2 keyboard'
+        system_type = "OXP_GEN2"
+        if cpu_vendor == "GenuineIntel":
+            GAMEPAD_ADDRESS = 'usb-0000:00:14.0-9/input0'
+            GAMEPAD_NAME = 'OneXPlayer Gamepad'
+            system_type = "OXP_GEN1"
 
     elif system_id in (
         "ONEXPLAYER Mini Pro",
         "AOKZOE A1 AR07"
         ):
+        BUTTON_DELAY = 0.08
         CAPTURE_CONTROLLER = True
         CAPTURE_KEYBOARD = True
         CAPTURE_POWER = True
-        BUTTON_DELAY = 0.08
+        GAMEPAD_ADDRESS = 'usb-0000:e3:00.3-4/input0'
+        GAMEPAD_NAME = 'Microsoft X-Box 360 pad'
         GYRO_I2C_ADDR = 0x68
         GYRO_I2C_BUS = 1
-        system_type = "OXP_GEN2"
+        KEYBOARD_ADDRESS = 'isa0060/serio0/input0'
+        KEYBOARD_NAME = 'AT Translated Set 2 keyboard'
+        system_type = "OXP_GEN3"
 
     ## GPD Devices.
     # Have 2 buttons with 3 modes (left, right, both)
-    #elif system_id in (
-    #    "G1618-03", #Win3
-    #    ):
-    #    CAPTURE_CONTROLLER = True
-    #    CAPTURE_KEYBOARD = True
-    #    CAPTURE_POWER = True
-    #    BUTTON_DELAY = 0.09
-    #    system_type = "GPD_GEN1"
+    elif system_id in (
+        "G1618-03", #Win3
+        ):
+        BUTTON_DELAY = 0.09
+        CAPTURE_CONTROLLER = True
+        CAPTURE_KEYBOARD = True
+        CAPTURE_POWER = True
+        GAMEPAD_ADDRESS = 'usb-0000:00:14.0-7/input0'
+        GAMEPAD_NAME = 'Microsoft X-Box 360 pad'
+        KEYBOARD_ADDRESS = 'usb-0000:00:14.0-5/input0'
+        KEYBOARD_NAME = '  Mouse for Windows'
+        system_type = "GPD_GEN1"
 
     elif system_id in (
         "G1618-04", #WinMax2
         ):
+        BUTTON_DELAY = 0.09
         CAPTURE_CONTROLLER = True
         CAPTURE_KEYBOARD = True
         CAPTURE_POWER = True
-        BUTTON_DELAY = 0.09
+        GAMEPAD_ADDRESS = 'usb-0000:74:00.3-3/input0'
+        GAMEPAD_NAME = 'Microsoft X-Box 360 pad'
         GYRO_I2C_ADDR = 0x69
         GYRO_I2C_BUS = 2
+        KEYBOARD_ADDRESS = 'usb-0000:74:00.3-4/input1'
+        KEYBOARD_NAME = '  Mouse for Windows'
         system_type = "GPD_GEN2"
 
     elif system_id in (
         "G1619-04", #Win4
         ):
+        BUTTON_DELAY = 0.09
         CAPTURE_CONTROLLER = True
         CAPTURE_KEYBOARD = True
         CAPTURE_POWER = True
-        BUTTON_DELAY = 0.09
+        GAMEPAD_ADDRESS = 'usb-0000:73:00.3-4/input0'
+        GAMEPAD_NAME = 'Microsoft X-Box 360 pad'
         GYRO_I2C_ADDR = 0x68
         GYRO_I2C_BUS = 1
+        KEYBOARD_ADDRESS = 'usb-0000:73:00.4-2/input1'
+        KEYBOARD_NAME = '  Mouse for Windows'
         system_type = "GPD_GEN3"
 
-    ## ABERNIC Devices
+    ## ANBERNIC Devices
     elif system_id in (
             "Win600",
             ):
@@ -273,7 +324,12 @@ def id_system():
         CAPTURE_KEYBOARD = True
         CAPTURE_POWER = True
         BUTTON_DELAY = 0.04
+        GAMEPAD_ADDRESS = 'usb-0000:02:00.3-5/input0'
+        GAMEPAD_NAME = 'Microsoft X-Box 360 pad'
+        KEYBOARD_ADDRESS = 'isa0060/serio0/input0'
+        KEYBOARD_NAME = 'AT Translated Set 2 keyboard'
         system_type = "ABN_GEN1"
+
     # Block devices that aren't supported as this could cause issues.
     else:
         logger.error(f"{system_id} is not currently supported by this tool. Open an issue on \
@@ -283,6 +339,13 @@ that file with your issue.")
         sys.exit(0)
 
     logger.info(f"Identified host system as {system_id} and configured defaults for {system_type}.")
+
+def get_cpu_vendor():
+    command = "cat /proc/cpuinfo"
+    all_info = subprocess.check_output(command, shell=True).decode().strip()
+    for line in all_info.split("\n"):
+        if "vendor_id" in line:
+                return re.sub( ".*vendor_id.*:", "", line,1)
 
 def get_config():
     global button_map
@@ -339,6 +402,8 @@ def make_controller():
 
 def get_controller():
     global CAPTURE_CONTROLLER
+    global CONTROLLER_ADDRESS
+    global CONTROLLER_NAME
     global controller_device
     global controller_event
     global controller_path
@@ -352,26 +417,9 @@ def get_controller():
         sleep(DETECT_DELAY)
         return False
 
-    controller_names = (
-            'Microsoft X-Box 360 pad',
-            'Generic X-Box pad',
-            'OneXPlayer Gamepad',
-            )
-    controller_phys = (
-            'usb-0000:00:14.0-7/input0',
-            'usb-0000:00:14.0-9/input0',
-            'usb-0000:02:00.3-5/input0',
-            'usb-0000:03:00.3-4/input0',
-            'usb-0000:04:00.3-4/input0',
-            'usb-0000:73:00.3-4/input0',
-            'usb-0000:74:00.3-3/input0',
-            'usb-0000:e3:00.3-4/input0',
-            'usb-0000:e4:00.3-4/input0',
-            )
-
     # Grab the built-in devices. This will give us exclusive acces to the devices and their capabilities.
     for device in devices_original:
-        if device.name in controller_names and device.phys in controller_phys:
+        if device.name == CONTROLLER_NAME and device.phys == CONTROLLER_ADDRESS:
             controller_path = device.path
             controller_device = InputDevice(controller_path)
             if CAPTURE_CONTROLLER:
@@ -391,6 +439,8 @@ def get_controller():
 
 def get_keyboard():
     global CAPTURE_KEYBOARD
+    global KEYBOARD_ADDRESS
+    global KEYBOARD_NAME
     global keyboard_device
     global keyboard_event
     global keyboard_path
@@ -399,15 +449,10 @@ def get_keyboard():
     try:
         # Grab the built-in devices. This will give us exclusive acces to the devices and their capabilities.
         for device in [InputDevice(path) for path in list_devices()]:
-            if system_type == "GPD_GEN1":
-                logger.debug(f"{device.name}, {device.phys}")
-                if device.name == '  Mouse for Windows' and device.phys in ['usb-0000:00:14.0-5/input0', 'usb-0000:73:00.4-2/input1', 'usb-0000:74:00.3-4/input1']:
-                    keyboard_path = device.path
-                    keyboard_device = InputDevice(keyboard_path)
-            else:
-                if device.name == 'AT Translated Set 2 keyboard' and device.phys == 'isa0060/serio0/input0':
-                    keyboard_path = device.path
-                    keyboard_device = InputDevice(keyboard_path)
+            logger.debug(f"{device.name}, {device.phys}")
+            if device.name == KEYBOARD_NAME and device.phys == KEYBOARD_ADDRESS:
+                keyboard_path = device.path
+                keyboard_device = InputDevice(keyboard_path)
 
             if CAPTURE_KEYBOARD and keyboard_device:
                 keyboard_device.grab()
@@ -601,7 +646,7 @@ async def capture_keyboard_events():
                             elif active == [] and seed_event.code == 125 and button_on == 0 and  event_queue == [] and shutdown == True:
                                 shutdown = False
 
-                        case "AYA_GEN2":
+                        case "AYA_GEN2" | "AYA_GEN3":
                             # BUTTON 1 (Default: Screenshot/Launch Chiumera) LC Button
                             if active == [87, 97, 125] and button_on == 1 and button1 not in event_queue and shutdown == False:
                                 if HAS_CHIMERA_LAUNCHER:
@@ -662,7 +707,7 @@ async def capture_keyboard_events():
                             elif active == [] and seed_event.code == 125 and button_on == 0 and  event_queue == [] and shutdown == True:
                                 shutdown = False
 
-                        case "AYA_GEN3":
+                        case "AYA_GEN4":
                             # This device class uses the same active events with different values for AYA SPACE, LC, and RC.
                             if active == [97, 125]:
 
@@ -710,7 +755,7 @@ async def capture_keyboard_events():
                                     await asyncio.sleep(FF_DELAY)
                                     await do_rumble(0, 100, 1000, 0)
 
-                        case "OXP_GEN1" | "OXP_GEN2":
+                        case "OXP_GEN1" | "OXP_GEN2" | "OXP_GEN3":
                             # BUTTON 1 (Possible dangerous fan activity!) Short press orange + |||||
                             # Temporarily RyzenAdj toggle/button6
                             if active == [99, 125] and button_on == 1 and button6 not in event_queue:
