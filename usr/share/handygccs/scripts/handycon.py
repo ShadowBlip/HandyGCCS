@@ -52,6 +52,8 @@ GYRO_I2C_ADDR = None
 GYRO_I2C_BUS = None
 KEYBOARD_ADDRESS = None
 KEYBOARD_NAME = None
+POWER_BUTTON_PRIMARY = "PNP0C0C/button/input0"
+POWER_BUTTON_SECONDARY = "LNXPWRBN/button/input0"
 
 EVENT_MAP= {
         "ALT_TAB": EVENT_ALT_TAB,
@@ -479,6 +481,8 @@ def get_keyboard():
 
 def get_powerkey():
     global CAPTURE_POWER
+    global POWER_BUTTON_PRIMARY
+    global POWER_BUTTON_SECONDARY
     global power_device
     global power_device_extra
 
@@ -495,14 +499,14 @@ def get_powerkey():
     for device in devices_original:
 
         # Power Button
-        if device.name == 'Power Button' and device.phys == "LNXPWRBN/button/input0":
+        if device.name == 'Power Button' and device.phys == POWER_BUTTON_PRIMARY:
             power_device = device
             if CAPTURE_POWER:
                 power_device.grab()
 
         # Some devices (e.g. AYANEO GEEK) have an extra power input device corresponding to the same
         # physical button that needs to be grabbed.
-        if device.name == 'Power Button' and device.phys == "PNP0C0C/button/input0":
+        if device.name == 'Power Button' and device.phys == POWER_BUTTON_SECONDARY:
             power_device_extra = device
             if CAPTURE_POWER:
                 power_device_extra.grab()
