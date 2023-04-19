@@ -52,8 +52,8 @@ GYRO_I2C_ADDR = None
 GYRO_I2C_BUS = None
 KEYBOARD_ADDRESS = None
 KEYBOARD_NAME = None
-POWER_BUTTON_PRIMARY = "PNP0C0C/button/input0"
-POWER_BUTTON_SECONDARY = "LNXPWRBN/button/input0"
+POWER_BUTTON_PRIARY = "LNXPWRBN/button/input0"
+POWER_BUTTON_SECONDARY = "PNP0C0C/button/input0"
 
 EVENT_MAP= {
         "ALT_TAB": EVENT_ALT_TAB,
@@ -215,6 +215,8 @@ def id_system():
         GYRO_I2C_BUS = 1
         KEYBOARD_ADDRESS = 'isa0060/serio0/input0'
         KEYBOARD_NAME = 'AT Translated Set 2 keyboard'
+        POWER_BUTTON_PRIMARY = "PNP0C0C/button/input0"
+        POWER_BUTTON_SECONDARY = "LNXPWRBN/button/input0"
         system_type = "AYA_GEN3"
     
     elif system_id in (
@@ -231,6 +233,8 @@ def id_system():
         GYRO_I2C_BUS = 1
         KEYBOARD_ADDRESS = 'isa0060/serio0/input0'
         KEYBOARD_NAME = 'AT Translated Set 2 keyboard'
+        POWER_BUTTON_PRIMARY = "PNP0C0C/button/input0"
+        POWER_BUTTON_SECONDARY = "LNXPWRBN/button/input0"
         system_type = "AYA_GEN4"
 
 
