@@ -202,3 +202,13 @@ FF_DELAY = 0.2
 HIDE_PATH = "/dev/input/.hidden/"
 JOY_MAX = 32767
 JOY_MIN = -32767
+EVENT_MAP= {
+        "ALT_TAB": EVENT_ALT_TAB,
+        "ESC": EVENT_ESC,
+        "MODE": EVENT_MODE,
+        "HOME": EVENT_MODE,
+        "KILL": EVENT_KILL,
+        "OSK": EVENT_OSK,
+        "QAM": EVENT_QAM,
+        "SCR": EVENT_SCR,
+    }
