@@ -6,29 +6,94 @@
 # send macros (i.e. CTRL/ALT/DEL). We capture those events and send button
 # presses that Steam understands.
 
+# Python Modules
 import asyncio
 import configparser
-import logging
 import os
 import re
 import subprocess
 import sys
 
+# Local modules
+import handhelds.aya_gen1 as aya_gen1
 from constants import *
+
+# Partial imports
 from evdev import InputDevice, InputEvent, UInput, ecodes as e, list_devices, ff
 from pathlib import Path
 from shutil import move
 from time import sleep
 
-logging.basicConfig(format="[%(asctime)s | %(filename)s:%(lineno)s:%(funcName)s] %(message)s",
-                    datefmt="%y%m%d_%H:%M:%S",
-                    level=logging.INFO
-                    )
+# Session Variables
+button_map = {}
+event_queue = [] # Stores incoming button presses to block spam
+gyro_enabled = False
+gyro_sensitivity = 0
+last_x_val = 0
+last_y_val = 0
+running = False
+shutdown = False
 
-logger = logging.getLogger(__name__)
+# Handheld Config
+BUTTON_DELAY = 0.00
+CAPTURE_CONTROLLER = False
+CAPTURE_KEYBOARD = False
+CAPTURE_POWER = False
+GAMEPAD_ADDRESS = ''
+GAMEPAD_NAME = ''
+GYRO_I2C_ADDR = 0x00
+GYRO_I2C_BUS = 0
+KEYBOARD_ADDRESS = ''
+KEYBOARD_NAME = ''
+POWER_BUTTON_PRIMARY = "LNXPWRBN/button/input0"
+POWER_BUTTON_SECONDARY = "PNP0C0C/button/input0"
+
+# Enviroment Variables
+HAS_CHIMERA_LAUNCHER = False
+USER = None
+
+# UInput Devices
+controller_device = None
+gyro_device = None
+keyboard_device = None
+power_device = None
+power_device_extra = None
+
+# Paths
+controller_event = None
+controller_path = None
+keyboard_event = None
+keyboard_path = None
+
+# RyzenAdj settings
+performance_mode = "--power-saving"
+protocol = None
+RYZENADJ_DELAY = 0.5
+selected_performance = None
+transport = None
+
+# Capture the username and home path of the user who has been logged in the longest.
+def get_user():
+    global USER
+    global HOME_PATH
+
+    cmd = "who | awk '{print $1}' | sort | head -1"
+    while USER is None:
+        USER_LIST = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout = subprocess.PIPE, stderr = subprocess.PIPE, shell=True)
+        for get_first in USER_LIST.stdout:
+            name = get_first.decode().strip()
+            if name is not None:
+                USER = name
+            break
+        sleep(.1)
+    
+    logger.debug(f"USER: {USER}")
+    HOME_PATH /= USER
+    logger.debug(f"HOME_PATH: {HOME_PATH}")
 
 # Identify the current device type. Kill script if not compatible.
 def id_system():
+    global system_type
 
     system_id = open("/sys/devices/virtual/dmi/id/product_name", "r").read().strip()
     cpu_vendor = get_cpu_vendor()
@@ -43,7 +108,7 @@ def id_system():
         "AYANEO 2021 Pro Retro Power",
         ):
         system_type = "AYA_GEN1"
-        from aya_gen1 import *
+        aya_gen1.init_handheld()
 
     elif system_id in (
         "NEXT",
@@ -187,6 +252,7 @@ def get_controller():
     global controller_event
     global controller_path
 
+    logger.debug(f"Attempting to grab {GAMEPAD_NAME}.")
     # Identify system input event devices.
     try:
         devices_original = [InputDevice(path) for path in list_devices()]
@@ -225,6 +291,7 @@ def get_keyboard():
     global keyboard_path
     global system_type
 
+    logger.debug(f"Attempting to grab {KEYBOARD_NAME}.")
     try:
         # Grab the built-in devices. This will give us exclusive acces to the devices and their capabilities.
         for device in [InputDevice(path) for path in list_devices()]:
@@ -261,6 +328,7 @@ def get_powerkey():
     global power_device
     global power_device_extra
 
+    logger.debug(f"Attempting to grab power button.")
     # Identify system input event devices.
     try:
         devices_original = [InputDevice(path) for path in list_devices()]
@@ -276,6 +344,7 @@ def get_powerkey():
         # Power Button
         if device.name == 'Power Button' and device.phys == POWER_BUTTON_PRIMARY:
             power_device = device
+            logger.debug(f"found power device {power_device.phys}")
             if CAPTURE_POWER:
                 power_device.grab()
 
@@ -283,6 +352,7 @@ def get_powerkey():
         # physical button that needs to be grabbed.
         if device.name == 'Power Button' and device.phys == POWER_BUTTON_SECONDARY:
             power_device_extra = device
+            logger.debug(f"found alternate power device {power_device_extra.phys}")
             if CAPTURE_POWER:
                 power_device_extra.grab()
 
@@ -298,6 +368,8 @@ def get_gyro():
     global GYRO_I2C_ADDR
     global GYRO_I2C_BUS
     global gyro_device
+    
+    logger.debug(f"Attempting to grab gyro device.")
 
     if not GYRO_I2C_BUS or not GYRO_I2C_ADDR:
         logger.info(f"Gyro device not configured for this system. Skipping gyro device setup.")
@@ -340,13 +412,27 @@ async def do_rumble(button=0, interval=10, length=1000, delay=0):
     await asyncio.sleep(interval / 1000)
     controller_device.erase_effect(effect_id)
 
+# Captures keyboard events and translates them to virtual device events.
+async def capture_keyboard_events():
+    # Get access to global variables. These are globalized because the function
+    # is instanciated twice and need to persist accross both instances.
+    global system_type
+    
+    # Capture keyboard events and translate them to mapped events.
+    match system_type:
+        case "AYA_GEN1":
+            await aya_gen1.capture_keyboard_events()
+
 async def capture_controller_events():
     global controller_device
     global controller_events
     global gyro_device
+    global gyro_enabled
     global last_x_val
     global last_y_val
+    global running
 
+    logger.debug(f"capture_controller_events, {running}")
     while running:
         if controller_device:
             try:
@@ -397,9 +483,10 @@ async def capture_gyro_events():
     global last_x_val
     global last_y_val
 
+    logger.debug(f"capture_gyro_events, {running}")
     while running:
         # Only run this loop if gyro is enabled
-        if gyro_device:
+        if gyro_device: 
             if gyro_enabled:
                 # Periodically output the EV_ABS events according to the gyro readings.
                 angular_velocity_x = float(gyro_device.getRotationX()[0] / 32768.0 * 2000)
@@ -415,49 +502,14 @@ async def capture_gyro_events():
 
             else:
                 # Slow down the loop so we don't waste millions of cycles and overheat our controller.
-                await asyncio.sleep(.5)
+                await asyncio.sleep(0.5)
+
         else:
             if gyro_device == None:
                 get_gyro()
+            
             elif gyro_device == False:
                 break
-
-def steam_ifrunning_deckui(cmd):
-    # Get the currently running Steam PID.
-    steampid_path = HOME_PATH / '.steam/steam.pid'
-    try:
-        with open(steampid_path) as f:
-            pid = f.read().strip()
-    except Exception as err:
-        logger.error(f"{err} | Error getting steam PID.")
-        return False
-
-    # Get the commandline for the Steam process by checking /proc.
-    steam_cmd_path = f"/proc/{pid}/cmdline"
-    if not os.path.exists(steam_cmd_path):
-        # Steam not running.
-        return False
-
-    try:
-        with open(steam_cmd_path, "rb") as f:
-            steam_cmd = f.read()
-    except Exception as err:
-        logger.error(f"{err} | Error getting steam cmdline.")
-        return False
-
-    # Use this commandline to determine if Steam is running in DeckUI mode.
-    # e.g. "steam://shortpowerpress" only works in DeckUI.
-    is_deckui = b"-gamepadui" in steam_cmd
-    if not is_deckui:
-        return False
-
-    steam_path = HOME_PATH / '.steam/root/ubuntu12_32/steam'
-    try:
-        result = subprocess.run(["su", USER, "-c", f"{steam_path} -ifrunning {cmd}"])
-        return result.returncode == 0
-    except Exception as err:
-        logger.error(f"{err} | Error sending command to Steam.")
-        return False
 
 # Captures power events and handles long or short press events.
 async def capture_power_events():
@@ -465,28 +517,28 @@ async def capture_power_events():
     global USER
 
     global power_device
-    global shutdown
     
     while running:
         if power_device:
             try:
                 async for event in power_device.async_read_loop():
-                    active_keys = keyboard_device.active_keys()
+                    logger.debug(f"Got event: {event.type} | {event.code} | {event.value}")
+                    #active_keys = keyboard_device.active_keys()
                     if event.type == e.EV_KEY and event.code == 116: # KEY_POWER
                         if event.value == 0:
-                            if active_keys == [125]:
+                            #if active_keys == [125]: # KEY_LEFTMETA
+                            #    # For DeckUI Sessions
+                            #    shutdown = True
+                            #    steam_ifrunning_deckui("steam://longpowerpress")
+                            #else:
                                 # For DeckUI Sessions
-                                shutdown = True
-                                steam_ifrunning_deckui("steam://longpowerpress")
-                            else:
-                                # For DeckUI Sessions
-                                is_deckui = steam_ifrunning_deckui("steam://shortpowerpress")
-                                if not is_deckui:
-                                    # For BPM and Desktop sessions
-                                    os.system('systemctl suspend')
+                            is_deckui = steam_ifrunning_deckui("steam://shortpowerpress")
+                            if not is_deckui:
+                                # For BPM and Desktop sessions
+                                os.system('systemctl suspend')
 
-                    if active_keys == [125]:
-                        await do_rumble(0, 150, 1000, 0)
+                    #if active_keys == [125]:
+                    #    await do_rumble(0, 150, 1000, 0)
             
             except Exception as err:
                 logger.error(f"{err} | Error reading events from power device.")
@@ -614,6 +666,43 @@ async def ryzenadj_control(loop):
                 await asyncio.sleep(RYZENADJ_DELAY)
                 continue
         await asyncio.sleep(RYZENADJ_DELAY)
+
+def steam_ifrunning_deckui(cmd):
+    # Get the currently running Steam PID.
+    steampid_path = HOME_PATH / '.steam/steam.pid'
+    try:
+        with open(steampid_path) as f:
+            pid = f.read().strip()
+    except Exception as err:
+        logger.error(f"{err} | Error getting steam PID.")
+        return False
+
+    # Get the commandline for the Steam process by checking /proc.
+    steam_cmd_path = f"/proc/{pid}/cmdline"
+    if not os.path.exists(steam_cmd_path):
+        # Steam not running.
+        return False
+
+    try:
+        with open(steam_cmd_path, "rb") as f:
+            steam_cmd = f.read()
+    except Exception as err:
+        logger.error(f"{err} | Error getting steam cmdline.")
+        return False
+
+    # Use this commandline to determine if Steam is running in DeckUI mode.
+    # e.g. "steam://shortpowerpress" only works in DeckUI.
+    is_deckui = b"-gamepadui" in steam_cmd
+    if not is_deckui:
+        return False
+
+    steam_path = HOME_PATH / '.steam/root/ubuntu12_32/steam'
+    try:
+        result = subprocess.run(["su", USER, "-c", f"{steam_path} -ifrunning {cmd}"])
+        return result.returncode == 0
+    except Exception as err:
+        logger.error(f"{err} | Error sending command to Steam.")
+        return False
 
 def launch_chimera():
     if not HAS_CHIMERA_LAUNCHER:

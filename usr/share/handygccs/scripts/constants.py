@@ -4,7 +4,19 @@
 # List of constants for handycon.py
 
 from evdev import AbsInfo, ecodes as e
+from pathlib import Path
 
+import logging
+logging.basicConfig(format="[%(asctime)s | %(filename)s:%(lineno)s:%(funcName)s] %(message)s",
+                    datefmt="%y%m%d_%H:%M:%S",
+                    level=logging.DEBUG
+                    )
+logger = logging.getLogger(__name__)
+
+HIDE_PATH = Path("/dev/input/.hidden/")
+HOME_PATH = Path('/home')
+CHIMERA_LAUNCHER_PATH = Path('/usr/share/chimera/bin/chimera-web-launcher')
+server_address = Path('/tmp/ryzenadj_socket')
 CONTROLLER_EVENTS = {
     e.EV_KEY: [
         e.KEY_ESC,
@@ -199,7 +211,6 @@ EVENT_OSK = [[e.EV_KEY, e.BTN_MODE], [e.EV_KEY, e.BTN_NORTH]]
 EVENT_QAM = [[e.EV_KEY, e.BTN_MODE], [e.EV_KEY, e.BTN_SOUTH]]
 EVENT_SCR = [[e.EV_KEY, e.BTN_MODE], [e.EV_KEY, e.BTN_TR]]
 FF_DELAY = 0.2
-HIDE_PATH = "/dev/input/.hidden/"
 JOY_MAX = 32767
 JOY_MIN = -32767
 EVENT_MAP= {

@@ -25,7 +25,7 @@ from time import sleep, time
 
 logging.basicConfig(format="[%(asctime)s | %(filename)s:%(lineno)s:%(funcName)s] %(message)s",
                     datefmt="%y%m%d_%H:%M:%S",
-                    level=logging.INFO
+                    level=logging.DEBUG
                     )
 
 logger = logging.getLogger(__name__)
@@ -599,6 +599,7 @@ async def capture_keyboard_events():
                         logging.debug(f"Active Keys: {active}, Seed Value: {seed_event.value}, Seed Code: {seed_event.code}, Seed Type: {seed_event.type}.")
                         logging.debug(f"Queued events: {event_queue}")
                     elif active == [] and event_queue != []:
+                        logging.debug(f"Active Keys: {active}, Seed Value: {seed_event.value}, Seed Code: {seed_event.code}, Seed Type: {seed_event.type}.")
                         logging.debug(f"Queued events: {event_queue}")
 
                     # Automatically pass default keycodes we dont intend to replace.

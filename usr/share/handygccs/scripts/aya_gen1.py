@@ -34,19 +34,6 @@ logger = logging.getLogger(__name__)
 # Functionality Variables
 event_queue = [] # Stores incoming button presses to block spam
 
-# Devices
-controller_device = None
-gyro_device = None
-keyboard_device = None
-power_device = None
-power_device_extra = None
-
-# Paths
-controller_event = None
-controller_path = None
-keyboard_event = None
-keyboard_path = None
-
 # Constants
 BUTTON_DELAY = 0.09
 CAPTURE_CONTROLLER = True
@@ -62,7 +49,7 @@ POWER_BUTTON_PRIMARY = "PNP0C0C/button/input0"
 POWER_BUTTON_SECONDARY = "LNXPWRBN/button/input0"
 
 # Captures keyboard events and translates them to virtual device events.
-async def capture_aya_gen1_events(seed_event):
+async def process_event(seed_event):
     # Get access to global variables. These are globalized because the function
     # is instanciated twice and need to persist accross both instances.
     global button_map
@@ -98,7 +85,6 @@ async def capture_aya_gen1_events(seed_event):
     ## Automatically pass default keycodes we dont intend to replace.
     if seed_event.code in [e.KEY_VOLUMEDOWN, e.KEY_VOLUMEUP]:
         events.append(seed_event)
-    match system_type:
 
     # BUTTON 1 (Default: Screenshot) WIN button
     # Temporarily RyzenAdj toggle/button6
