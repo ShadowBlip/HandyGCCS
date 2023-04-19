@@ -399,7 +399,7 @@ def get_keyboard():
     try:
         # Grab the built-in devices. This will give us exclusive acces to the devices and their capabilities.
         for device in [InputDevice(path) for path in list_devices()]:
-            if system_type == "GPD_GEN1":
+            if system_type in ["GPD_GEN1", "GPD_GEN2", "GPD_GEN3"]:
                 logger.debug(f"{device.name}, {device.phys}")
                 if device.name == '  Mouse for Windows' and device.phys in ['usb-0000:00:14.0-5/input0', 'usb-0000:73:00.4-2/input1', 'usb-0000:74:00.3-4/input1']:
                     keyboard_path = device.path
