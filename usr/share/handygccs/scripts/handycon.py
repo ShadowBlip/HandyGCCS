@@ -17,7 +17,7 @@ import subprocess
 import sys
 import warnings
 
-from constants import CONTROLLER_EVENTS, DETECT_DELAY, EVENT_ALT_TAB, EVENT_ESC, EVENT_MODE, EVENT_KILL, EVENT_OSK, EVENT_QAM, EVENT_SCR, FF_DELAY, HIDE_PATH, JOY_MAX, JOY_MIN
+from constants import CONTROLLER_EVENTS, DETECT_DELAY, EVENT_ALT_TAB, EVENT_ESC, EVENT_MODE, EVENT_KILL, EVENT_OSK, EVENT_OSK_DE, EVENT_QAM, EVENT_SCR, FF_DELAY, HIDE_PATH, JOY_MAX, JOY_MIN
 from evdev import InputDevice, InputEvent, UInput, ecodes as e, list_devices, ff
 from pathlib import Path
 from shutil import move
@@ -56,6 +56,7 @@ EVENT_MAP= {
         "HOME": EVENT_MODE,
         "KILL": EVENT_KILL,
         "OSK": EVENT_OSK,
+        "OSK_DE": EVENT_OSK_DE,
         "QAM": EVENT_QAM,
         "SCR": EVENT_SCR,
     }
