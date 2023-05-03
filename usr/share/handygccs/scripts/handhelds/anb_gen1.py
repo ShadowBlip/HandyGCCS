@@ -20,14 +20,12 @@ event_queue = [] # Stores incoming button presses to block spam
 
 # Constants
 def init_handheld():
-    com.BUTTON_DELAY = 0.09
+    com.BUTTON_DELAY = 0.04
     com.CAPTURE_CONTROLLER = True
     com.CAPTURE_KEYBOARD = True
     com.CAPTURE_POWER = True
-    com.GAMEPAD_ADDRESS = 'usb-0000:03:00.3-4/input0'
+    com.GAMEPAD_ADDRESS = 'usb-0000:02:00.3-5/input0'
     com.GAMEPAD_NAME = 'Microsoft X-Box 360 pad'
-    com.GYRO_I2C_ADDR = 0x68
-    com.GYRO_I2C_BUS = 1
     com.KEYBOARD_ADDRESS = 'isa0060/serio0/input0'
     com.KEYBOARD_NAME = 'AT Translated Set 2 keyboard'
 
@@ -93,42 +91,57 @@ async def process_event(seed_event, active_keys):
     if seed_event.code in [e.KEY_VOLUMEDOWN, e.KEY_VOLUMEUP]:
         events.append(seed_event)
 
-    # BUTTON 1 (Default: Screenshot) WIN button
-    # Temporarily RyzenAdj toggle/button6
-    if active_keys == [125] and button_on == 1 and button6 not in event_queue and com.shutdown == False:
+    # BUTTON 1 (BUTTON 4 ALT Mode) (Default: Screenshot) Long press KB
+    if active == [24, 29, 125] and button_on == 2 and button1 not in event_queue:
+        if button4 in event_queue:
+            event_queue.remove(button4)
+        if button5 in event_queue:
+            event_queue.remove(button5)
+        event_queue.append(button1)
+    elif active == [] and seed_event.code in [24, 29, 125] and button_on == 0 and button1 in event_queue:
+        this_button = button1
+
+    # BUTTON 2 (Default: QAM) Home key.
+    if active == [34, 125] and button_on == 1 and button2 not in event_queue:
+        if button5 in event_queue:
+            event_queue.remove(button5)
+        event_queue.append(button2)
+    elif active == [] and seed_event.code in [34, 125] and button_on == 0 and button2 in event_queue:
+        this_button = button2
+
+    # BUTTON 3, BUTTON 2 ALt mode (Defalt ESC)
+    elif active == [1] and button_on == 1 and button3 not in event_queue:
+        if button2 in event_queue:
+            event_queue.remove(button2)
+        event_queue.append(button3)
+        await com.do_rumble(0, 75, 1000, 0)
+    elif active == [] and seed_event.code == 1 and button_on == 0 and button3 in event_queue:
+        this_button = button3
+
+    # BUTTON 4 (Default: OSK) Short press KB
+    if active == [24, 29, 125] and button_on == 1 and button4 not in event_queue:
+        if button5 in event_queue:
+            event_queue.remove(button5)
+        event_queue.append(button4)
+    elif active == [] and seed_event.code in [24, 29, 125] and button_on == 0 and button4 in event_queue:
+        this_button = button4
+
+    # BUTTON 5 (Default: GUIDE) Meta/Windows key.
+    if active == [125] and button_on == 1 and button5 not in event_queue:
+        event_queue.append(button5)
+    elif active == [] and seed_event.code == 125 and button_on == 0 and button5 in event_queue:
+        this_button = button5
+
+    # BUTTON 5 ALT mode, toggle performance_mode
+    if active == [1, 29, 42] and button_on == 1 and button6 not in event_queue:
+        if button5 in event_queue:
+            event_queue.remove(button5)
         event_queue.append(button6)
-    elif active_keys == [] and seed_event.code == 125 and button_on == 0 and button6 in event_queue:
-        event_queue.remove(button6)
         await com.toggle_performance()
 
-    # BUTTON 2 (Default: QAM) TM Button
-    if active_keys == [97, 100, 111] and button_on == 1 and button2 not in event_queue:
-        event_queue.append(button2)
-        cons.logger.debug(f"Key down button 2 conditions met: {seed_event.code} | {button_on} | {active_keys}")
-        await com.emit_now(seed_event, button2, 1)
-        await com.do_rumble(0, 150, 1000, 0)
-    elif active_keys == [] and seed_event.code in [97, 100, 111] and button_on == 0 and button2 in event_queue:
-        event_queue.remove(button2)
-        cons.logger.debug(f"Key up button 2 conditions met: {seed_event.code} | {button_on} | {active_keys}")
-        await com.emit_now(seed_event, button2, 0)
-
-    # BUTTON 3 (Default: ESC) ESC Button
-    if active_keys == [1] and seed_event.code == 1 and button_on == 1 and button3 not in event_queue:
-        event_queue.append(button3)
-    elif active_keys == [] and seed_event.code == 1 and button_on == 0 and button3 in event_queue:
-        this_button = button3
-    # BUTTON 3 SECOND STATE (Default: Toggle Gyro)
-    elif seed_event.code == 1 and button_on == 2 and button3 in event_queue and com.gyro_device:
-        event_queue.remove(button3)
-        await com.toggle_gyro()
-
-    # BUTTON 4 (Default: OSK) KB Button
-    if active_keys == [24, 97, 125] and button_on == 1 and button4 not in event_queue:
-        event_queue.append(button4)
-        await com.emit_now(seed_event, button4, 1)
-    elif active_keys == [] and seed_event.code in [24, 97, 125] and button_on == 0 and button4 in event_queue:
-        event_queue.remove(button4)
-        await com.emit_now(seed_event, button4, 0)
+    elif active == [] and seed_event in [1, 29, 42] and button_on == 0 and button6 in event_queue:
+        event_queue.remove(button6)
+    
 
     # Handle L_META from power button
     elif active_keys == [] and seed_event.code == 125 and button_on == 0 and  event_queue == [] and com.shutdown == True:

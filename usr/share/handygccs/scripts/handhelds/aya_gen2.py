@@ -93,45 +93,30 @@ async def process_event(seed_event, active_keys):
     if seed_event.code in [e.KEY_VOLUMEDOWN, e.KEY_VOLUMEUP]:
         events.append(seed_event)
 
-    # BUTTON 1 (Default: Screenshot) WIN button
-    # Temporarily RyzenAdj toggle/button6
-    if active_keys == [125] and button_on == 1 and button6 not in event_queue and com.shutdown == False:
+    # BUTTON 2 (Default: QAM) Small Button
+    if active_keys in [[40, 133], [32, 125]] and button_on == 1 and button2 not in event_queue:
+        event_queue.append(button2)
+        await com.emit_now(seed_event, button2, 1)
+        await com.do_rumble(0, 150, 1000, 0)
+    elif active_keys == [] and seed_event.code in [32, 40, 125, 133] and button_on == 0 and button2 in event_queue:
+        event_queue.remove(button2)
+        await com.emit_now(seed_event, button2, 0)
+
+    # BUTTON 5 (Default: MODE) Big button
+    if active in [[96, 105, 133], [88, 97, 125]] and button_on == 1 and button5 not in event_queue:
+        event_queue.append(button5)
+    elif active == [] and seed_event.code in [88, 96, 97, 105, 125, 133] and button_on == 0 and button5 in event_queue:
+        this_button = button5
+
+    # BUTTON 6 (Default: Toggle RyzenAdj) Big button + Small Button
+    if active == [32, 88, 97, 125] and button_on == 1 and button6 not in event_queue:
         event_queue.append(button6)
-    elif active_keys == [] and seed_event.code == 125 and button_on == 0 and button6 in event_queue:
+    elif active == [] and seed_event.code in [32, 88, 97, 125] and button_on == 0 and button6 in event_queue:
         event_queue.remove(button6)
         await com.toggle_performance()
 
-    # BUTTON 2 (Default: QAM) TM Button
-    if active_keys == [97, 100, 111] and button_on == 1 and button2 not in event_queue:
-        event_queue.append(button2)
-        cons.logger.debug(f"Key down button 2 conditions met: {seed_event.code} | {button_on} | {active_keys}")
-        await com.emit_now(seed_event, button2, 1)
-        await com.do_rumble(0, 150, 1000, 0)
-    elif active_keys == [] and seed_event.code in [97, 100, 111] and button_on == 0 and button2 in event_queue:
-        event_queue.remove(button2)
-        cons.logger.debug(f"Key up button 2 conditions met: {seed_event.code} | {button_on} | {active_keys}")
-        await com.emit_now(seed_event, button2, 0)
-
-    # BUTTON 3 (Default: ESC) ESC Button
-    if active_keys == [1] and seed_event.code == 1 and button_on == 1 and button3 not in event_queue:
-        event_queue.append(button3)
-    elif active_keys == [] and seed_event.code == 1 and button_on == 0 and button3 in event_queue:
-        this_button = button3
-    # BUTTON 3 SECOND STATE (Default: Toggle Gyro)
-    elif seed_event.code == 1 and button_on == 2 and button3 in event_queue and com.gyro_device:
-        event_queue.remove(button3)
-        await com.toggle_gyro()
-
-    # BUTTON 4 (Default: OSK) KB Button
-    if active_keys == [24, 97, 125] and button_on == 1 and button4 not in event_queue:
-        event_queue.append(button4)
-        await com.emit_now(seed_event, button4, 1)
-    elif active_keys == [] and seed_event.code in [24, 97, 125] and button_on == 0 and button4 in event_queue:
-        event_queue.remove(button4)
-        await com.emit_now(seed_event, button4, 0)
-
     # Handle L_META from power button
-    elif active_keys == [] and seed_event.code == 125 and button_on == 0 and  event_queue == [] and com.shutdown == True:
+    elif active_keys == [] and seed_event.code == 125 and button_on == 0 and event_queue == [] and com.shutdown == True:
         com.shutdown = False
 
     # Create list of events to fire.

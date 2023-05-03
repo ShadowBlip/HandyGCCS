@@ -15,7 +15,18 @@ import subprocess
 import sys
 
 # Local modules
+import handhelds.anb_gen1 as anb_gen1
 import handhelds.aya_gen1 as aya_gen1
+import handhelds.aya_gen2 as aya_gen2
+import handhelds.aya_gen3 as aya_gen3
+import handhelds.aya_gen4 as aya_gen4
+import handhelds.aya_gen5 as aya_gen5
+import handhelds.gpd_gen1 as gpd_gen1
+import handhelds.gpd_gen2 as gpd_gen2
+import handhelds.gpd_gen3 as gpd_gen3
+import handhelds.oxp_gen1 as oxp_gen1
+import handhelds.oxp_gen2 as oxp_gen2
+import handhelds.oxp_gen3 as oxp_gen3
 from constants import *
 
 # Partial imports
@@ -99,6 +110,13 @@ def id_system():
     cpu_vendor = get_cpu_vendor()
     logger.debug(f"Found CPU Vendor: {cpu_vendor}")
 
+    ## ANBERNIC Devices
+    elif system_id in (
+            "Win600",
+            ):
+        system_type = "ANB_GEN1"
+        anb_gen1.init_handheld()
+
     ## Aya Neo Devices
     if system_id in (
         "AYA NEO FOUNDER",
@@ -119,21 +137,49 @@ def id_system():
         "AYANEO NEXT Advance",
         ):
         system_type = "AYA_GEN2"
+        aya_gen2.init_handheld()
 
     elif system_id in (
         "AIR",
         "AIR Pro",
         ):
         system_type = "AYA_GEN3"
+        aya_gen3.init_handheld()
     
     elif system_id in (
         "AYANEO 2",
         "GEEK",
         ):
         system_type = "AYA_GEN4"
+        aya_gen4.init_handheld()
 
+    elif system_id in (
+        "AIR Plus",
+        ):
+        system_type = "AYA_GEN5"
+        aya_gen5.init_handheld()
 
-    ## ONEXPLAYER and AOKZOE devices.
+    ## GPD Devices.
+    # Have 2 buttons with 3 modes (left, right, both)
+    elif system_id in (
+        "G1618-03", #Win3
+        ):
+        system_type = "GPD_GEN1"
+        gpd_gen1.init_handheld()
+
+    elif system_id in (
+        "G1618-04", #WinMax2
+        ):
+        system_type = "GPD_GEN2"
+        gpd_gen2.init_handheld()
+
+    elif system_id in (
+        "G1619-04", #Win4
+        ):
+        system_type = "GPD_GEN3"
+        gpd_gen3.init_handheld()
+
+## ONEXPLAYER and AOKZOE devices.
     # BIOS have incomplete DMI data and most models report as "ONE XPLAYER" or "ONEXPLAYER".
     elif system_id in (
         "ONE XPLAYER",
@@ -142,37 +188,17 @@ def id_system():
         ):
         if cpu_vendor == "GenuineIntel":
             system_type = "OXP_GEN1"
+            oxp_gen1.init_handheld()
         else:
             system_type = "OXP_GEN2"
+            oxp_gen2.init_handheld()
 
     elif system_id in (
         "ONEXPLAYER Mini Pro",
         "AOKZOE A1 AR07"
         ):
         system_type = "OXP_GEN3"
-
-    ## GPD Devices.
-    # Have 2 buttons with 3 modes (left, right, both)
-    elif system_id in (
-        "G1618-03", #Win3
-        ):
-        system_type = "GPD_GEN1"
-
-    elif system_id in (
-        "G1618-04", #WinMax2
-        ):
-        system_type = "GPD_GEN2"
-
-    elif system_id in (
-        "G1619-04", #Win4
-        ):
-        system_type = "GPD_GEN3"
-
-    ## ANBERNIC Devices
-    elif system_id in (
-            "Win600",
-            ):
-        system_type = "ABN_GEN1"
+        oxp_gen3.init_handheld()
 
     # Block devices that aren't supported as this could cause issues.
     else:
@@ -181,7 +207,6 @@ GitHub at https://github.com/ShadowBlip/aya-neo-fixes if this is a bug. If possi
 please run the capture-system.py utility found on the GitHub repository and upload \
 that file with your issue.")
         sys.exit(0)
-
     logger.info(f"Identified host system as {system_id} and configured defaults for {system_type}.")
 
 def get_cpu_vendor():
@@ -420,8 +445,30 @@ async def capture_keyboard_events():
     
     # Capture keyboard events and translate them to mapped events.
     match system_type:
+        case "ANB_GEN1":
+            await anb_gen1.capture_keyboard_events()
         case "AYA_GEN1":
             await aya_gen1.capture_keyboard_events()
+        case "AYA_GEN2":
+            await aya_gen2.capture_keyboard_events()
+        case "AYA_GEN3":
+            await aya_gen3.capture_keyboard_events()
+        case "AYA_GEN4":
+            await aya_gen3.capture_keyboard_events()
+        case "AYA_GEN5":
+            await aya_gen5.capture_keyboard_events()
+        case "GPD_GEN1":
+            await gpd_gen1.capture_keyboard_events()
+        case "GPD_GEN2":
+            await gpd_gen2.capture_keyboard_events()
+        case "GPD_GEN3":
+            await gpd_gen3.capture_keyboard_events()
+        case "OXP_GEN1":
+            await oxp_gen1.capture_keyboard_events()
+        case "OXP_GEN2":
+            await oxp_gen2.capture_keyboard_events()
+        case "OXP_GEN3":
+            await oxp_gen3.capture_keyboard_events()
 
 async def capture_controller_events():
     global controller_device
@@ -616,6 +663,23 @@ async def emit_events(events: list):
             ui_device.write_event(event)
             ui_device.syn()
             await asyncio.sleep(BUTTON_DELAY)
+
+# Generates events from an event list to immediately  emit, bypassing queue
+async def emit_now(seed_event, event_list, value):
+    events = []
+    for button_event in event_list:
+        new_event = InputEvent(seed_event.sec, seed_event.usec, button_event[0], button_event[1], value)
+        events.append(new_event)
+    await emit_events(events)
+
+async def toggle_gyro():
+    gyro_enabled = not com.gyro_enabled
+   if gyro_enabled:
+       await do_rumble(0, 250, 1000, 0)
+   else:
+       await do_rumble(0, 100, 1000, 0)
+       await asyncio.sleep(FF_DELAY)
+       await do_rumble(0, 100, 1000, 0)
 
 # RYZENADJ
 async def toggle_performance():
