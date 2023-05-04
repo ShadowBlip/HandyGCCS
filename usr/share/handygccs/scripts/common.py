@@ -111,14 +111,14 @@ def id_system():
     logger.debug(f"Found CPU Vendor: {cpu_vendor}")
 
     ## ANBERNIC Devices
-    elif system_id in (
+    if system_id in (
             "Win600",
             ):
         system_type = "ANB_GEN1"
         anb_gen1.init_handheld()
 
     ## Aya Neo Devices
-    if system_id in (
+    elif system_id in (
         "AYA NEO FOUNDER",
         "AYA NEO 2021",
         "AYANEO 2021",
