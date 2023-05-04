@@ -105,7 +105,7 @@ async def process_event(seed_event, active_keys):
         event_queue.append(button2)
     elif active == [] and seed_event.code in [34, 125] and button_on == 0 and button2 in event_queue:
         this_button = button2
-        await do_rumble(0, 150, 1000, 0)
+        await com.do_rumble(0, 150, 1000, 0)
 
     # BUTTON 3 (Default: Toggle Gyro) Short press orange + KB
     if active == [97, 100, 111] and button_on == 1 and button3 not in event_queue and com.gyro_device:
