@@ -18,19 +18,19 @@ import sys
 import warnings
 
 # Local modules
-import handhelds.anb_gen1 as anb_gen1
-import handhelds.aya_gen1 as aya_gen1
-import handhelds.aya_gen2 as aya_gen2
-import handhelds.aya_gen3 as aya_gen3
-import handhelds.aya_gen4 as aya_gen4
-import handhelds.aya_gen5 as aya_gen5
-import handhelds.gpd_gen1 as gpd_gen1
-import handhelds.gpd_gen2 as gpd_gen2
-import handhelds.gpd_gen3 as gpd_gen3
-import handhelds.oxp_gen1 as oxp_gen1
-import handhelds.oxp_gen2 as oxp_gen2
-import handhelds.oxp_gen3 as oxp_gen3
-from constants import *
+import handycon.handhelds.anb_gen1 as anb_gen1
+import handycon.handhelds.aya_gen1 as aya_gen1
+import handycon.handhelds.aya_gen2 as aya_gen2
+import handycon.handhelds.aya_gen3 as aya_gen3
+import handycon.handhelds.aya_gen4 as aya_gen4
+import handycon.handhelds.aya_gen5 as aya_gen5
+import handycon.handhelds.gpd_gen1 as gpd_gen1
+import handycon.handhelds.gpd_gen2 as gpd_gen2
+import handycon.handhelds.gpd_gen3 as gpd_gen3
+import handycon.handhelds.oxp_gen1 as oxp_gen1
+import handycon.handhelds.oxp_gen2 as oxp_gen2
+import handycon.handhelds.oxp_gen3 as oxp_gen3
+from .constants import *
 
 # Partial imports
 from evdev import InputDevice, InputEvent, UInput, ecodes as e, list_devices, ff
@@ -97,17 +97,17 @@ class HandheldController:
     selected_performance = None
     transport = None
     
-    def __init__():
+    def __init__(self):
         global HAS_CHIMERA_LAUNCHER
         global running
         running = True
     
-        get_user()
+        self.get_user()
         HAS_CHIMERA_LAUNCHER=os.path.isfile(CHIMERA_LAUNCHER_PATH)
-        id_system()
+        self.id_system()
         Path(HIDE_PATH).mkdir(parents=True, exist_ok=True)
-        get_config()
-        make_controller()
+        self.get_config()
+        self.make_controller()
     
         # Run asyncio loop to capture all events.
         loop = asyncio.get_event_loop()
@@ -139,12 +139,12 @@ class HandheldController:
             sys.exit(exit_code)
 
     # Capture the username and home path of the user who has been logged in the longest.
-    def get_user():
+    def get_user(self):
         global USER
         global HOME_PATH
     
         cmd = "who | awk '{print $1}' | sort | head -1"
-        while USER is None:
+        while self.USER is None:
             USER_LIST = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout = subprocess.PIPE, stderr = subprocess.PIPE, shell=True)
             for get_first in USER_LIST.stdout:
                 name = get_first.decode().strip()
@@ -154,12 +154,12 @@ class HandheldController:
             sleep(.1)
         
         logger.debug(f"USER: {USER}")
-        HOME_PATH /= USER
+        self.HOME_PATH /= USER
         logger.debug(f"HOME_PATH: {HOME_PATH}")
     
     
     # Identify the current device type. Kill script if not atible.
-    def id_system():
+    def id_system(self):
         global system_type
     
         system_id = open("/sys/devices/virtual/dmi/id/product_name", "r").read().strip()
@@ -266,7 +266,7 @@ class HandheldController:
         logger.info(f"Identified host system as {system_id} and configured defaults for {system_type}.")
     
     
-    def get_cpu_vendor():
+    def get_cpu_vendor(self):
         cmd = "cat /proc/cpuinfo"
         all_info = subprocess.check_output(cmd, shell=True).decode().strip()
         for line in all_info.split("\n"):
@@ -274,7 +274,7 @@ class HandheldController:
                     return re.sub( ".*vendor_id.*:", "", line,1).strip()
     
     
-    def get_config():
+    def get_config(self):
         global button_map
         global gyro_sensitivity
     
@@ -315,7 +315,7 @@ class HandheldController:
         gyro_sensitivity = int(config["Gyro"]["sensitivity"])
     
     
-    def make_controller():
+    def make_controller(self):
         global ui_device
     
         # Create the virtual controller.
@@ -329,7 +329,7 @@ class HandheldController:
                 )
     
     
-    def get_controller():
+    def get_controller(self):
         global CAPTURE_CONTROLLER
         global GAMEPAD_ADDRESS
         global GAMEPAD_NAME
@@ -368,7 +368,7 @@ class HandheldController:
             return True
     
     
-    def get_keyboard():
+    def get_keyboard(self):
         global CAPTURE_KEYBOARD
         global KEYBOARD_ADDRESS
         global KEYBOARD_NAME
@@ -408,7 +408,7 @@ class HandheldController:
             return False
     
     
-    def get_powerkey():
+    def get_powerkey(self):
         global CAPTURE_POWER
         global POWER_BUTTON_PRIMARY
         global POWER_BUTTON_SECONDARY
@@ -452,7 +452,7 @@ class HandheldController:
             return True
     
     
-    def get_gyro():
+    def get_gyro(self):
         global GYRO_I2C_ADDR
         global GYRO_I2C_BUS
         global gyro_device
@@ -477,7 +477,7 @@ class HandheldController:
             gyro_device = False
     
     
-    async def do_rumble(button=0, interval=10, length=1000, delay=0):
+    async def do_rumble(self, button=0, interval=10, length=1000, delay=0):
         global controller_device
     
         # Prevent look crash if controller_device was taken.
@@ -503,7 +503,7 @@ class HandheldController:
     
     
     # Captures keyboard events and translates them to virtual device events.
-    async def capture_keyboard_events():
+    async def capture_keyboard_events(self):
         # Get access to global variables. These are globalized because the function
         # is instanciated twice and need to persist accross both instances.
         global last_button
@@ -564,7 +564,7 @@ class HandheldController:
                 await asyncio.sleep(DETECT_DELAY)
     
     
-    async def capture_controller_events():
+    async def capture_controller_events(self):
         global controller_device
         global controller_events
         global gyro_device
@@ -620,7 +620,7 @@ class HandheldController:
     
     # Captures gyro events and translates them to joystick events.
     # TODO: Add mouse mode.
-    async def capture_gyro_events():
+    async def capture_gyro_events(self):
         global controller_events
         global gyro_device
         global gyro_enabled
@@ -657,7 +657,7 @@ class HandheldController:
     
     
     # Captures power events and handles long or short press events.
-    async def capture_power_events():
+    async def capture_power_events(self):
         global HOME_PATH
         global USER
     
@@ -695,7 +695,7 @@ class HandheldController:
     
     
     # Handle FF event uploads
-    async def capture_ff_events():
+    async def capture_ff_events(self):
         ff_effect_id_set = set()
     
         async for event in ui_device.async_read_loop():
@@ -752,7 +752,7 @@ class HandheldController:
     
     
     # Emits passed or generated events to the virtual controller.
-    async def emit_events(events: list):
+    async def emit_events(self, events: list):
         if len(events) == 1:
             ui_device.write_event(events[0])
             ui_device.syn()
@@ -765,7 +765,7 @@ class HandheldController:
     
     
     # Generates events from an event list to immediately  emit, bypassing queue.
-    async def emit_now(seed_event, event_list, value):
+    async def emit_now(self, seed_event, event_list, value):
         events = []
         for button_event in event_list:
             new_event = InputEvent(seed_event.sec, seed_event.usec, button_event[0], button_event[1], value)
@@ -774,7 +774,7 @@ class HandheldController:
     
     
     # Toggles enable/disable gyro input and do FF event to notify user of status.
-    async def toggle_gyro():
+    async def toggle_gyro(self):
         global gyro_enabled
         gyro_enabled = not gyro_enabled
         if gyro_enabled:
@@ -786,7 +786,7 @@ class HandheldController:
     
     
     # RYZENADJ
-    async def toggle_performance():
+    async def toggle_performance(self):
         global performance_mode
         global protocol
         global transport
@@ -815,7 +815,7 @@ class HandheldController:
         protocol = None
     
     
-    async def ryzenadj_control(loop):
+    async def ryzenadj_control(self, loop):
         global transport
         global protocol
     
@@ -837,7 +837,7 @@ class HandheldController:
             await asyncio.sleep(RYZENADJ_DELAY)
     
     
-    def steam_ifrunning_deckui(cmd):
+    def steam_ifrunning_deckui(self, cmd):
         # Get the currently running Steam PID.
         steampid_path = HOME_PATH / '.steam/steam.pid'
         try:
@@ -875,14 +875,14 @@ class HandheldController:
             return False
     
     
-    def launch_chimera():
+    def launch_chimera(self):
         if not HAS_CHIMERA_LAUNCHER:
             return
         subprocess.run([ "su", USER, "-c", CHIMERA_LAUNCHER_PATH ])
     
     
     # Gracefull shutdown.
-    async def restore_all(loop):
+    async def restore_all(self, loop):
         logger.info("Receved exit signal. Restoring devices.")
         running = False
     
@@ -921,7 +921,7 @@ class HandheldController:
         logger.info("Handheld Game Console Controller Service stopped.")
     
     
-    def restore_keyboard():
+    def restore_keyboard(self):
         # Both devices threads will attempt this, so ignore if they have been moved.
         try:
             move(str(HIDE_PATH / keyboard_event), keyboard_path)
@@ -929,7 +929,7 @@ class HandheldController:
             pass
     
     
-    def restore_controller():
+    def restore_controller(self):
         # Both devices threads will attempt this, so ignore if they have been moved.
         try:
             move(str(HIDE_PATH / controller_event), controller_path)

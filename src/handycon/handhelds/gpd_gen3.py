@@ -9,11 +9,8 @@
 import sys
 from evdev import InputDevice, InputEvent, UInput, ecodes as e, list_devices, ff
 
-sys.path.append("../common")
-import common as com
-
-sys.path.append("../constants")
-import constants as cons
+from .. import constants as cons
+from .. import common as com
 
 event_queue = [] # Stores incoming button presses to block spam
 
