@@ -43,7 +43,7 @@ async def capture_keyboard_events():
         if com.keyboard_device:
             try:
                 async for seed_event in com.keyboard_device.async_read_loop():
-                    if seed_event.type != e.EV_KEY:
+                    if seed_event.type not in [e.EV_KEY, e.KEY_MSC]:
                         continue
                     # Loop variables
                     active_keys = com.keyboard_device.active_keys()
@@ -94,6 +94,7 @@ async def process_event(seed_event, active_keys):
         events.append(seed_event)
     # This device class uses the same active_keys events with different values for AYA SPACE, LC, and RC.
     if active_keys == [97, 125]:
+        cons.logger.debug(f"Detected special button press. Seed: {seed_event.code} | {seed_event.value}")
 
         # LC | Default: Screenshot / Launch Chimera
         if button_on == 102 and event_queue == []:

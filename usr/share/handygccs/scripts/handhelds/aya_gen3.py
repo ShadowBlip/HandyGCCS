@@ -20,7 +20,7 @@ event_queue = [] # Stores incoming button presses to block spam
 
 # Constants
 def init_handheld():
-    com.BUTTON_DELAY = 0.09
+    com.BUTTON_DELAY = 0.075
     com.CAPTURE_CONTROLLER = True
     com.CAPTURE_KEYBOARD = True
     com.CAPTURE_POWER = True
