@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "handycon"
-version = "1.0.0"
+version = "2.0.0"
 authors = [
     { name="Derek J. Clark", email="derekjohn.clark@gmail.com" },
 ]
@@ -21,9 +21,6 @@ dependencies = []
 [project.urls]
 "Homepage" = "https://github.com/ShadowBlip/HandyGCCS"
 "Bug Tracker" = "https://github.com/ShadowBlip/HandyGCCS/issues"
-
-[tool.setuptools.packages.find]
-include = ["handycon"]
 
 [project.scripts]
 handycon = "handycon.common:main"
