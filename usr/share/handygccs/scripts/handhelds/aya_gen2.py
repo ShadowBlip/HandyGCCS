@@ -103,15 +103,15 @@ async def process_event(seed_event, active_keys):
         await com.emit_now(seed_event, button2, 0)
 
     # BUTTON 5 (Default: MODE) Big button
-    if active in [[96, 105, 133], [88, 97, 125]] and button_on == 1 and button5 not in event_queue:
+    if active_keys in [[96, 105, 133], [88, 97, 125]] and button_on == 1 and button5 not in event_queue:
         event_queue.append(button5)
     elif active == [] and seed_event.code in [88, 96, 97, 105, 125, 133] and button_on == 0 and button5 in event_queue:
         this_button = button5
 
     # BUTTON 6 (Default: Toggle RyzenAdj) Big button + Small Button
-    if active == [32, 88, 97, 125] and button_on == 1 and button6 not in event_queue:
+    if active_keys == [32, 88, 97, 125] and button_on == 1 and button6 not in event_queue:
         event_queue.append(button6)
-    elif active == [] and seed_event.code in [32, 88, 97, 125] and button_on == 0 and button6 in event_queue:
+    elif active_keys == [] and seed_event.code in [32, 88, 97, 125] and button_on == 0 and button6 in event_queue:
         event_queue.remove(button6)
         await com.toggle_performance()
 

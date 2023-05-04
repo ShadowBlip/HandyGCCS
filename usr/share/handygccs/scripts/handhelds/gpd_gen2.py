@@ -94,17 +94,17 @@ async def process_event(seed_event, active_keys):
         events.append(seed_event)
 
     # BUTTON 1 (Default: Toggle Gyro)
-    if active == [11] and button_on == 1 and button1 not in event_queue and com.gyro_device:
+    if active_keys == [11] and button_on == 1 and button1 not in event_queue and com.gyro_device:
         event_queue.append(button1)
-    elif active == [] and seed_event.code in [29, 56, 111] and button_on == 0 and button1 in event_queue and com.gyro_device:
+    elif active_keys == [] and seed_event.code in [29, 56, 111] and button_on == 0 and button1 in event_queue and com.gyro_device:
         event_queue.remove(button1)
         await com.toggle_gyro()
 
     # BUTTON 2 (Default: QAM)
-    if active == [10] and button_on == 1 and button2 not in event_queue:
+    if active_keys == [10] and button_on == 1 and button2 not in event_queue:
         event_queue.append(button2)
         await com.emit_now(seed_event, button2, 1)
-    elif active == [] and seed_event.code in [1] and button_on == 0 and button2 in event_queue:
+    elif active_keys == [] and seed_event.code in [1] and button_on == 0 and button2 in event_queue:
         event_queue.remove(button2)
         await com.emit_now(seed_event, button2, 0)
 

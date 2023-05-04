@@ -94,13 +94,13 @@ async def process_event(seed_event, active_keys):
         events.append(seed_event)
 
     # BUTTON 1 (Default: Screenshot/Launch Chiumera) LC Button
-    if active == [87, 97, 125] and button_on == 1 and button1 not in event_queue:
+    if active_keys == [87, 97, 125] and button_on == 1 and button1 not in event_queue:
         if com.HAS_CHIMERA_LAUNCHER:
             event_queue.append(button7)
         else:
             event_queue.append(button1)
             await com.emit_now(seed_event, button1, 1)
-    elif active == [] and seed_event.code in [87, 97, 125] and button_on == 0:
+    elif active_keys == [] and seed_event.code in [87, 97, 125] and button_on == 0:
         if button1 in event_queue:
             event_queue.remove(button1)
             await com.emit_now(seed_event, button1, 0)
@@ -118,7 +118,7 @@ async def process_event(seed_event, active_keys):
         await com.emit_now(seed_event, button2, 0)
 
     # BUTTON 3 (Default: Toggle Gyro) RC + LC Buttons
-    if active == [68, 87, 97, 125] and button_on == 1 and button3 not in event_queue and com.gyro_device:
+    if active_keys == [68, 87, 97, 125] and button_on == 1 and button3 not in event_queue and com.gyro_device:
         event_queue.append(button3)
         if button1 in event_queue:
             event_queue.remove(button1)
@@ -127,28 +127,28 @@ async def process_event(seed_event, active_keys):
             event_queue.remove(button4)
             await com.emit_now(seed_event, button4, 0)
 
-    elif active == [] and seed_event.code in [68, 87, 97, 125] and button_on == 0 and button3 in event_queue and com.gyro_device:
+    elif active_keys == [] and seed_event.code in [68, 87, 97, 125] and button_on == 0 and button3 in event_queue and com.gyro_device:
          event_queue.remove(button3)
          await com.toggle_gyro()
 
     # BUTTON 4 (Default: OSK) RC Button
-    if active == [68, 97, 125] and button_on == 1 and button4 not in event_queue:
+    if active_keys == [68, 97, 125] and button_on == 1 and button4 not in event_queue:
         event_queue.append(button4)
         await com.emit_now(seed_event, button4, 1)
-    elif active == [] and seed_event.code in [68, 97, 125] and button_on == 0 and button4 in event_queue:
+    elif active_keys == [] and seed_event.code in [68, 97, 125] and button_on == 0 and button4 in event_queue:
         event_queue.remove(button4)
         await com.emit_now(seed_event, button4, 0)
 
     # BUTTON 5 (Default: MODE) Big button
-    if active == [88, 97, 125] and button_on == 1 and button5 not in event_queue:
+    if active_keys == [88, 97, 125] and button_on == 1 and button5 not in event_queue:
         event_queue.append(button5)
-    elif active == [] and seed_event.code in [88, 97, 125] and button_on == 0 and button5 in event_queue:
+    elif active_keys == [] and seed_event.code in [88, 97, 125] and button_on == 0 and button5 in event_queue:
         this_button = button5
 
     # BUTTON 6 (Default: Toggle RyzenAdj) Big button + Small Button
-    if active == [32, 88, 97, 125] and button_on == 1 and button6 not in event_queue:
+    if active_keys == [32, 88, 97, 125] and button_on == 1 and button6 not in event_queue:
         event_queue.append(button6)
-    elif active == [] and seed_event.code in [32, 88, 97, 125] and button_on == 0 and button6 in event_queue:
+    elif active_keys == [] and seed_event.code in [32, 88, 97, 125] and button_on == 0 and button6 in event_queue:
         event_queue.remove(button6)
         await com.toggle_performance()
 

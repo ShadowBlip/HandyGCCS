@@ -92,8 +92,8 @@ async def process_event(seed_event, active_keys):
     # Automatically pass default keycodes we dont intend to replace.
     if seed_event.code in [e.KEY_VOLUMEDOWN, e.KEY_VOLUMEUP]:
         events.append(seed_event)
-    # This device class uses the same active events with different values for AYA SPACE, LC, and RC.
-    if active == [97, 125]:
+    # This device class uses the same active_keys events with different values for AYA SPACE, LC, and RC.
+    if active_keys == [97, 125]:
 
         # LC | Default: Screenshot / Launch Chimera
         if button_on == 102 and event_queue == []:
@@ -110,7 +110,7 @@ async def process_event(seed_event, active_keys):
         elif button_on == 104 and event_queue == []:
             event_queue.append(button5)
             await com.emit_now(seed_event, button5, 1)
-    elif active == [] and seed_event.code in [97, 125] and button_on == 0 and event_queue != []:
+    elif active_keys == [] and seed_event.code in [97, 125] and button_on == 0 and event_queue != []:
         if button7 in event_queue:
             event_queue.remove(button7)
             com.launch_chimera()
@@ -125,10 +125,10 @@ async def process_event(seed_event, active_keys):
             await com.emit_now(seed_event, button5, 0)
 
     # Small button | Default: QAM
-    if active == [32, 125] and button_on == 1 and button2 not in event_queue:
+    if active_keys == [32, 125] and button_on == 1 and button2 not in event_queue:
         event_queue.append(button2)
         await com.emit_now(seed_event, button2, 1)
-    elif active == [] and seed_event.code in [32, 125] and button_on == 0 and button2 in event_queue:
+    elif active_keys == [] and seed_event.code in [32, 125] and button_on == 0 and button2 in event_queue:
         event_queue.remove(button2)
         await com.emit_now(seed_event, button2, 0)
 

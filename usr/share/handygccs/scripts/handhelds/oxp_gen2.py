@@ -95,36 +95,36 @@ async def process_event(seed_event, active_keys):
 
     # BUTTON 1 (Possible dangerous fan activity!) Short press orange + |||||
     # Temporarily RyzenAdj toggle/button6
-    if active == [99, 125] and button_on == 1 and button6 not in event_queue:
+    if active_keys == [99, 125] and button_on == 1 and button6 not in event_queue:
         event_queue.append(button6)
-    elif active == [] and seed_event.code in [99, 125] and button_on == 0 and button6 in event_queue:
+    elif active_keys == [] and seed_event.code in [99, 125] and button_on == 0 and button6 in event_queue:
         event_queue.remove(button6)
         await com.toggle_performance()
 
     # BUTTON 2 (Default: QAM) Long press orange
-    if active == [34, 125] and button_on == 1 and button2 not in event_queue:
+    if active_keys == [34, 125] and button_on == 1 and button2 not in event_queue:
         event_queue.append(button2)
-    elif active == [] and seed_event.code in [34, 125] and button_on == 0 and button2 in event_queue:
+    elif active_keys == [] and seed_event.code in [34, 125] and button_on == 0 and button2 in event_queue:
         this_button = button2
         await com.do_rumble(0, 150, 1000, 0)
 
     # BUTTON 3 (Default: Toggle Gyro) Short press orange + KB
-    if active == [97, 100, 111] and button_on == 1 and button3 not in event_queue and com.gyro_device:
+    if active_keys == [97, 100, 111] and button_on == 1 and button3 not in event_queue and com.gyro_device:
         event_queue.append(button3)
-    elif active == [] and seed_event.code in [100, 111] and button_on == 0 and button3 in event_queue and com.gyro_device:
+    elif active_keys == [] and seed_event.code in [100, 111] and button_on == 0 and button3 in event_queue and com.gyro_device:
         event_queue.remove(button3)
         await com.toggle_gyro()
 
     # BUTTON 4 (Default: OSK) Short press KB
-    if active == [24, 97, 125] and button_on == 1 and button4 not in event_queue:
+    if active_keys == [24, 97, 125] and button_on == 1 and button4 not in event_queue:
         event_queue.append(button4)
-    elif active == [] and seed_event.code in [24, 97, 125] and button_on == 0 and button4 in event_queue:
+    elif active_keys == [] and seed_event.code in [24, 97, 125] and button_on == 0 and button4 in event_queue:
         this_button = button4
 
     # BUTTON 5 (Default: MODE) Short press orange
-    if active == [32, 125] and button_on == 1 and button5 not in event_queue:
+    if active_keys == [32, 125] and button_on == 1 and button5 not in event_queue:
         event_queue.append(button5)
-    elif active == [] and seed_event.code in [32, 125] and button_on == 0 and button5 in event_queue:
+    elif active_keys == [] and seed_event.code in [32, 125] and button_on == 0 and button5 in event_queue:
         this_button = button5
 
     # Handle L_META from power button
