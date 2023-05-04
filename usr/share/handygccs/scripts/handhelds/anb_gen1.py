@@ -58,7 +58,7 @@ async def capture_keyboard_events():
                     await process_event(seed_event, active_keys)
 
             except Exception as err:
-                cons.logger.error(f"{err} | Error reading events from {keyboard_device.name}")
+                cons.logger.error(f"{err} | Error reading events from {com.keyboard_device.name}")
                 com.restore_keyboard()
                 com.keyboard_device = None
                 com.keyboard_event = None
