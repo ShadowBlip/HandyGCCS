@@ -454,7 +454,7 @@ async def capture_keyboard_events():
         case "AYA_GEN3":
             await aya_gen3.capture_keyboard_events()
         case "AYA_GEN4":
-            await aya_gen3.capture_keyboard_events()
+            await aya_gen4.capture_keyboard_events()
         case "AYA_GEN5":
             await aya_gen5.capture_keyboard_events()
         case "GPD_GEN1":
