@@ -43,11 +43,8 @@ async def capture_keyboard_events():
         if com.keyboard_device:
             try:
                 async for seed_event in com.keyboard_device.async_read_loop():
-                    if seed_event.type != e.EV_KEY:
-                        continue
                     # Loop variables
                     active_keys = com.keyboard_device.active_keys()
-                    button_on = seed_event.value
 
                     # Debugging variables
                     if active_keys != []:
