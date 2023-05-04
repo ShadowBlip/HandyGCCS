@@ -9,6 +9,7 @@
 # Python Modules
 import asyncio
 import configparser
+import logging
 import os
 import re
 import subprocess
@@ -35,11 +36,19 @@ from pathlib import Path
 from shutil import move
 from time import sleep
 
+# Logging
+logging.basicConfig(format="[%(asctime)s | %(filename)s:%(lineno)s:%(funcName)s] %(message)s",
+                    datefmt="%y%m%d_%H:%M:%S",
+                    level=logging.DEBUG
+                    )
+logger = logging.getLogger(__name__)
+
 # Session Variables
 button_map = {}
 event_queue = [] # Stores incoming button presses to block spam
 gyro_enabled = False
 gyro_sensitivity = 0
+last_button = None
 last_x_val = 0
 last_y_val = 0
 running = False
@@ -101,6 +110,7 @@ def get_user():
     logger.debug(f"USER: {USER}")
     HOME_PATH /= USER
     logger.debug(f"HOME_PATH: {HOME_PATH}")
+
 
 # Identify the current device type. Kill script if not compatible.
 def id_system():
@@ -209,12 +219,14 @@ that file with your issue.")
         sys.exit(0)
     logger.info(f"Identified host system as {system_id} and configured defaults for {system_type}.")
 
+
 def get_cpu_vendor():
     command = "cat /proc/cpuinfo"
     all_info = subprocess.check_output(command, shell=True).decode().strip()
     for line in all_info.split("\n"):
         if "vendor_id" in line:
                 return re.sub( ".*vendor_id.*:", "", line,1).strip()
+
 
 def get_config():
     global button_map
@@ -256,6 +268,7 @@ def get_config():
     }
     gyro_sensitivity = int(config["Gyro"]["sensitivity"])
 
+
 def make_controller():
     global ui_device
 
@@ -268,6 +281,7 @@ def make_controller():
             product=0x028e,
             version=0x110
             )
+
 
 def get_controller():
     global CAPTURE_CONTROLLER
@@ -307,6 +321,7 @@ def get_controller():
         logger.info(f"Found {controller_device.name}. Capturing input data.")
         return True
 
+
 def get_keyboard():
     global CAPTURE_KEYBOARD
     global KEYBOARD_ADDRESS
@@ -345,6 +360,7 @@ def get_keyboard():
         logger.error("Error when scanning event devices. Restarting scan.")
         sleep(DETECT_DELAY)
         return False
+
 
 def get_powerkey():
     global CAPTURE_POWER
@@ -389,6 +405,7 @@ def get_powerkey():
         logger.info(f"Found {power_device.name}. Capturing input data.")
         return True
 
+
 def get_gyro():
     global GYRO_I2C_ADDR
     global GYRO_I2C_BUS
@@ -412,6 +429,7 @@ def get_gyro():
     except (BrokenPipeError, FileNotFoundError, NameError, OSError) as err:
         logger.error(f"{err} | Gyro device not initialized. Ensure bmi160_i2c and i2c_dev modules are loaded. Skipping gyro device setup.")
         gyro_device = False
+
 
 async def do_rumble(button=0, interval=10, length=1000, delay=0):
     global controller_device
@@ -437,38 +455,68 @@ async def do_rumble(button=0, interval=10, length=1000, delay=0):
     await asyncio.sleep(interval / 1000)
     controller_device.erase_effect(effect_id)
 
+
 # Captures keyboard events and translates them to virtual device events.
 async def capture_keyboard_events():
     # Get access to global variables. These are globalized because the function
     # is instanciated twice and need to persist accross both instances.
+    global last_button
     global system_type
-    
+
     # Capture keyboard events and translate them to mapped events.
-    match system_type:
-        case "ANB_GEN1":
-            await anb_gen1.capture_keyboard_events()
-        case "AYA_GEN1":
-            await aya_gen1.capture_keyboard_events()
-        case "AYA_GEN2":
-            await aya_gen2.capture_keyboard_events()
-        case "AYA_GEN3":
-            await aya_gen3.capture_keyboard_events()
-        case "AYA_GEN4":
-            await aya_gen4.capture_keyboard_events()
-        case "AYA_GEN5":
-            await aya_gen5.capture_keyboard_events()
-        case "GPD_GEN1":
-            await gpd_gen1.capture_keyboard_events()
-        case "GPD_GEN2":
-            await gpd_gen2.capture_keyboard_events()
-        case "GPD_GEN3":
-            await gpd_gen3.capture_keyboard_events()
-        case "OXP_GEN1":
-            await oxp_gen1.capture_keyboard_events()
-        case "OXP_GEN2":
-            await oxp_gen2.capture_keyboard_events()
-        case "OXP_GEN3":
-            await oxp_gen3.capture_keyboard_events()
+    while running:
+        if keyboard_device:
+            try:
+                async for seed_event in keyboard_device.async_read_loop():
+                    # Loop variables
+                    active_keys = ckeyboard_device.active_keys()
+
+                    # Debugging variables
+                    if active_keys != []:
+                        logger.debug(f"Active Keys: {active_keys}, Seed Value: {seed_event.value}, Seed Code: {seed_event.code}, Seed Type: {seed_event.type}.")
+                        logger.debug(f"Queued events: {event_queue}")
+                    elif active_keys == [] and event_queue != []:
+                        logger.debug(f"Seed Value: {seed_event.value}, Seed Code: {seed_event.code}, Seed Type: {seed_event.type}.")
+                        logger.debug(f"Queued events: {event_queue}")
+
+                    # Capture keyboard events and translate them to mapped events.
+                    match system_type:
+                        case "ANB_GEN1":
+                            await anb_gen1.process_event(seed_event, active_keys)
+                        case "AYA_GEN1":
+                            await aya_gen1.process_event(seed_event, active_keys)
+                        case "AYA_GEN2":
+                            await aya_gen2.process_event(seed_event, active_keys)
+                        case "AYA_GEN3":
+                            await aya_gen3.process_event(seed_event, active_keys)
+                        case "AYA_GEN4":
+                            await aya_gen4.process_event(seed_event, active_keys)
+                        case "AYA_GEN5":
+                            await aya_gen5.process_event(seed_event, active_keys)
+                        case "GPD_GEN1":
+                            await gpd_gen1.process_event(seed_event, active_keys)
+                        case "GPD_GEN2":
+                            await gpd_gen2.process_event(seed_event, active_keys)
+                        case "GPD_GEN3":
+                            await gpd_gen3.process_event(seed_event, active_keys)
+                        case "OXP_GEN1":
+                            await oxp_gen1.process_event(seed_event, active_keys)
+                        case "OXP_GEN2":
+                            await oxp_gen2.process_event(seed_event, active_keys)
+                        case "OXP_GEN3":
+                            await oxp_gen3.process_event(seed_event, active_keys)
+
+            except Exception as err:
+                logger.error(f"{err} | Error reading events from {com.keyboard_device.name}")
+                restore_keyboard()
+                keyboard_device = None
+                keyboard_event = None
+                keyboard_path = None
+        else:
+            logger.info("Attempting to grab keyboard device...")
+            get_keyboard()
+            await asyncio.sleep(cons.DETECT_DELAY)
+
 
 async def capture_controller_events():
     global controller_device
@@ -523,6 +571,9 @@ async def capture_controller_events():
             get_controller()
             await asyncio.sleep(DETECT_DELAY)
 
+
+# Captures gyro events and translates them to joystick events.
+# TODO: Add mouse mode.
 async def capture_gyro_events():
     global controller_events
     global gyro_device
@@ -557,6 +608,7 @@ async def capture_gyro_events():
             
             elif gyro_device == False:
                 break
+
 
 # Captures power events and handles long or short press events.
 async def capture_power_events():
@@ -652,6 +704,7 @@ async def capture_ff_events():
 
             ui_device.end_erase(erase)
 
+
 # Emits passed or generated events to the virtual controller.
 async def emit_events(events: list):
     if len(events) == 1:
@@ -664,7 +717,8 @@ async def emit_events(events: list):
             ui_device.syn()
             await asyncio.sleep(BUTTON_DELAY)
 
-# Generates events from an event list to immediately  emit, bypassing queue
+
+# Generates events from an event list to immediately  emit, bypassing queue.
 async def emit_now(seed_event, event_list, value):
     events = []
     for button_event in event_list:
@@ -672,16 +726,18 @@ async def emit_now(seed_event, event_list, value):
         events.append(new_event)
     await emit_events(events)
 
+
+# Toggles enable/disable gyro input and do FF event to notify user of status.
 async def toggle_gyro():
     global gyro_enabled
     gyro_enabled = not gyro_enabled
-    
     if gyro_enabled:
         await do_rumble(0, 250, 1000, 0)
     else:
         await do_rumble(0, 100, 1000, 0)
         await asyncio.sleep(FF_DELAY)
         await do_rumble(0, 100, 1000, 0)
+
 
 # RYZENADJ
 async def toggle_performance():
@@ -712,6 +768,7 @@ async def toggle_performance():
     transport = None
     protocol = None
 
+
 async def ryzenadj_control(loop):
     global transport
     global protocol
@@ -732,6 +789,7 @@ async def ryzenadj_control(loop):
                 await asyncio.sleep(RYZENADJ_DELAY)
                 continue
         await asyncio.sleep(RYZENADJ_DELAY)
+
 
 def steam_ifrunning_deckui(cmd):
     # Get the currently running Steam PID.
@@ -770,10 +828,12 @@ def steam_ifrunning_deckui(cmd):
         logger.error(f"{err} | Error sending command to Steam.")
         return False
 
+
 def launch_chimera():
     if not HAS_CHIMERA_LAUNCHER:
         return
     subprocess.run([ "su", USER, "-c", CHIMERA_LAUNCHER_PATH ])
+
 
 # Gracefull shutdown.
 async def restore_all(loop):
@@ -814,12 +874,14 @@ async def restore_all(loop):
     loop.stop()
     logger.info("Handheld Game Console Controller Service stopped.")
 
+
 def restore_keyboard():
     # Both devices threads will attempt this, so ignore if they have been moved.
     try:
         move(str(HIDE_PATH / keyboard_event), keyboard_path)
     except FileNotFoundError:
         pass
+
 
 def restore_controller():
     # Both devices threads will attempt this, so ignore if they have been moved.

@@ -48,7 +48,7 @@ def main():
     asyncio.ensure_future(com.capture_keyboard_events())
     asyncio.ensure_future(com.capture_power_events())
     asyncio.ensure_future(com.ryzenadj_control(loop))
-    cons.logger.info("Handheld Game Console Controller Service started.")
+    com.logger.info("Handheld Game Console Controller Service started.")
 
     # Establish signaling to handle gracefull shutdown.
     for s in (signal.SIGHUP, signal.SIGTERM, signal.SIGINT, signal.SIGQUIT):

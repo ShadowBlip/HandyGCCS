@@ -6,13 +6,6 @@
 from evdev import AbsInfo, ecodes as e
 from pathlib import Path
 
-import logging
-logging.basicConfig(format="[%(asctime)s | %(filename)s:%(lineno)s:%(funcName)s] %(message)s",
-                    datefmt="%y%m%d_%H:%M:%S",
-                    level=logging.DEBUG
-                    )
-logger = logging.getLogger(__name__)
-
 HIDE_PATH = Path("/dev/input/.hidden/")
 HOME_PATH = Path('/home')
 CHIMERA_LAUNCHER_PATH = Path('/usr/share/chimera/bin/chimera-web-launcher')
