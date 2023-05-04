@@ -674,12 +674,12 @@ async def emit_now(seed_event, event_list, value):
 
 async def toggle_gyro():
     gyro_enabled = not com.gyro_enabled
-   if gyro_enabled:
-       await do_rumble(0, 250, 1000, 0)
-   else:
-       await do_rumble(0, 100, 1000, 0)
-       await asyncio.sleep(FF_DELAY)
-       await do_rumble(0, 100, 1000, 0)
+    if gyro_enabled:
+        await do_rumble(0, 250, 1000, 0)
+    else:
+        await do_rumble(0, 100, 1000, 0)
+        await asyncio.sleep(FF_DELAY)
+        await do_rumble(0, 100, 1000, 0)
 
 # RYZENADJ
 async def toggle_performance():
