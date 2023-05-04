@@ -673,7 +673,9 @@ async def emit_now(seed_event, event_list, value):
     await emit_events(events)
 
 async def toggle_gyro():
+    global gyro_enabled
     gyro_enabled = not gyro_enabled
+    
     if gyro_enabled:
         await do_rumble(0, 250, 1000, 0)
     else:
