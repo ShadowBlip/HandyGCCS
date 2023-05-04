@@ -267,8 +267,8 @@ class HandheldController:
     
     
     def get_cpu_vendor():
-        and = "cat /proc/cpuinfo"
-        all_info = subprocess.check_output(and, shell=True).decode().strip()
+        cmd = "cat /proc/cpuinfo"
+        all_info = subprocess.check_output(cmd, shell=True).decode().strip()
         for line in all_info.split("\n"):
             if "vendor_id" in line:
                     return re.sub( ".*vendor_id.*:", "", line,1).strip()
