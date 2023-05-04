@@ -163,6 +163,7 @@ CONTROLLER_EVENTS = {
         e.KEY_F15,
         e.KEY_SEARCH,
         e.KEY_MEDIA,
+        e.BTN_BASE,
         e.BTN_SOUTH,
         e.BTN_EAST,
         e.BTN_NORTH,
@@ -208,7 +209,7 @@ EVENT_ESC = [[e.EV_MSC, e.MSC_SCAN], [e.EV_KEY, e.KEY_ESC]]
 EVENT_MODE = [[e.EV_KEY, e.BTN_MODE]]
 EVENT_KILL = [[e.EV_KEY, e.KEY_LEFTMETA], [e.EV_KEY, e.KEY_LEFTCTRL], [e.EV_KEY, e.KEY_ESC]]
 EVENT_OSK = [[e.EV_KEY, e.BTN_MODE], [e.EV_KEY, e.BTN_NORTH]]
-EVENT_QAM = [[e.EV_KEY, e.BTN_MODE], [e.EV_KEY, e.BTN_SOUTH]]
+EVENT_QAM = [[e.EV_KEY, e.BTN_BASE]]
 EVENT_SCR = [[e.EV_KEY, e.BTN_MODE], [e.EV_KEY, e.BTN_TR]]
 FF_DELAY = 0.2
 JOY_MAX = 32767
