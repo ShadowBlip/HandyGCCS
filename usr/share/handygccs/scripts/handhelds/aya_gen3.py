@@ -142,8 +142,10 @@ async def process_event(seed_event, active_keys):
     # BUTTON 5 (Default: MODE) Big button
     if active_keys == [88, 97, 125] and button_on == 1 and button5 not in event_queue:
         event_queue.append(button5)
+        await com.emit_now(seed_event, button5, 1)
     elif active_keys == [] and seed_event.code in [88, 97, 125] and button_on == 0 and button5 in event_queue:
-        this_button = button5
+        event_queue.remove(button5)
+        await com.emit_now(seed_event, button5, 0)
 
     # BUTTON 6 (Default: Toggle RyzenAdj) Big button + Small Button
     if active_keys == [32, 88, 97, 125] and button_on == 1 and button6 not in event_queue:
