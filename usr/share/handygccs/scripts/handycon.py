@@ -197,6 +197,18 @@ def id_system():
         GYRO_I2C_ADDR = 0x68
         GYRO_I2C_BUS = 1
         system_type = "AYA_GEN3"
+        
+    # I'm separating the Air Plus for now because the Gyro stalls the system.
+    elif system_id in (
+        "AIR Plus",
+        ):
+        CAPTURE_CONTROLLER = True
+        CAPTURE_KEYBOARD = True
+        CAPTURE_POWER = True
+        BUTTON_DELAY = 0.09
+        #GYRO_I2C_ADDR = 0x68
+        #GYRO_I2C_BUS = 1
+        system_type = "AYA_GEN3"
 
 
     ## ONEXPLAYER and AOKZOE devices.
@@ -364,6 +376,7 @@ def get_controller():
             'usb-0000:02:00.3-5/input0',
             'usb-0000:03:00.3-4/input0',
             'usb-0000:04:00.3-4/input0',
+            'usb-0000:64:00.3-3/input0',
             'usb-0000:73:00.3-4/input0',
             'usb-0000:74:00.3-3/input0',
             'usb-0000:e3:00.3-4/input0',
@@ -665,7 +678,7 @@ async def capture_keyboard_events():
 
                         case "AYA_GEN3":
                             # This device class uses the same active events with different values for AYA SPACE, LC, and RC.
-                            if active == [97, 125]:
+                            if active == [97, 125] or active == [29,125]:
 
                                 # LC | Default: Screenshot / Launch Chimera
                                 if button_on == 102 and event_queue == []:
