@@ -709,7 +709,7 @@ class HandheldController:
         for button_event in event_list:
             new_event = InputEvent(seed_event.sec, seed_event.usec, button_event[0], button_event[1], value)
             events.append(new_event)
-        await emit_events(events)
+        await self.emit_events(events)
     
     
     # Toggles enable/disable gyro input and do FF event to notify user of status.
