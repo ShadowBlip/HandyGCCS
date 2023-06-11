@@ -797,7 +797,7 @@ class HandheldController:
         if not is_deckui:
             return False
     
-        steam_path = self.HOME_PATH / '.steam/root/ubuntu12_32/steam'
+        steam_path = self.HOME_PATH + '/.steam/root/ubuntu12_32/steam'
         try:
             result = subprocess.run(["su", self.USER, "-c", f"{steam_path} -ifrunning {cmd}"])
             return result.returncode == 0
