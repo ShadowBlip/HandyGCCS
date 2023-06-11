@@ -770,7 +770,7 @@ class HandheldController:
     
     def steam_ifrunning_deckui(self, cmd):
         # Get the currently running Steam PID.
-        steampid_path = self.HOME_PATH / '.steam/steam.pid'
+        steampid_path = self.HOME_PATH + '/.steam/steam.pid'
         try:
             with open(steampid_path) as f:
                 pid = f.read().strip()
