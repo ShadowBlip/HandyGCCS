@@ -37,7 +37,7 @@ async def process_event(seed_event, active_keys):
     button3 = handycon.button_map["button3"]  # Default ESC
     button4 = handycon.button_map["button4"]  # Default OSK
     button5 = handycon.button_map["button5"]  # Default MODE
-
+    button6 = ["Open Chimera"]
     ## Loop variables
     events = []
     this_button = None
