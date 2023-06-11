@@ -809,7 +809,7 @@ class HandheldController:
     def launch_chimera(self):
         if not self.HAS_CHIMERA_LAUNCHER:
             return
-        subprocess.run([ "su", self.USER, "-c", self.CHIMERA_LAUNCHER_PATH ])
+        subprocess.run([ "su", self.USER, "-c", CHIMERA_LAUNCHER_PATH ])
     
     
     # Gracefull shutdown.
