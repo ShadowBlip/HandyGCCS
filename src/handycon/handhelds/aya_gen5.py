@@ -50,7 +50,7 @@ async def process_event(seed_event, active_keys):
     if seed_event.code in [e.KEY_VOLUMEDOWN, e.KEY_VOLUMEUP]:
         events.append(seed_event)
     # This device class uses the same active_keys events with different values for AYA SPACE, LC, and RC.
-    if active_keys == [29, 125]:
+    if active_keys == [29, 125] or active_keys == [97, 125]:
 
         # LC | Default: Screenshot / Launch Chimera
         if button_on == 102 and handycon.event_queue == []:
@@ -67,6 +67,7 @@ async def process_event(seed_event, active_keys):
         elif button_on == 104 and handycon.event_queue == []:
             handycon.event_queue.append(button5)
             await handycon.emit_now(seed_event, button5, 1)
+
     elif active_keys == [] and seed_event.code in [97, 125] and button_on == 0 and handycon.event_queue != []:
         if button7 in handycon.event_queue:
             handycon.event_queue.remove(button7)

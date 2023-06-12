@@ -480,12 +480,12 @@ class HandheldController:
                         active_keys = self.keyboard_device.active_keys()
     
                         # Debugging variables
-                        if active_keys != []:
-                            self.logger.debug(f"Active Keys: {active_keys}, Seed Value: {seed_event.value}, Seed Code: {seed_event.code}, Seed Type: {seed_event.type}.")
-                            self.logger.debug(f"Queued events: {self.event_queue}")
-                        elif active_keys == [] and self.event_queue != []:
-                            self.logger.debug(f"Seed Value: {seed_event.value}, Seed Code: {seed_event.code}, Seed Type: {seed_event.type}.")
-                            self.logger.debug(f"Queued events: {self.event_queue}")
+                        #if active_keys != []:
+                        #    self.logger.debug(f"Active Keys: {active_keys}, Seed Value: {seed_event.value}, Seed Code: {seed_event.code}, Seed Type: {seed_event.type}.")
+                        #    self.logger.debug(f"Queued events: {self.event_queue}")
+                        #elif active_keys == [] and self.event_queue != []:
+                        #    self.logger.debug(f"Seed Value: {seed_event.value}, Seed Code: {seed_event.code}, Seed Type: {seed_event.type}.")
+                        #    self.logger.debug(f"Queued events: {self.event_queue}")
     
                         # Capture keyboard events and translate them to mapped events.
                         match self.system_type:
@@ -535,7 +535,7 @@ class HandheldController:
                         # Block FF events, or get infinite recursion. Up to you I guess...
                         if event.type in [e.EV_FF, e.EV_UINPUT]:
                             continue
-                        self.logger.debug(f"Got event: {event}")   
+                        #self.logger.debug(f"Got event: {event}")
                         # If gyro is enabled, queue all events so the gyro event handler can manage them.
                         if self.gyro_device is not None and self.gyro_enabled:
                             adjusted_val = None
@@ -699,7 +699,8 @@ class HandheldController:
         for event in events:
             self.ui_device.write_event(event)
             self.ui_device.syn()
-            if len(events) > 1:
+            # Pause between multiple events, but not after the last one in the list.
+            if event != events[len(events)-1]:
                 await asyncio.sleep(self.BUTTON_DELAY)
     
     

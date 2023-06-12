@@ -45,7 +45,7 @@ async def process_event(seed_event, active_keys):
     events = []
     this_button = None
     button_on = seed_event.value
-
+    handycon.logger.debug(f" Active Keys: {len(active_keys)}, Button_on: {button_on}, Event Queue: {handycon.event_queue}")
     # Automatically pass default keycodes we dont intend to replace.
     if seed_event.code in [e.KEY_VOLUMEDOWN, e.KEY_VOLUMEUP]:
         events.append(seed_event)
@@ -66,6 +66,7 @@ async def process_event(seed_event, active_keys):
         elif button_on == 104 and handycon.event_queue == []:
             handycon.event_queue.append(button5)
             await handycon.emit_now(seed_event, button5, 1)
+
     elif active_keys == [] and seed_event.code in [97, 125] and button_on == 0 and handycon.event_queue != []:
         if button7 in handycon.event_queue:
             handycon.event_queue.remove(button7)
