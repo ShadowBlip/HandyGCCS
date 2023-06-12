@@ -69,6 +69,7 @@ async def process_event(seed_event, active_keys):
             await handycon.emit_now(seed_event, button5, 1)
 
     elif active_keys == [] and seed_event.code in [97, 125] and button_on == 0 and handycon.event_queue != []:
+        await asyncio.sleep(handycon.BUTTON_DELAY)
         if button7 in handycon.event_queue:
             handycon.event_queue.remove(button7)
             handycon.launch_chimera()
@@ -87,6 +88,7 @@ async def process_event(seed_event, active_keys):
         handycon.event_queue.append(button2)
         await handycon.emit_now(seed_event, button2, 1)
     elif active_keys == [] and seed_event.code in [32, 125] and button_on == 0 and button2 in handycon.event_queue:
+        await asyncio.sleep(handycon.BUTTON_DELAY)
         handycon.event_queue.remove(button2)
         await handycon.emit_now(seed_event, button2, 0)
 
