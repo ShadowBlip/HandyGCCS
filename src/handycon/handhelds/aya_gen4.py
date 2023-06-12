@@ -7,6 +7,7 @@
 # presses that Steam understands.
 
 import sys
+from asyncio import sleep
 from evdev import InputDevice, InputEvent, UInput, ecodes as e, list_devices, ff
 
 from .. import constants as cons
