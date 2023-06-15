@@ -188,7 +188,9 @@ def id_system():
     
     elif system_id in (
         "AYANEO 2",
+        "AYANEO 2S",
         "GEEK",
+        "GEEK 1S",
         ):
         CAPTURE_CONTROLLER = True
         CAPTURE_KEYBOARD = True
@@ -379,6 +381,7 @@ def get_controller():
             'usb-0000:64:00.3-3/input0',
             'usb-0000:73:00.3-4/input0',
             'usb-0000:74:00.3-3/input0',
+            'usb-0000:c4:00.3-4/input0',
             'usb-0000:e3:00.3-4/input0',
             'usb-0000:e4:00.3-4/input0',
             )
