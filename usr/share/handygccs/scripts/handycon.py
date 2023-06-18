@@ -25,7 +25,7 @@ from time import sleep, time
 
 logging.basicConfig(format="[%(asctime)s | %(filename)s:%(lineno)s:%(funcName)s] %(message)s",
                     datefmt="%y%m%d_%H:%M:%S",
-                    level=logging.INFO
+                    level=logging.DEBUG
                     )
 
 logger = logging.getLogger(__name__)
@@ -950,6 +950,7 @@ async def capture_keyboard_events():
                             # BUTTON 6 (Default: toggle performace mode) Rear Left
                             if active == [317] and button_on == 1 and button6 not in event_queue:
                                 event_queue.append(button6)
+                                await toggle_performance()
                             elif active == [] and seed_event.code in [317] and button_on == 0 and button6 in event_queue:
                                 event_queue.remove(button6)
 
@@ -957,13 +958,13 @@ async def capture_keyboard_events():
                             if active == [318] and button_on == 1 and event_queue == []:
                                 if HAS_CHIMERA_LAUNCHER:
                                     event_queue.append(button7)
+                                    launch_chimera()
                                 else:
                                     event_queue.append(button1)
                             elif active == [] and seed_event.code in [318] and button_on == 0 and button1 in event_queue:
                                 this_button = button1
                             elif active == [] and seed_event.code in [318] and button_on == 0 and button7 in event_queue:
                                 event_queue.remove(button7)
-                                launch_chimera()
 
                     # Create list of events to fire.
                     # Handle new button presses.
