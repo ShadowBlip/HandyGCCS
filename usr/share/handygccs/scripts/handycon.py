@@ -300,6 +300,16 @@ def id_system():
         BUTTON_DELAY = 0.04
         system_type = "AYN_GEN1"
 
+    ## Asus Ally
+    elif system_id in (
+            "ROG Ally RC71L_RC71L",
+            ):
+        CAPTURE_CONTROLLER = True
+        CAPTURE_KEYBOARD = True
+        CAPTURE_POWER = False
+        BUTTON_DELAY = 0.09
+        system_type = "ROG ALLY"
+        
     # Block devices that aren't supported as this could cause issues.
     else:
         logger.error(f"{system_id} is not currently supported by this tool. Open an issue on \
@@ -389,6 +399,7 @@ def get_controller():
             'usb-0000:02:00.3-5/input0',
             'usb-0000:03:00.3-4/input0',
             'usb-0000:04:00.3-4/input0',
+            'usb-0000:0a:00.3-2/input0',
             'usb-0000:64:00.3-3/input0',
             'usb-0000:73:00.3-4/input0',
             'usb-0000:74:00.0-1/input0',
@@ -433,6 +444,10 @@ def get_keyboard():
                 if device.name == '  Mouse for Windows' and device.phys in ['usb-0000:00:14.0-5/input0', 'usb-0000:73:00.4-2/input1', 'usb-0000:74:00.3-4/input1']:
                     keyboard_path = device.path
                     keyboard_device = InputDevice(keyboard_path)
+            elif system_type == "ROG ALLY":
+                if device.name == 'Asus Keyboard' and device.phys == 'usb-0000:0a:00.3-3/input2':
+                    keyboard_path = device.path
+                    keyboard_device = InputDevice(keyboard_path)
             else:
                 if device.name == 'AT Translated Set 2 keyboard' and device.phys == 'isa0060/serio0/input0':
                     keyboard_path = device.path
@@ -475,7 +490,6 @@ def get_powerkey():
 
     # Grab the built-in devices. This will give us exclusive acces to the devices and their capabilities.
     for device in devices_original:
-
         # Power Button
         if device.name == 'Power Button' and device.phys == "LNXPWRBN/button/input0":
             power_device = device
@@ -489,12 +503,15 @@ def get_powerkey():
             if CAPTURE_POWER:
                 power_device_extra.grab()
 
-    if not power_device:
+    if not power_device and not power_device_extra:
         logger.warn("Power Button device not yet found. Restarting scan.")
         sleep(DETECT_DELAY)
         return False
     else:
-        logger.info(f"Found {power_device.name}. Capturing input data.")
+        if power_device:
+            logger.info(f"Found {power_device.name}. Capturing input data.")
+        else:
+            logger.info(f"Found {power_device_extra.name}. Capturing input data.")
         return True
 
 def get_gyro():
@@ -940,6 +957,18 @@ async def capture_keyboard_events():
                                 event_queue.append(button2)
                             elif active == [] and seed_event.code in [20, 29, 42, 56] and button_on == 0 and button2 in event_queue:
                                 this_button = button2
+                                
+                        case "ROG ALLY":
+                            # BUTTON 2 (Default: QAM)
+                            if active == [148] and button_on == 1 and button2 not in event_queue:
+                                event_queue.append(button2)
+                            elif active == [] and seed_event.code in [148] and button_on == 0 and button2 in event_queue:
+                                this_button = button2
+                                
+                            if active == [186] and button_on == 1 and button5 not in event_queue:
+                                event_queue.append(button5)
+                            elif active == [] and seed_event.code in [186] and button_on == 0 and button5 in event_queue:
+                                this_button = button5
 
                     # Create list of events to fire.
                     # Handle new button presses.
@@ -1096,14 +1125,34 @@ def steam_ifrunning_deckui(cmd):
 async def capture_power_events():
     global HOME_PATH
     global USER
-
     global power_device
+    global power_device_extra
     global shutdown
     
     while running:
         if power_device:
             try:
                 async for event in power_device.async_read_loop():
+                    active_keys = keyboard_device.active_keys()
+                    if event.type == e.EV_KEY and event.code == 116: # KEY_POWER
+                        if event.value == 0:
+                            if active_keys == [125]:
+                                # For DeckUI Sessions
+                                shutdown = True
+                                steam_ifrunning_deckui("steam://longpowerpress")
+                            else:
+                                # For DeckUI Sessions
+                                is_deckui = steam_ifrunning_deckui("steam://shortpowerpress")
+                                if not is_deckui:
+                                    # For BPM and Desktop sessions
+                                    os.system('systemctl suspend')
+            except Exception as err:
+                logger.error(f"{err} | Error reading events from power device.")
+                power_device = None
+
+        if power_device_extra:    
+            try:
+                async for event in power_device_extra.async_read_loop():
                     active_keys = keyboard_device.active_keys()
                     if event.type == e.EV_KEY and event.code == 116: # KEY_POWER
                         if event.value == 0:
