@@ -237,14 +237,15 @@ def id_system():
 
     elif system_id in (
         "ONEXPLAYER Mini Pro",
-        "AOKZOE A1 AR07"
+        "AOKZOE A1 AR07",
+        "AOKZOE A1 Pro",
         ):
         CAPTURE_CONTROLLER = True
         CAPTURE_KEYBOARD = True
         CAPTURE_POWER = True
         BUTTON_DELAY = 0.08
-        GYRO_I2C_ADDR = 0x68
-        GYRO_I2C_BUS = 1
+        # GYRO_I2C_ADDR = 0x68
+        # GYRO_I2C_BUS = 1
         system_type = "OXP_GEN2"
 
     ## GPD Devices.
