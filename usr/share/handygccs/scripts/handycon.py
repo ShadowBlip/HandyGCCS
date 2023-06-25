@@ -955,7 +955,7 @@ async def capture_keyboard_events():
 
                         case "ROG ALLY":
 
-                            # BUTTON 1 (Default: Screenshot) Armoury Crate Button Mode 2
+                            # BUTTON 1 (Default: Screenshot) Armory Crate Button Mode 2
                             # This button triggers immediate down/up after holding for ~1s an F17 and then
                             # released another down/up for F18 on release. This queues on hold and triggers on release
                             if active == [187] and button_on == 1 and button1 not in event_queue:
@@ -964,7 +964,7 @@ async def capture_keyboard_events():
                             elif active == [] and seed_event.code in [188] and button_on == 0 and button1 in event_queue:
                                 this_button = button1
 
-                            # BUTTON 2 (Default: QAM) Armoury Crate Button Mode 1
+                            # BUTTON 2 (Default: QAM) Armory Crate Button Mode 1
                             if active == [148] and button_on == 1 and button2 not in event_queue:
                                 event_queue.append(button2)
                             elif active == [] and seed_event.code in [148] and button_on == 0 and button2 in event_queue:
