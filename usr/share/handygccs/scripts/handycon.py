@@ -117,8 +117,7 @@ gyro_sensitivity = 0
 
 # RyzenAdj settings
 performance_mode = "--power-saving"
-RYZENADJ_DELAY = 0.5
-
+thermal_mode = "0"
 def __init__():
     global controller_device
     global keyboard_device
@@ -958,10 +957,10 @@ async def capture_keyboard_events():
                             # BUTTON 1 (Default: Screenshot) Armory Crate Button Mode 2
                             # This button triggers immediate down/up after holding for ~1s an F17 and then
                             # released another down/up for F18 on release. This queues on hold and triggers on release
-                            if active == [187] and button_on == 1 and button1 not in event_queue:
+                            if active == [185] and button_on == 2 and button1 not in event_queue:
                                 event_queue.append(button1)
                                 await do_rumble(0, 75, 1000, 0)
-                            elif active == [] and seed_event.code in [188] and button_on == 0 and button1 in event_queue:
+                            elif active == [] and seed_event.code in [185] and button_on == 0 and button1 in event_queue:
                                 this_button = button1
 
                             # BUTTON 2 (Default: QAM) Armory Crate Button Mode 1
@@ -978,19 +977,22 @@ async def capture_keyboard_events():
                             elif active == [] and seed_event.code in [186] and button_on == 0 and button5 in event_queue:
                                 this_button = button5
 
-                            ## BUTTON 5 (Default: GUIDE) Ally Home Mode 2. Long Press. Disabled for now.
+                            # BUTTON 5 (Default: GUIDE) Ally Home Mode 2. Long Press. Disabled for now. This event triggers
+                            # from a different device than the short press event. TODO: Address in refactor.
                             #if active == [29, 56, 111] and button_on == 1 and button5 not in event_queue:
                             #    pass
                             #elif active == [] and seed_event.code in [29, 56, 111] and button_on == 0 and button5 in event_queue:
                             #    pass
 
-                            # BUTTON 6 (Default: Toggle Ryzenadj) Both rear buttons (currently). More RE needed to configure
-                            # them seperately
-                            if active == [185] and button_on == 1 and button6 not in event_queue:
+                            # BUTTON 6 (Default: Toggle Ryzenadj) either rear button (currently). More RE needed to configure
+                            # back paddles seperately
+                            if active == [187] and button_on == 1 and button6 not in event_queue:
                                 event_queue.append(button6)
-                            elif active == [] and seed_event.code in [185] and button_on == 0 and button6 in event_queue:
+                                await do_rumble(0, 75, 1000, 0)
+                            elif active == [] and seed_event.code in [188] and button_on == 0 and button6 in event_queue:
                                 event_queue.remove(button6)
                                 await toggle_performance()
+                                toggle_thermal_mode()
 
                     # Create list of events to fire.
                     # Handle new button presses.
@@ -1290,6 +1292,18 @@ async def toggle_performance():
 
     ryzenadj_command = f'ryzenadj {performance_mode}'
     run = os.popen(ryzenadj_command, 'r', 1).read().strip()
+    logger.debug(run)
+
+def toggle_thermal_mode():
+    global thermal_mode
+
+    if thermal_mode == "1":
+        thermal_mode = "0"
+    else:
+        thermal_mode = "1"
+
+    command = f'echo {thermal_mode} > /sys/devices/platform/asus-nb-wmi/throttle_thermal_policy'
+    run = os.popen(command, 'r', 1).read().strip()
     logger.debug(run)
 
 def launch_chimera():
