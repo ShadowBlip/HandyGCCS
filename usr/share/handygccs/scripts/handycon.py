@@ -35,7 +35,6 @@ logger = logging.getLogger(__name__)
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 ## Declare globals
-
 # Constants
 BUTTON_DELAY = 0.0
 
@@ -65,8 +64,6 @@ HIDE_PATH = Path(HIDE_PATH)
 
 CHIMERA_LAUNCHER_PATH='/usr/share/chimera/bin/chimera-web-launcher'
 HAS_CHIMERA_LAUNCHER=os.path.isfile(CHIMERA_LAUNCHER_PATH)
-
-server_address = '/tmp/ryzenadj_socket'
 
 # Capture the username and home path of the user who has been logged in the longest.
 USER = None
@@ -120,10 +117,7 @@ gyro_sensitivity = 0
 
 # RyzenAdj settings
 performance_mode = "--power-saving"
-protocol = None
 RYZENADJ_DELAY = 0.5
-selected_performance = None
-transport = None
 
 def __init__():
     global controller_device
@@ -958,18 +952,45 @@ async def capture_keyboard_events():
                                 event_queue.append(button2)
                             elif active == [] and seed_event.code in [20, 29, 42, 56] and button_on == 0 and button2 in event_queue:
                                 this_button = button2
-                                
+
                         case "ROG ALLY":
-                            # BUTTON 2 (Default: QAM)
+
+                            # BUTTON 1 (Default: Screenshot) Armoury Crate Button Mode 2
+                            # This button triggers immediate down/up after holding for ~1s an F17 and then
+                            # released another down/up for F18 on release. This queues on hold and triggers on release
+                            if active == [187] and button_on == 1 and button1 not in event_queue:
+                                event_queue.append(button1)
+                                await do_rumble(0, 75, 1000, 0)
+                            elif active == [] and seed_event.code in [188] and button_on == 0 and button1 in event_queue:
+                                this_button = button1
+
+                            # BUTTON 2 (Default: QAM) Armoury Crate Button Mode 1
                             if active == [148] and button_on == 1 and button2 not in event_queue:
                                 event_queue.append(button2)
                             elif active == [] and seed_event.code in [148] and button_on == 0 and button2 in event_queue:
                                 this_button = button2
-                                
+
+                            # This button triggers on two separate devices. Short press is F16 from the same device as all other keys.
+                            # Long pres is CTRL + ALT + DEL from a different device.
+                            # BUTTON 5 (Default: GUIDE) Ally Home Mode 1. Short Press
                             if active == [186] and button_on == 1 and button5 not in event_queue:
                                 event_queue.append(button5)
                             elif active == [] and seed_event.code in [186] and button_on == 0 and button5 in event_queue:
                                 this_button = button5
+
+                            ## BUTTON 5 (Default: GUIDE) Ally Home Mode 2. Long Press. Disabled for now.
+                            #if active == [29, 56, 111] and button_on == 1 and button5 not in event_queue:
+                            #    pass
+                            #elif active == [] and seed_event.code in [29, 56, 111] and button_on == 0 and button5 in event_queue:
+                            #    pass
+
+                            # BUTTON 6 (Default: Toggle Ryzenadj) Both rear buttons (currently). More RE needed to configure
+                            # them seperately
+                            if active == [185] and button_on == 1 and button6 not in event_queue:
+                                event_queue.append(button6)
+                            elif active == [] and seed_event.code in [185] and button_on == 0 and button6 in event_queue:
+                                event_queue.remove(button6)
+                                await toggle_performance()
 
                     # Create list of events to fire.
                     # Handle new button presses.
@@ -1251,11 +1272,6 @@ async def emit_events(events: list):
 # RYZENADJ
 async def toggle_performance():
     global performance_mode
-    global protocol
-    global transport
-
-    if not transport:
-        return
 
     if performance_mode == "--max-performance":
         performance_mode = "--power-saving"
@@ -1272,31 +1288,9 @@ async def toggle_performance():
         await asyncio.sleep(FF_DELAY)
         await do_rumble(0, 75, 1000, 0)
 
-    transport.write(bytes(performance_mode, 'utf-8'))
-    transport.close()
-    transport = None
-    protocol = None
-
-async def ryzenadj_control(loop):
-    global transport
-    global protocol
-
-    while running:
-        # Wait for a server to be launched
-        if not os.path.exists(server_address):
-            await asyncio.sleep(RYZENADJ_DELAY)
-            continue
-
-        # Wait for a connection to the server
-        if not transport or not protocol:
-            try:
-                transport, protocol = await loop.create_unix_connection(asyncio.Protocol, path=server_address)
-                logger.debug(f"got {transport}, {protocol}")
-            except ConnectionRefusedError:
-                logger.debug('Could not connect to RyzenaAdj Control')
-                await asyncio.sleep(RYZENADJ_DELAY)
-                continue
-        await asyncio.sleep(RYZENADJ_DELAY)
+    ryzenadj_command = f'ryzenadj {performance_mode}'
+    run = os.popen(ryzenadj_command, 'r', 1).read().strip()
+    logger.debug(run)
 
 def launch_chimera():
     if not HAS_CHIMERA_LAUNCHER:
@@ -1367,7 +1361,6 @@ def main():
     asyncio.ensure_future(capture_ff_events())
     asyncio.ensure_future(capture_keyboard_events())
     asyncio.ensure_future(capture_power_events())
-    asyncio.ensure_future(ryzenadj_control(loop))
     logger.info("Handheld Game Console Controller Service started.")
 
     # Establish signaling to handle gracefull shutdown.
