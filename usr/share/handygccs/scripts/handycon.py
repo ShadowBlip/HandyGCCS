@@ -954,10 +954,10 @@ async def capture_keyboard_events():
 
                         case "ROG ALLY":
 
-                            # BUTTON 1 (Default: Screenshot) Paddle + DPAD UP
-                            if active == [88] and button_on == 1 and button1 not in event_queue:
+                            # BUTTON 1 (Default: Screenshot) Paddle + Y
+                            if active == [184] and button_on == 1 and button1 not in event_queue:
                                 event_queue.append(button1)
-                            elif active == [] and seed_event.code in [88] and button_on == 0 and button1 in event_queue:
+                            elif active == [] and seed_event.code in [184] and button_on == 0 and button1 in event_queue:
                                 this_button = button1
 
                             # BUTTON 2 (Default: QAM) Armory Crate Button Mode 1
@@ -972,13 +972,11 @@ async def capture_keyboard_events():
                             #elif active == [] and seed_event.code in [185] and button_on == 0 and button3 in event_queue:
                             #    event_queue.remove(button3)
 
-                            # BUTTON 4 (Default: OSK) Armory Crate Button Mode 2
-                            # This button triggers immediate down/up after holding for ~1s an F17 and then
-                            # released another down/up for F18 on release. This queues on hold and triggers on release
-                            if active == [187] and button_on == 1 and button4 not in event_queue:
+                            # BUTTON 4 (Default: OSK) Paddle + D-Pad UP
+                            if active == [88] and button_on == 1 and button4 not in event_queue:
                                 event_queue.append(button4)
                                 await do_rumble(0, 75, 1000, 0)
-                            elif active == [] and seed_event.code in [188] and button_on == 0 and button4 in event_queue:
+                            elif active == [] and seed_event.code in [88] and button_on == 0 and button4 in event_queue:
                                 this_button = button4
 
                             # This button triggers on two separate devices. Short press is F16 from the same device as all other keys.
@@ -996,21 +994,24 @@ async def capture_keyboard_events():
                             #elif active == [] and seed_event.code in [29, 56, 111] and button_on == 0 and button5 in event_queue:
                             #    pass
 
-                            # BUTTON 6 (Default: Set Max Performance. Paddle + Y
-                            if active == [184] and button_on == 1 and button6 not in event_queue:
+                            # BUTTON 6 (Default: Toggle Performance) Armory Crate Button Mode 2
+                            # This button triggers immediate down/up after holding for ~1s an F17 and then
+                            # released another down/up for F18 on release. This queues on hold and triggers on release
+                            if active == [187] and button_on == 1 and button6 not in event_queue:
                                 event_queue.append(button6)
-                            elif active == [] and seed_event.code in [184] and button_on == 0 and button6 in event_queue:
+                                await do_rumble(0, 10, 1000, 0)
+                            elif active == [] and seed_event.code in [188] and button_on == 0 and button6 in event_queue:
                                 event_queue.remove(button6)
-                                await set_max_performance()
-                                set_thermal_1()
+                                await toggle_performance_mode()
+                                toggle_thermal_mode()
 
-                            # BUTTON 7 (Default: Set Power Saving. Paddle + A
-                            if active == [68] and button_on == 1 and button7 not in event_queue:
+                            # BUTTON 7 (Default: Launch Chimera. Paddle + A
+                            if active == [68] and button_on == 1 and button7 not in event_queue and HAS_CHIMERA_LAUNCHER:
                                 event_queue.append(button7)
                             elif active == [] and seed_event.code in [68] and button_on == 0 and button7 in event_queue:
                                 event_queue.remove(button7)
-                                await set_power_saving()
-                                set_thermal_0()
+                                launch_chimera()
+
 
                     # Create list of events to fire.
                     # Handle new button presses.
