@@ -1294,40 +1294,19 @@ async def emit_events(events: list):
 async def toggle_performance_mode():
     global performance_mode
 
-    if performance_mode == "--max-performance":
-        await set_power_saving()
-    else:
-        await set_max_performance()
-
-async def set_max_performance():
-    global performance_mode
-
-    if performance_mode != "--power-saving":
-        performance_mode = "--power-saving"
-
-    await do_rumble(0, 500, 1000, 0)
-    await asyncio.sleep(FF_DELAY)
-    await do_rumble(0, 75, 1000, 0)
-    await asyncio.sleep(FF_DELAY)
-    await do_rumble(0, 75, 1000, 0)
-
-    await set_performance_mode()
-
-async def set_power_saving():
-    global performance_mode
-
-    if performance_mode != "--max_performance":
+    if performance_mode == "--power-saving":
         performance_mode = "--max-performance"
-
-    await do_rumble(0, 75, 1000, 0)
-    await asyncio.sleep(FF_DELAY)
-    await do_rumble(0, 75, 1000, 0)
-    await asyncio.sleep(FF_DELAY)
-    await do_rumble(0, 75, 1000, 0)
-    await set_performance_mode()
-
-async def set_performance_mode():
-    global performance_mode
+        await do_rumble(0, 500, 1000, 0)
+        await asyncio.sleep(FF_DELAY)
+        await do_rumble(0, 75, 1000, 0)
+        await asyncio.sleep(FF_DELAY)
+        await do_rumble(0, 75, 1000, 0)
+    else:
+        performance_mode = "--power-saving"
+        await do_rumble(0, 100, 1000, 0)
+        await asyncio.sleep(FF_DELAY)
+        await do_rumble(0, 100, 1000, 0)
+        await asyncio.sleep(FF_DELAY)
 
     ryzenadj_command = f'ryzenadj {performance_mode}'
     run = os.popen(ryzenadj_command, 'r', 1).read().strip()
@@ -1337,28 +1316,13 @@ def toggle_thermal_mode():
     global thermal_mode
 
     if thermal_mode == "1":
-        set_thermal_0()
-    else:
-        set_thermal_1()
-
-def set_thermal_0():
-    global thermal_mode
-    if thermal_mode != "0":
         thermal_mode = "0"
-    set_thermal_mode()
-
-def set_thermal_1():
-    global thermal_mode
-    if thermal_mode != "1":
+    else:
         thermal_mode = "1"
-    set_thermal_mode()
-
-def set_thermal_mode():
-    global thermal_mode
 
     command = f'echo {thermal_mode} > /sys/devices/platform/asus-nb-wmi/throttle_thermal_policy'
     run = os.popen(command, 'r', 1).read().strip()
-    logger.debug(run)
+    logger.debug(f'Thermal mode set to {thermal_mode}.')
 
 def launch_chimera():
     if not HAS_CHIMERA_LAUNCHER:
