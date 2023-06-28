@@ -606,7 +606,7 @@ async def capture_keyboard_events():
                                 event_queue.append(button6)
                             elif active == [] and seed_event.code == 125 and button_on == 0 and button6 in event_queue:
                                 event_queue.remove(button6)
-                                await toggle_performance()
+                                await toggle_performance_mode()
 
                             # BUTTON 2 (Default: QAM) TM Button
                             if active == [97, 100, 111] and button_on == 1 and button2 not in event_queue:
@@ -696,7 +696,7 @@ async def capture_keyboard_events():
                                 event_queue.append(button6)
                             elif active == [] and seed_event.code in [32, 88, 97, 125] and button_on == 0 and button6 in event_queue:
                                 event_queue.remove(button6)
-                                await toggle_performance()
+                                await toggle_performance_mode()
 
                             # Handle L_META from power button
                             elif active == [] and seed_event.code == 125 and button_on == 0 and  event_queue == [] and shutdown == True:
@@ -757,7 +757,7 @@ async def capture_keyboard_events():
                                 event_queue.append(button6)
                             elif active == [] and seed_event.code in [99, 125] and button_on == 0 and button6 in event_queue:
                                 event_queue.remove(button6)
-                                await toggle_performance()
+                                await toggle_performance_mode()
 
                             # BUTTON 2 (Default: MODE) Short press orange
                             if active == [34, 125] and button_on == 1 and button2 not in event_queue:
@@ -844,7 +844,7 @@ async def capture_keyboard_events():
                                 event_queue.append(button6)
                             elif active == [] and seed_event.code in [10, 11] and button_on == 0 and button6 in event_queue:
                                 event_queue.remove(button6)
-                                await toggle_performance()
+                                await toggle_performance_mode()
 
                         case "GPD_GEN3":
                             # BUTTON 2 (Default: QAM)
@@ -872,7 +872,7 @@ async def capture_keyboard_events():
                                 event_queue.append(button6)
                             elif active == [] and seed_event.code in [99, 119] and button_on == 0 and button6 in event_queue:
                                 event_queue.remove(button6)
-                                await toggle_performance()
+                                await toggle_performance_mode()
 
                         case "ABN_GEN1":
 
@@ -922,7 +922,7 @@ async def capture_keyboard_events():
                                 if button5 in event_queue:
                                     event_queue.remove(button5)
                                 event_queue.append(button6)
-                                await toggle_performance()
+                                await toggle_performance_mode()
 
                             elif active == [] and seed_event.code in [1, 29, 42] and button_on == 0 and button6 in event_queue:
                                 event_queue.remove(button6)
@@ -954,13 +954,10 @@ async def capture_keyboard_events():
 
                         case "ROG ALLY":
 
-                            # BUTTON 1 (Default: Screenshot) Armory Crate Button Mode 2
-                            # This button triggers immediate down/up after holding for ~1s an F17 and then
-                            # released another down/up for F18 on release. This queues on hold and triggers on release
-                            if active == [185] and button_on == 2 and button1 not in event_queue:
+                            # BUTTON 1 (Default: Screenshot) Paddle + DPAD UP
+                            if active == [88] and button_on == 1 and button1 not in event_queue:
                                 event_queue.append(button1)
-                                await do_rumble(0, 75, 1000, 0)
-                            elif active == [] and seed_event.code in [185] and button_on == 0 and button1 in event_queue:
+                            elif active == [] and seed_event.code in [88] and button_on == 0 and button1 in event_queue:
                                 this_button = button1
 
                             # BUTTON 2 (Default: QAM) Armory Crate Button Mode 1
@@ -968,6 +965,21 @@ async def capture_keyboard_events():
                                 event_queue.append(button2)
                             elif active == [] and seed_event.code in [148] and button_on == 0 and button2 in event_queue:
                                 this_button = button2
+
+                            # BUTTON 3 (Default: Nothing, used as modifier) Paddle Switches.
+                            #if active == [185] and button_on == 1 and button3 not in event_queue:
+                            #    event_queue.append(button3)
+                            #elif active == [] and seed_event.code in [185] and button_on == 0 and button3 in event_queue:
+                            #    event_queue.remove(button3)
+
+                            # BUTTON 4 (Default: OSK) Armory Crate Button Mode 2
+                            # This button triggers immediate down/up after holding for ~1s an F17 and then
+                            # released another down/up for F18 on release. This queues on hold and triggers on release
+                            if active == [187] and button_on == 1 and button4 not in event_queue:
+                                event_queue.append(button4)
+                                await do_rumble(0, 75, 1000, 0)
+                            elif active == [] and seed_event.code in [188] and button_on == 0 and button4 in event_queue:
+                                this_button = button4
 
                             # This button triggers on two separate devices. Short press is F16 from the same device as all other keys.
                             # Long pres is CTRL + ALT + DEL from a different device.
@@ -984,15 +996,21 @@ async def capture_keyboard_events():
                             #elif active == [] and seed_event.code in [29, 56, 111] and button_on == 0 and button5 in event_queue:
                             #    pass
 
-                            # BUTTON 6 (Default: Toggle Ryzenadj) either rear button (currently). More RE needed to configure
-                            # back paddles seperately
-                            if active == [187] and button_on == 1 and button6 not in event_queue:
+                            # BUTTON 6 (Default: Set Max Performance. Paddle + Y
+                            if active == [184] and button_on == 1 and button6 not in event_queue:
                                 event_queue.append(button6)
-                                await do_rumble(0, 75, 1000, 0)
-                            elif active == [] and seed_event.code in [188] and button_on == 0 and button6 in event_queue:
+                            elif active == [] and seed_event.code in [184] and button_on == 0 and button6 in event_queue:
                                 event_queue.remove(button6)
-                                await toggle_performance()
-                                toggle_thermal_mode()
+                                await set_max_performance()
+                                set_thermal_1()
+
+                            # BUTTON 7 (Default: Set Power Saving. Paddle + A
+                            if active == [68] and button_on == 1 and button7 not in event_queue:
+                                event_queue.append(button7)
+                            elif active == [] and seed_event.code in [68] and button_on == 0 and button7 in event_queue:
+                                event_queue.remove(button7)
+                                await set_power_saving()
+                                set_thermal_0()
 
                     # Create list of events to fire.
                     # Handle new button presses.
@@ -1272,23 +1290,43 @@ async def emit_events(events: list):
             await asyncio.sleep(BUTTON_DELAY)
 
 # RYZENADJ
-async def toggle_performance():
+async def toggle_performance_mode():
     global performance_mode
 
     if performance_mode == "--max-performance":
-        performance_mode = "--power-saving"
-        await do_rumble(0, 75, 1000, 0)
-        await asyncio.sleep(FF_DELAY)
-        await do_rumble(0, 75, 1000, 0)
-        await asyncio.sleep(FF_DELAY)
-        await do_rumble(0, 75, 1000, 0)
+        await set_power_saving()
     else:
+        await set_max_performance()
+
+async def set_max_performance():
+    global performance_mode
+
+    if performance_mode != "--power-saving":
+        performance_mode = "--power-saving"
+
+    await do_rumble(0, 500, 1000, 0)
+    await asyncio.sleep(FF_DELAY)
+    await do_rumble(0, 75, 1000, 0)
+    await asyncio.sleep(FF_DELAY)
+    await do_rumble(0, 75, 1000, 0)
+
+    await set_performance_mode()
+
+async def set_power_saving():
+    global performance_mode
+
+    if performance_mode != "--max_performance":
         performance_mode = "--max-performance"
-        await do_rumble(0, 500, 1000, 0)
-        await asyncio.sleep(FF_DELAY)
-        await do_rumble(0, 75, 1000, 0)
-        await asyncio.sleep(FF_DELAY)
-        await do_rumble(0, 75, 1000, 0)
+
+    await do_rumble(0, 75, 1000, 0)
+    await asyncio.sleep(FF_DELAY)
+    await do_rumble(0, 75, 1000, 0)
+    await asyncio.sleep(FF_DELAY)
+    await do_rumble(0, 75, 1000, 0)
+    await set_performance_mode()
+
+async def set_performance_mode():
+    global performance_mode
 
     ryzenadj_command = f'ryzenadj {performance_mode}'
     run = os.popen(ryzenadj_command, 'r', 1).read().strip()
@@ -1298,9 +1336,24 @@ def toggle_thermal_mode():
     global thermal_mode
 
     if thermal_mode == "1":
-        thermal_mode = "0"
+        set_thermal_0()
     else:
+        set_thermal_1()
+
+def set_thermal_0():
+    global thermal_mode
+    if thermal_mode != "0":
+        thermal_mode = "0"
+    set_thermal_mode()
+
+def set_thermal_1():
+    global thermal_mode
+    if thermal_mode != "1":
         thermal_mode = "1"
+    set_thermal_mode()
+
+def set_thermal_mode():
+    global thermal_mode
 
     command = f'echo {thermal_mode} > /sys/devices/platform/asus-nb-wmi/throttle_thermal_policy'
     run = os.popen(command, 'r', 1).read().strip()
