@@ -717,7 +717,7 @@ class HandheldController:
                 case "Open Chimera":
                     if value == 1:
                         self.logger.debug("Open Chimera")
-                        await self.launch_chimera
+                        self.launch_chimera
                 case _:
                     new_event = InputEvent(seed_event.sec, seed_event.usec, button_event[0], button_event[1], value)
                     events.append(new_event)
