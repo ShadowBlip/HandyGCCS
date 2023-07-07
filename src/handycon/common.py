@@ -707,7 +707,12 @@ class HandheldController:
     
     # Generates events from an event list to immediately emit, bypassing queue.
     async def emit_now(self, seed_event, event_list, value):
+        # Ignore malformed requests
         if not event_list:
+            logger.error("emit_now received malfirmed event_list. No action") 
+            return
+        if type(event_list[0]) == str and value == 0:
+            logger.debug("Received string event with value 0. KEY_UP event not required. Skipping")
             return
         events = []
         self.logger.debug(f'Event list: {event_list}')
