@@ -708,6 +708,7 @@ class HandheldController:
     # Generates events from an event list to immediately emit, bypassing queue.
     async def emit_now(self, seed_event, event_list, value):
         events = []
+        self.logger.debug(f'Event list: {event_list}')
         for button_event in event_list:
             match button_event:
                 case "RyzenAdj Toggle":
