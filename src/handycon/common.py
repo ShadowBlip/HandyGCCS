@@ -707,18 +707,18 @@ class HandheldController:
     
     # Generates events from an event list to immediately emit, bypassing queue.
     async def emit_now(self, seed_event, event_list, value):
+        if not event_list:
+            return
         events = []
         self.logger.debug(f'Event list: {event_list}')
         for button_event in event_list:
             match button_event:
                 case "RyzenAdj Toggle":
-                    if value == 1:
-                        self.logger.debug("RyzenAdj Toggle")
-                        await self.toggle_performance
+                    self.logger.debug("RyzenAdj Toggle")
+                    await self.toggle_performance()
                 case "Open Chimera":
-                    if value == 1:
-                        self.logger.debug("Open Chimera")
-                        self.launch_chimera
+                    self.logger.debug("Open Chimera")
+                    self.launch_chimera()
                 case _:
                     new_event = InputEvent(seed_event.sec, seed_event.usec, button_event[0], button_event[1], value)
                     events.append(new_event)
