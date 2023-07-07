@@ -71,8 +71,7 @@ async def process_event(seed_event, active_keys):
     elif active_keys == [] and seed_event.code in [97, 125] and button_on == 0 and handycon.event_queue != []:
         await asyncio.sleep(handycon.BUTTON_DELAY)
         if button7 in handycon.event_queue:
-            handycon.event_queue.remove(button7)
-            handycon.launch_chimera()
+            this_button = button7
         if button1 in handycon.event_queue:
             handycon.event_queue.remove(button1)
             await handycon.emit_now(seed_event, button1, 0)
@@ -99,19 +98,14 @@ async def process_event(seed_event, active_keys):
     # Create list of events to fire.
     # Handle new button presses.
     if this_button and not handycon.last_button:
-        for button_event in this_button:
-            event = InputEvent(seed_event.sec, seed_event.usec, button_event[0], button_event[1], 1)
-            events.append(event)
+        await handycon.emit_now(seed_event, this_button, 1)
         handycon.event_queue.remove(this_button)
         handycon.last_button = this_button
 
     # Clean up old button presses.
     elif handycon.last_button and not this_button:
-        for button_event in handycon.last_button:
-            event = InputEvent(seed_event.sec, seed_event.usec, button_event[0], button_event[1], 0)
-            events.append(event)
+        await handycon.emit_now(seed_event, this_button, 0)
         handycon.last_button = None
 
-    # Push out all events.
     if events != []:
         await handycon.emit_events(events)

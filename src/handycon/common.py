@@ -705,13 +705,24 @@ class HandheldController:
                 await asyncio.sleep(self.BUTTON_DELAY)
     
     
-    # Generates events from an event list to immediately  emit, bypassing queue.
+    # Generates events from an event list to immediately emit, bypassing queue.
     async def emit_now(self, seed_event, event_list, value):
         events = []
         for button_event in event_list:
-            new_event = InputEvent(seed_event.sec, seed_event.usec, button_event[0], button_event[1], value)
-            events.append(new_event)
-        await self.emit_events(events)
+            match button_event:
+                case "RyzenAdj Toggle":
+                    if value == 1:
+                        self.logger.debug("RyzenAdj Toggle")
+                        await self.toggle_performance
+                case "Open Chimera":
+                    if value == 1:
+                        self.logger.debug("Open Chimera")
+                        await self.launch_chimera
+                case _:
+                    new_event = InputEvent(seed_event.sec, seed_event.usec, button_event[0], button_event[1], value)
+                    events.append(new_event)
+        if events != []:
+            await self.emit_events(events)
     
     
     # Toggles enable/disable gyro input and do FF event to notify user of status.
