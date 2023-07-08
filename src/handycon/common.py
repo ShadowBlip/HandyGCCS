@@ -731,17 +731,23 @@ class HandheldController:
             return
         events = []
         self.logger.debug(f'Event list: {event_list}')
-        for button_event in event_list:
-            match button_event:
-                case "RyzenAdj Toggle":
-                    self.logger.debug("RyzenAdj Toggle")
-                    await self.toggle_performance()
-                case "Open Chimera":
-                    self.logger.debug("Open Chimera")
-                    self.launch_chimera()
-                case _:
-                    new_event = InputEvent(seed_event.sec, seed_event.usec, button_event[0], button_event[1], value)
-                    events.append(new_event)
+        if value == 0:
+            for button_event in reversed(event_list):
+            new_event = InputEvent(seed_event.sec, seed_event.usec, button_event[0], button_event[1], value)
+            events.append(new_event)
+        else:
+            for button_event in event_list:
+                match button_event:
+                    case "RyzenAdj Toggle":
+                        self.logger.debug("RyzenAdj Toggle")
+                        await self.toggle_performance()
+                    case "Open Chimera":
+                        self.logger.debug("Open Chimera")
+                        self.launch_chimera()
+                    case _:
+                        new_event = InputEvent(seed_event.sec, seed_event.usec, button_event[0], button_event[1], value)
+                        events.append(new_event)
+
         if events != []:
             await self.emit_events(events)
     
