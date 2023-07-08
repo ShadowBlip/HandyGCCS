@@ -16,7 +16,7 @@ handycon = None
 def init_handheld(handheld_controller):
     global handycon
     handycon = handheld_controller
-    handycon.BUTTON_DELAY = 0.09
+    handycon.BUTTON_DELAY = 0.10
     handycon.CAPTURE_CONTROLLER = True
     handycon.CAPTURE_KEYBOARD = True
     handycon.CAPTURE_POWER = True

@@ -20,10 +20,10 @@ def init_handheld(handheld_controller):
     handycon.CAPTURE_CONTROLLER = True
     handycon.CAPTURE_KEYBOARD = True
     handycon.CAPTURE_POWER = True
-    handycon.GAMEPAD_ADDRESS = 'usb-0000:00:14.0-7/input0'
+    handycon.GAMEPAD_ADDRESS = 'usb-0000:74:00.0-1/input0'
     handycon.GAMEPAD_NAME = 'Microsoft X-Box 360 pad'
-    handycon.KEYBOARD_ADDRESS = 'usb-0000:00:14.0-5/input0'
-    handycon.KEYBOARD_NAME = '  Mouse for Windows'
+    handycon.KEYBOARD_ADDRESS = 'isa0060/serio0/input0'
+    handycon.KEYBOARD_NAME = 'AT Translated Set 2 keyboard'
 
 
 # Captures keyboard events and translates them to virtual device events.
@@ -31,7 +31,6 @@ async def process_event(seed_event, active_keys):
     global handycon
 
     # Button map shortcuts for easy reference.
-    button1 = handycon.button_map["button1"]  # Default Screenshot
     button2 = handycon.button_map["button2"]  # Default QAM
 
     ## Loop variables
@@ -41,22 +40,10 @@ async def process_event(seed_event, active_keys):
     if seed_event.code in [e.KEY_VOLUMEDOWN, e.KEY_VOLUMEUP]:
         await handycon.emit_events([seed_event])
 
-    # BUTTON 1 (Default: Screenshot)
-    if active_keys == [29, 56, 111] and button_on == 1 and button1 not in handycon.event_queue:
-        handycon.event_queue.append(button1)
-        await handycon.emit_now(seed_event, button1, 1)
-    elif active_keys == [] and seed_event.code in [29, 56, 111] and button_on == 0 and button1 in handycon.event_queue:
-        handycon.event_queue.remove(button1)
-        await handycon.emit_now(seed_event, button1, 0)
-
-    # BUTTON 2 (Default: QAM)
-    if active_keys == [1] and button_on == 1 and button2 not in handycon.event_queue:
-        handycon.event_queue.append(button2)
+    # BUTTON 2 (Default: QAM) Front lower-right
+    if active == [20, 29, 42, 56] and button_on == 1 and button2 not in event_queue:
+        event_queue.append(button2)
         await handycon.emit_now(seed_event, button2, 1)
-    elif active_keys == [] and seed_event.code in [1] and button_on == 0 and button2 in handycon.event_queue:
-        handycon.event_queue.remove(button2)
+    elif active == [] and seed_event.code in [20, 29, 42, 56] and button_on == 0 and button2 in event_queue:
+        event_queue.remove(button2)
         await handycon.emit_now(seed_event, button2, 0)
-
-    # Handle L_META from power button
-    elif active_keys == [] and seed_event.code == 125 and button_on == 0 and  handycon.event_queue == [] and handycon.shutdown == True:
-        handycon.shutdown = False

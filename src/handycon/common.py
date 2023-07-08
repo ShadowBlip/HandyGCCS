@@ -18,6 +18,7 @@ import sys
 import warnings
 
 # Local modules
+import handycon.handhelds.ally_gen1 as ally_gen1
 import handycon.handhelds.anb_gen1 as anb_gen1
 import handycon.handhelds.aya_gen1 as aya_gen1
 import handycon.handhelds.aya_gen2 as aya_gen2
@@ -25,6 +26,7 @@ import handycon.handhelds.aya_gen3 as aya_gen3
 import handycon.handhelds.aya_gen4 as aya_gen4
 import handycon.handhelds.aya_gen5 as aya_gen5
 import handycon.handhelds.aya_gen6 as aya_gen6
+import handycon.handhelds.ayn_gen1 as ayn_gen1
 import handycon.handhelds.gpd_gen1 as gpd_gen1
 import handycon.handhelds.gpd_gen2 as gpd_gen2
 import handycon.handhelds.gpd_gen3 as gpd_gen3
@@ -53,8 +55,8 @@ class HandheldController:
     # Session Variables
     button_map = {}
     event_queue = [] # Stores inng button presses to block spam
-    gyro_enabled = False
-    gyro_sensitivity = 0
+    #gyro_enabled = False
+    #gyro_sensitivity = 0
     last_button = None
     last_x_val = 0
     last_y_val = 0
@@ -72,6 +74,8 @@ class HandheldController:
     GYRO_I2C_BUS = 0
     KEYBOARD_ADDRESS = ''
     KEYBOARD_NAME = ''
+    KEYBOARD_2_ADDRESS = ''
+    KEYBOARD_2_NAME = ''
     POWER_BUTTON_PRIMARY = "LNXPWRBN/button/input0"
     POWER_BUTTON_SECONDARY = "PNP0C0C/button/input0"
     
@@ -82,16 +86,19 @@ class HandheldController:
     
     # UInput Devices
     controller_device = None
-    gyro_device = None
+    #gyro_device = None
     keyboard_device = None
+    keyboard_2_device = None
     power_device = None
-    power_device_extra = None
+    power_device_2 = None
     
     # Paths
     controller_event = None
     controller_path = None
     keyboard_event = None
     keyboard_path = None
+    keyboard_2_event = None
+    keyboard_2_path = None
     
     # RyzenAdj settings
     performance_mode = "--power-saving"
@@ -115,7 +122,7 @@ class HandheldController:
     
         # Attach the event loop of each device to the asyncio loop.
         asyncio.ensure_future(self.capture_controller_events())
-        asyncio.ensure_future(self.capture_gyro_events())
+        #asyncio.ensure_future(self.capture_gyro_events())
         asyncio.ensure_future(self.capture_ff_events())
         asyncio.ensure_future(self.capture_keyboard_events())
         asyncio.ensure_future(self.capture_power_events())
@@ -171,6 +178,13 @@ class HandheldController:
             self.system_type = "ANB_GEN1"
             anb_gen1.init_handheld(self)
 
+        ## ASUS Devices
+        elif system_id in (
+            "ROG Ally RC71L_RC71L",
+            ):
+            self.system_type = "ALY_GEN1"
+            ally_gen1.init_handheld(self)
+
         ## Aya Neo Devices
         elif system_id in (
             "AYA NEO FOUNDER",
@@ -219,6 +233,13 @@ class HandheldController:
             ):
             self.system_type = "AYA_GEN6"
             aya_gen6.init_handheld(self)
+
+        ## Ayn Devices
+        elif system_id in (
+                "Loki Max",
+            ):
+            self.system_type = "AYN_GEN1"
+            ayn_gen1.init_handheld(self)
 
         ## GPD Devices.
         # Have 2 buttons with 3 modes (left, right, both)
@@ -321,7 +342,7 @@ class HandheldController:
         "button4": EVENT_MAP[config["Button Map"]["button4"]],
         "button5": EVENT_MAP[config["Button Map"]["button5"]],
         }
-        self.gyro_sensitivity = int(config["Gyro"]["sensitivity"])
+        #self.gyro_sensitivity = int(config["Gyro"]["sensitivity"])
     
     
     def make_controller(self):
@@ -334,8 +355,8 @@ class HandheldController:
                 product=0x028e,
                 version=0x110
                 )
-    
-    
+
+
     def get_controller(self):
         self.logger.debug(f"Attempting to grab {self.GAMEPAD_NAME}.")
         # Identify system input event devices.
@@ -382,7 +403,7 @@ class HandheldController:
                         self.keyboard_event = Path(self.keyboard_path).name
                         move(self.keyboard_path, str(HIDE_PATH / self.keyboard_event))
                     break
-    
+
             # Sometimes the service loads before all input devices have full initialized. Try a few times.
             if not self.keyboard_device:
                 self.logger.warn("Keyboard device not yet found. Restarting scan.")
@@ -391,7 +412,38 @@ class HandheldController:
             else:
                 self.logger.info(f"Found {self.keyboard_device.name}. Capturing input data.")
                 return True
-    
+
+        # Some funky stuff happens sometimes when booting. Give it another shot.
+        except Exception as err:
+            self.logger.error("Error when scanning event devices. Restarting scan.")
+            sleep(DETECT_DELAY)
+            return False
+
+
+    def get_keyboard_2(self):
+        self.logger.debug(f"Attempting to grab {self.KEYBOARD_NAME_2}.")
+        try:
+            # Grab the built-in devices. This will give us exclusive acces to the devices and their capabilities.
+            for device in [InputDevice(path) for path in list_devices()]:
+                self.logger.debug(f"{device.name}, {device.phys}")
+                if device.name == self.KEYBOARD_NAME_2 and device.phys == self.KEYBOARD_ADDRESS_2:
+                    self.keyboard_2_path = device.path
+                    self.keyboard_2_device = InputDevice(self.keyboard_2_path)
+                    if self.CAPTURE_KEYBOARD:
+                        self.keyboard_2_device.grab()
+                        self.keyboard_2_event = Path(self.keyboard_2_path).name
+                        move(self.keyboard_2_path, str(HIDE_PATH / self.keyboard_2_event))
+                    break
+
+            # Sometimes the service loads before all input devices have full initialized. Try a few times.
+            if not self.keyboard_2_device:
+                self.logger.warn("Keyboard device 2 not yet found. Restarting scan.")
+                sleep(DETECT_DELAY)
+                return False
+            else:
+                self.logger.info(f"Found {self.keyboard_2_device.name}. Capturing input data.")
+                return True
+
         # Some funky stuff happens sometimes when booting. Give it another shot.
         except Exception as err:
             self.logger.error("Error when scanning event devices. Restarting scan.")
@@ -423,39 +475,21 @@ class HandheldController:
             # Some devices (e.g. AYANEO GEEK) have an extra power input device corresponding to the same
             # physical button that needs to be grabbed.
             if device.name == 'Power Button' and device.phys == self.POWER_BUTTON_SECONDARY:
-                self.power_device_extra = device
-                self.logger.debug(f"found alternate power device {self.power_device_extra.phys}")
+                self.power_device_2 = device
+                self.logger.debug(f"found alternate power device {self.power_device_2.phys}")
                 if self.CAPTURE_POWER:
-                    self.power_device_extra.grab()
+                    self.power_device_2.grab()
     
-        if not self.power_device:
+        if not self.power_device and not power_device_2:
             self.logger.warn("Power Button device not yet found. Restarting scan.")
             sleep(DETECT_DELAY)
             return False
         else:
-            self.logger.info(f"Found {self.power_device.name}. Capturing input data.")
+            if power_device:
+                logger.info(f"Found {power_device.name}. Capturing input data.")
+            else:
+                logger.info(f"Found {power_device_2.name}. Capturing input data.")
             return True
-    
-    
-    def get_gyro(self):
-        self.logger.debug(f"Attempting to grab gyro device.")
-    
-        if not self.GYRO_I2C_BUS or not self.GYRO_I2C_ADDR:
-            self.logger.info(f"Gyro device not configured for this system. Skipping gyro device setup.")
-            self.gyro_device = False
-            return
-    
-        # Make a gyro_device, if it exists.
-        try:
-            from BMI160_i2c import Driver
-            self.gyro_device = Driver(addr=self.GYRO_I2C_ADDR, bus=self.GYRO_I2C_BUS)
-            self.logger.info("Found gyro device. Gyro support enabled.")
-        except ModuleNotFoundError as err:
-            self.logger.error(f"{err} | Gyro device not initialized. Skipping gyro device setup.")
-            self.gyro_device = False
-        except (BrokenPipeError, FileNotFoundError, NameError, OSError) as err:
-            self.logger.error(f"{err} | Gyro device not initialized. Ensure bmi160_i2c and i2c_dev modules are loaded. Skipping gyro device setup.")
-            self.gyro_device = False
     
     
     async def do_rumble(self, button=0, interval=10, length=1000, delay=0):
@@ -495,17 +529,22 @@ class HandheldController:
                         active_keys = self.keyboard_device.active_keys()
     
                         # Debugging variables
-                        #if active_keys != []:
-                        #    self.logger.debug(f"Active Keys: {active_keys}, Seed Value: {seed_event.value}, Seed Code: {seed_event.code}, Seed Type: {seed_event.type}.")
-                        #    self.logger.debug(f"Queued events: {self.event_queue}")
-                        #elif active_keys == [] and self.event_queue != []:
-                        #    self.logger.debug(f"Seed Value: {seed_event.value}, Seed Code: {seed_event.code}, Seed Type: {seed_event.type}.")
-                        #    self.logger.debug(f"Queued events: {self.event_queue}")
+                        self.logger.debug(f"Seed Value: {seed_event.value}, Seed Code: {seed_event.code}, Seed Type: {seed_event.type}.")
+                        if active_keys != []:
+                            self.logger.debug(f"Active Keys: {active_keys}")
+                        else:
+                            self.logger.debug("No active keys")
+                        if self.event_queue != []:
+                            self.logger.debug(f"Queued events: {self.event_queue}")
+                        else:
+                            self.logger.debug("No active events.")
     
                         # Capture keyboard events and translate them to mapped events.
                         match self.system_type:
                             case "ANB_GEN1":
                                 await anb_gen1.process_event(seed_event, active_keys)
+                            case "ALY_GEN1":
+                                await ally_gen1.process_event(seed_event, active_keys)
                             case "AYA_GEN1":
                                 await aya_gen1.process_event(seed_event, active_keys)
                             case "AYA_GEN2":
@@ -516,6 +555,10 @@ class HandheldController:
                                 await aya_gen4.process_event(seed_event, active_keys)
                             case "AYA_GEN5":
                                 await aya_gen5.process_event(seed_event, active_keys)
+                            case "AYA_GEN6":
+                                await aya_gen6.process_event(seed_event, active_keys)
+                            case "AYN_GEN1":
+                                await ayn_gen1.process_event(seed_event, active_keys)
                             case "GPD_GEN1":
                                 await gpd_gen1.process_event(seed_event, active_keys)
                             case "GPD_GEN2":
@@ -539,6 +582,42 @@ class HandheldController:
                 self.logger.info("Attempting to grab keyboard device...")
                 self.get_keyboard()
                 await asyncio.sleep(DETECT_DELAY)
+
+            if self.KEYBOARD_2_NAME == '' or self.KEYBOARD_2_ADDRESS == '':
+                continue
+
+            if self.keyboard_2_device:
+                try:
+                    async for seed_event_2 in self.keyboard_2_device.async_read_loop():
+                        # Loop variables
+                        active_keys_2 = self.keyboard_2_device.active_keys()
+    
+                        # Debugging variables
+                        self.logger.debug(f"Seed Value: {seed_event_2.value}, Seed Code: {seed_event_2.code}, Seed Type: {seed_event_2.type}.")
+                        if active_keys_2 != []:
+                            self.logger.debug(f"Active Keys: {active_keys_2")
+                        else:
+                            self.logger.debug("No active keys")
+                        if self.event_queue != []:
+                            self.logger.debug(f"Queued events: {self.event_queue}")
+                        else:
+                            self.logger.debug("No active events.")
+    
+                        # Capture keyboard events and translate them to mapped events.
+                        match self.system_type:
+                            case "ALY_GEN1":
+                               await ally_gen1.process_event(seed_event_2, active_keys_2)
+    
+                except Exception as err:
+                    self.logger.error(f"{err} | Error reading events from {self.keyboard_2_device.name}")
+                    self.restore_keyboard_2()
+                    self.keyboard_2_device = None
+                    self.keyboard_2_event = None
+                    self.keyboard_2_path = None
+            else:
+                self.logger.info("Attempting to grab keyboard device 2...")
+                self.get_keyboard_2()
+                await asyncio.sleep(DETECT_DELAY)
     
     
     async def capture_controller_events(self):
@@ -552,26 +631,26 @@ class HandheldController:
                             continue
                         #self.logger.debug(f"Got event: {event}")
                         # If gyro is enabled, queue all events so the gyro event handler can manage them.
-                        if self.gyro_device is not None and self.gyro_enabled:
-                            adjusted_val = None
+                        #if self.gyro_device is not None and self.gyro_enabled:
+                        #    adjusted_val = None
     
-                            # We only modify RX/RY ABS events.
-                            if event.type == e.EV_ABS and event.code == e.ABS_RX:
-                                # Record last_x_val before adjustment. 
-                                # If right stick returns to the original position there is always an event that sets last_x_val back to zero. 
-                                self.last_x_val = event.value
-                                angular_velocity_x = float(self.gyro_device.getRotationX()[0] / 32768.0 * 2000)
-                                adjusted_val = max(min(int(angular_velocity_x * self.gyro_sensitivity) + event.value, JOY_MAX), JOY_MIN)
-                            if event.type == e.EV_ABS and event.code == e.ABS_RY:
-                                # Record last_y_val before adjustment. 
-                                # If right stick returns to the original position there is always an event that sets last_y_val back to zero. 
-                                self.last_y_val = event.value
-                                angular_velocity_y = float(self.gyro_device.getRotationY()[0] / 32768.0 * 2000)
-                                adjusted_val = max(min(int(angular_velocity_y * self.gyro_sensitivity) + event.value, JOY_MAX), JOY_MIN)
+                        #    # We only modify RX/RY ABS events.
+                        #    if event.type == e.EV_ABS and event.code == e.ABS_RX:
+                        #        # Record last_x_val before adjustment. 
+                        #        # If right stick returns to the original position there is always an event that sets last_x_val back to zero. 
+                        #        self.last_x_val = event.value
+                        #        angular_velocity_x = float(self.gyro_device.getRotationX()[0] / 32768.0 * 2000)
+                        #        adjusted_val = max(min(int(angular_velocity_x * self.gyro_sensitivity) + event.value, JOY_MAX), JOY_MIN)
+                        #    if event.type == e.EV_ABS and event.code == e.ABS_RY:
+                        #        # Record last_y_val before adjustment. 
+                        #        # If right stick returns to the original position there is always an event that sets last_y_val back to zero. 
+                        #        self.last_y_val = event.value
+                        #        angular_velocity_y = float(self.gyro_device.getRotationY()[0] / 32768.0 * 2000)
+                        #        adjusted_val = max(min(int(angular_velocity_y * self.gyro_sensitivity) + event.value, JOY_MAX), JOY_MIN)
     
-                            if adjusted_val:
-                                # Overwrite the event.
-                                event = InputEvent(event.sec, event.usec, event.type, event.code, adjusted_val)
+                        #    if adjusted_val:
+                        #        # Overwrite the event.
+                        #        event = InputEvent(event.sec, event.usec, event.type, event.code, adjusted_val)
     
                         # Output the event.
                         await self.emit_events([event])
@@ -589,34 +668,34 @@ class HandheldController:
     
     # Captures gyro events and translates them to joystick events.
     # TODO: Add mouse mode.
-    async def capture_gyro_events(self):
-        self.logger.debug(f"capture_gyro_events, {self.running}")
-        while self.running:
-            # Only run this loop if gyro is enabled
-            if self.gyro_device: 
-                if self.gyro_enabled:
-                    # Periodically output the EV_ABS events according to the gyro readings.
-                    angular_velocity_x = float(self.gyro_device.getRotationX()[0] / 32768.0 * 2000)
-                    adjusted_x = max(min(int(angular_velocity_x * self.gyro_sensitivity) + self.last_x_val, JOY_MAX), JOY_MIN)
-                    x_event = InputEvent(0, 0, e.EV_ABS, e.ABS_RX, adjusted_x)
-                    angular_velocity_y = float(self.gyro_device.getRotationY()[0] / 32768.0 * 2000)
-                    adjusted_y = max(min(int(angular_velocity_y * self.gyro_sensitivity) + self.last_y_val, JOY_MAX), JOY_MIN)
-                    y_event = InputEvent(0, 0, e.EV_ABS, e.ABS_RY, adjusted_y)
-    
-                    await self.emit_events([x_event])
-                    await self.emit_events([y_event])
-                    await asyncio.sleep(0.01)
-    
-                else:
-                    # Slow down the loop so we don't waste millions of cycles and overheat our controller.
-                    await asyncio.sleep(0.5)
-    
-            else:
-                if self.gyro_device == None:
-                    self.get_gyro()
-                
-                elif self.gyro_device == False:
-                    break
+    #async def capture_gyro_events(self):
+    #    self.logger.debug(f"capture_gyro_events, {self.running}")
+    #    while self.running:
+    #        # Only run this loop if gyro is enabled
+    #        if self.gyro_device: 
+    #            if self.gyro_enabled:
+    #                # Periodically output the EV_ABS events according to the gyro readings.
+    #                angular_velocity_x = float(self.gyro_device.getRotationX()[0] / 32768.0 * 2000)
+    #                adjusted_x = max(min(int(angular_velocity_x * self.gyro_sensitivity) + self.last_x_val, JOY_MAX), JOY_MIN)
+    #                x_event = InputEvent(0, 0, e.EV_ABS, e.ABS_RX, adjusted_x)
+    #                angular_velocity_y = float(self.gyro_device.getRotationY()[0] / 32768.0 * 2000)
+    #                adjusted_y = max(min(int(angular_velocity_y * self.gyro_sensitivity) + self.last_y_val, JOY_MAX), JOY_MIN)
+    #                y_event = InputEvent(0, 0, e.EV_ABS, e.ABS_RY, adjusted_y)
+    #
+    #                await self.emit_events([x_event])
+    #                await self.emit_events([y_event])
+    #                await asyncio.sleep(0.01)
+    #
+    #            else:
+    #                # Slow down the loop so we don't waste millions of cycles and overheat our controller.
+    #                await asyncio.sleep(0.5)
+    #
+    #        else:
+    #            if self.gyro_device == None:
+    #                self.get_gyro()
+    #            
+    #            elif self.gyro_device == False:
+    #                break
     
     
     # Captures power events and handles long or short press events.
@@ -709,6 +788,12 @@ class HandheldController:
                 self.ui_device.end_erase(erase)
     
     
+    async def emit_qam_event(self, seed_event, value):
+        qam_event = InputEvent(seed_event.sec, seed_event.usec, e.EV_KEY, e.BTN_BASE, value)
+        self.ui_device.write_event(qam_event)
+        self.ui_device.syn()
+
+
     # Emits passed or generated events to the virtual controller.
     async def emit_events(self, events: list):
         for event in events:
@@ -728,6 +813,10 @@ class HandheldController:
             return
         if type(event_list[0]) == str and value == 0:
             self.logger.debug("Received string event with value 0. KEY_UP event not required. Skipping")
+            return
+        if event_list == EVENT_QAM:
+            self.logger.debug('Incomming QAM event!')
+            await self.emit_qam_event(seed_event, value)
             return
         events = []
         self.logger.debug(f'Event list: {event_list}')
@@ -753,14 +842,14 @@ class HandheldController:
     
     
     # Toggles enable/disable gyro input and do FF event to notify user of status.
-    async def toggle_gyro(self):
-        self.gyro_enabled = not self.gyro_enabled
-        if self.gyro_enabled:
-            await self.do_rumble(0, 250, 1000, 0)
-        else:
-            await self.do_rumble(0, 100, 1000, 0)
-            await asyncio.sleep(FF_DELAY)
-            await self.do_rumble(0, 100, 1000, 0)
+    #async def toggle_gyro(self):
+    #    self.gyro_enabled = not self.gyro_enabled
+    #    if self.gyro_enabled:
+    #        await self.do_rumble(0, 250, 1000, 0)
+    #    else:
+    #        await self.do_rumble(0, 100, 1000, 0)
+    #        await asyncio.sleep(FF_DELAY)
+    #        await self.do_rumble(0, 100, 1000, 0)
     
     
     # RYZENADJ
@@ -874,9 +963,9 @@ class HandheldController:
                 self.power_device.ungrab()
             except IOError as err:
                 self.logger.warn(f"{err} | Device wasn't grabbed.")
-        if self.power_device_extra and self.CAPTURE_POWER:
+        if self.power_device_2 and self.CAPTURE_POWER:
             try:
-                self.power_device_extra.ungrab()
+                self.power_device_2.ungrab()
             except IOError as err:
                 self.logger.warn(f"{err} | Device wasn't grabbed.")
         self.logger.info("Devices restored.")
@@ -896,6 +985,14 @@ class HandheldController:
         # Both devices threads will attempt this, so ignore if they have been moved.
         try:
             move(str(HIDE_PATH / self.keyboard_event), self.keyboard_path)
+        except FileNotFoundError:
+            pass
+    
+    
+    def restore_keyboard_2(self):
+        # Both devices threads will attempt this, so ignore if they have been moved.
+        try:
+            move(str(HIDE_PATH / self.keyboard_2_event), self.keyboard_2_path)
         except FileNotFoundError:
             pass
     

@@ -16,7 +16,7 @@ handycon = None
 def init_handheld(handheld_controller):
     global handycon
     handycon = handheld_controller
-    handycon.BUTTON_DELAY = 0.09
+    handycon.BUTTON_DELAY = 0.11
     handycon.CAPTURE_CONTROLLER = True
     handycon.CAPTURE_KEYBOARD = True
     handycon.CAPTURE_POWER = True
@@ -69,7 +69,7 @@ async def process_event(seed_event, active_keys):
         handycon.event_queue.remove(button3)
         await handycon.emit_now(seed_event, button3, 1)
     # BUTTON 3 SECOND STATE
-    elif seed_event.code == 1 and button_on == 2 and button3 in handycon.event_queue and handycon.gyro_device:
+    elif seed_event.code == 1 and button_on == 2 and button3 in handycon.event_queue:
         await handycon.emit_now(seed_event, button3, 2)
 
     # BUTTON 4 (Default: OSK) KB Button

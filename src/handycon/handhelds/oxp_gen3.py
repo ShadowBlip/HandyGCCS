@@ -16,7 +16,7 @@ handycon = None
 def init_handheld(handheld_controller):
     global handycon
     handycon = handheld_controller
-    handycon.BUTTON_DELAY = 0.09
+    handycon.BUTTON_DELAY = 0.11
     handycon.CAPTURE_CONTROLLER = True
     handycon.CAPTURE_KEYBOARD = True
     handycon.CAPTURE_POWER = True
@@ -58,12 +58,11 @@ async def process_event(seed_event, active_keys):
         this_button = button2
         await handycon.do_rumble(0, 150, 1000, 0)
 
-    # BUTTON 3 (Default: Toggle Gyro) Short press orange + KB
-    if active_keys == [97, 100, 111] and button_on == 1 and button3 not in handycon.event_queue and handycon.gyro_device:
+    # BUTTON 3 (Default: ESC) Short press orange + KB
+    if active_keys == [97, 100, 111] and button_on == 1 and button3 not in handycon.event_queue:
         handycon.event_queue.append(button3)
-    elif active_keys == [] and seed_event.code in [100, 111] and button_on == 0 and button3 in handycon.event_queue and handycon.gyro_device:
-        handycon.event_queue.remove(button3)
-        await handycon.toggle_gyro()
+    elif active_keys == [] and seed_event.code in [100, 111] and button_on == 0 and button3 in handycon.event_queued:
+        this_button = button3
 
     # BUTTON 4 (Default: OSK) Short press KB
     if active_keys == [24, 97, 125] and button_on == 1 and button4 not in handycon.event_queue:

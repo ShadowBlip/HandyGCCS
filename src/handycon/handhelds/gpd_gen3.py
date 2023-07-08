@@ -16,7 +16,7 @@ handycon = None
 def init_handheld(handheld_controller):
     global handycon
     handycon = handheld_controller
-    handycon.BUTTON_DELAY = 0.09
+    handycon.BUTTON_DELAY = 0.11
     handycon.CAPTURE_CONTROLLER = True
     handycon.CAPTURE_KEYBOARD = True
     handycon.CAPTURE_POWER = True
@@ -42,10 +42,10 @@ async def process_event(seed_event, active_keys):
         await handycon.emit_events([seed_event])
 
     # BUTTON 1 (Default: Toggle Gyro)
-    if active_keys == [119] and button_on == 1 and button1 not in handycon.event_queue and handycon.gyro_device:
+    if active_keys == [119] and button_on == 1 and button1 not in handycon.event_queue:
         handycon.event_queue.append(button1)
         await handycon.emit_now(seed_event, button1, 1)
-    elif active_keys == [] and seed_event.code in [29, 56, 111] and button_on == 0 and button1 in handycon.event_queue and handycon.gyro_device:
+    elif active_keys == [] and seed_event.code in [29, 56, 111] and button_on == 0 and button1 in handycon.event_queue:
         handycon.event_queue.remove(button1)
         await handycon.emit_now(seed_event, button1, 0)
 
