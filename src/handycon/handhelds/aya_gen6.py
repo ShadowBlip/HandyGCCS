@@ -21,7 +21,7 @@ def init_handheld(handheld_controller):
     handycon.CAPTURE_CONTROLLER = True
     handycon.CAPTURE_KEYBOARD = True
     handycon.CAPTURE_POWER = True
-    handycon.GAMEPAD_ADDRESS = 'usb-0000:64:00.3-3/input0'
+    handycon.GAMEPAD_ADDRESS = 'usb-0000:c4:00.3-4/input0'
     handycon.GAMEPAD_NAME = 'Microsoft X-Box 360 pad'
     handycon.KEYBOARD_ADDRESS = 'isa0060/serio0/input0'
     handycon.KEYBOARD_NAME = 'AT Translated Set 2 keyboard'
@@ -46,8 +46,7 @@ async def process_event(seed_event, active_keys):
         await handycon.emit_events([seed_event])
 
     # This device class uses the same active_keys events with different values for AYA SPACE, LC, and RC.
-    if active_keys == [29, 125]:
-
+    if active_keys == [97, 125]:
         # LC | Default: Screenshot / Launch Chimera
         if button_on == 102 and handycon.event_queue == []:
             handycon.event_queue.append(button1)

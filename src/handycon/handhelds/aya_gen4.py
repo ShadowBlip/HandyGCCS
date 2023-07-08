@@ -23,8 +23,6 @@ def init_handheld(handheld_controller):
     handycon.CAPTURE_POWER = True
     handycon.GAMEPAD_ADDRESS = 'usb-0000:e4:00.3-4/input0'
     handycon.GAMEPAD_NAME = 'Microsoft X-Box 360 pad'
-    handycon.GYRO_I2C_ADDR = 0x68
-    handycon.GYRO_I2C_BUS = 1
     handycon.KEYBOARD_ADDRESS = 'isa0060/serio0/input0'
     handycon.KEYBOARD_NAME = 'AT Translated Set 2 keyboard'
 
@@ -39,26 +37,20 @@ async def process_event(seed_event, active_keys):
     button3 = handycon.button_map["button3"]  # Default ESC
     button4 = handycon.button_map["button4"]  # Default OSK
     button5 = handycon.button_map["button5"]  # Default MODE
-    button6 = ["RyzenAdj Toggle"]
-    button7 = ["Open Chimera"]
 
     ## Loop variables
-    events = []
-    this_button = None
     button_on = seed_event.value
 
     # Automatically pass default keycodes we dont intend to replace.
     if seed_event.code in [e.KEY_VOLUMEDOWN, e.KEY_VOLUMEUP]:
-        events.append(seed_event)
+        await handycon.emit_events([seed_event])
+
     # This device class uses the same active_keys events with different values for AYA SPACE, LC, and RC.
     if active_keys == [97, 125]:
         # LC | Default: Screenshot / Launch Chimera
         if button_on == 102 and handycon.event_queue == []:
-            if handycon.HAS_CHIMERA_LAUNCHER:
-                handycon.event_queue.append(button7)
-            else:
-                handycon.event_queue.append(button1)
-                await handycon.emit_now(seed_event, button1, 1)
+            handycon.event_queue.append(button1)
+            await handycon.emit_now(seed_event, button1, 1)
         # RC | Default: OSK
         elif button_on == 103 and handycon.event_queue == []:
             handycon.event_queue.append(button4)
@@ -70,8 +62,6 @@ async def process_event(seed_event, active_keys):
 
     elif active_keys == [] and seed_event.code in [97, 125] and button_on == 0 and handycon.event_queue != []:
         await sleep(handycon.BUTTON_DELAY)
-        if button7 in handycon.event_queue:
-            this_button = button7
         if button1 in handycon.event_queue:
             handycon.event_queue.remove(button1)
             await handycon.emit_now(seed_event, button1, 0)
@@ -94,18 +84,3 @@ async def process_event(seed_event, active_keys):
     # Handle L_META from power button
     elif active_keys == [] and seed_event.code == 125 and button_on == 0 and handycon.event_queue == [] and handycon.shutdown == True:
         handycon.shutdown = False
-
-    # Create list of events to fire.
-    # Handle new button presses.
-    if this_button and not handycon.last_button:
-        await handycon.emit_now(seed_event, this_button, 1)
-        handycon.event_queue.remove(this_button)
-        handycon.last_button = this_button
-
-    # Clean up old button presses.
-    elif handycon.last_button and not this_button:
-        await handycon.emit_now(seed_event, handycon.last_button, 0)
-        handycon.last_button = None
-
-    if events != []:
-        await handycon.emit_events(events)

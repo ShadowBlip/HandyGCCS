@@ -33,20 +33,13 @@ async def process_event(seed_event, active_keys):
     # Button map shortcuts for easy reference.
     button1 = handycon.button_map["button1"]  # Default Screenshot
     button2 = handycon.button_map["button2"]  # Default QAM
-    button3 = handycon.button_map["button3"]  # Default ESC
-    button4 = handycon.button_map["button4"]  # Default OSK
-    button5 = handycon.button_map["button5"]  # Default MODE
-    button6 = ["RyzenAdj Toggle"]
-    button7 = ["Open Chimera"]
 
     ## Loop variables
-    events = []
-    this_button = None
     button_on = seed_event.value
 
     # Automatically pass default keycodes we dont intend to replace.
     if seed_event.code in [e.KEY_VOLUMEDOWN, e.KEY_VOLUMEUP]:
-        events.append(seed_event)
+        await handycon.emit_events([seed_event])
 
     # BUTTON 1 (Default: Screenshot)
     if active_keys == [29, 56, 111] and button_on == 1 and button1 not in handycon.event_queue:
@@ -67,23 +60,3 @@ async def process_event(seed_event, active_keys):
     # Handle L_META from power button
     elif active_keys == [] and seed_event.code == 125 and button_on == 0 and  handycon.event_queue == [] and handycon.shutdown == True:
         handycon.shutdown = False
-
-    # Create list of events to fire.
-    # Handle new button presses.
-    if this_button and not handycon.last_button:
-        for button_event in this_button:
-            event = InputEvent(seed_event.sec, seed_event.usec, button_event[0], button_event[1], 1)
-            events.append(event)
-        handycon.event_queue.remove(this_button)
-        handycon.last_button = this_button
-
-    # Clean up old button presses.
-    elif handycon.last_button and not this_button:
-        for button_event in handycon.last_button:
-            event = InputEvent(seed_event.sec, seed_event.usec, button_event[0], button_event[1], 0)
-            events.append(event)
-        handycon.last_button = None
-
-    # Push out all events.
-    if events != []:
-        await handycon.emit_events(events)

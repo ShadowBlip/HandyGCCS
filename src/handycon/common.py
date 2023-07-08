@@ -24,12 +24,14 @@ import handycon.handhelds.aya_gen2 as aya_gen2
 import handycon.handhelds.aya_gen3 as aya_gen3
 import handycon.handhelds.aya_gen4 as aya_gen4
 import handycon.handhelds.aya_gen5 as aya_gen5
+import handycon.handhelds.aya_gen6 as aya_gen6
 import handycon.handhelds.gpd_gen1 as gpd_gen1
 import handycon.handhelds.gpd_gen2 as gpd_gen2
 import handycon.handhelds.gpd_gen3 as gpd_gen3
 import handycon.handhelds.oxp_gen1 as oxp_gen1
 import handycon.handhelds.oxp_gen2 as oxp_gen2
 import handycon.handhelds.oxp_gen3 as oxp_gen3
+import handycon.handhelds.oxp_gen4 as oxp_gen4
 from .constants import *
 
 # Partial imports
@@ -149,26 +151,26 @@ class HandheldController:
                     self.USER = name
                 break
             sleep(1)
-        
+
         self.logger.debug(f"USER: {self.USER}")
         self.HOME_PATH = "/home/" + self.USER
         self.logger.debug(f"HOME_PATH: {self.HOME_PATH}")
-    
-    
+
+
     # Identify the current device type. Kill script if not atible.
     def id_system(self):
-    
+
         system_id = open("/sys/devices/virtual/dmi/id/product_name", "r").read().strip()
         cpu_vendor = self.get_cpu_vendor()
         self.logger.debug(f"Found CPU Vendor: {cpu_vendor}")
-    
+
         ## ANBERNIC Devices
         if system_id in (
                 "Win600",
                 ):
             self.system_type = "ANB_GEN1"
             anb_gen1.init_handheld(self)
-    
+
         ## Aya Neo Devices
         elif system_id in (
             "AYA NEO FOUNDER",
@@ -179,7 +181,7 @@ class HandheldController:
             ):
             self.system_type = "AYA_GEN1"
             aya_gen1.init_handheld(self)
-    
+
         elif system_id in (
             "NEXT",
             "NEXT Pro",
@@ -190,27 +192,34 @@ class HandheldController:
             ):
             self.system_type = "AYA_GEN2"
             aya_gen2.init_handheld(self)
-    
+
         elif system_id in (
             "AIR",
             "AIR Pro",
             ):
             self.system_type = "AYA_GEN3"
             aya_gen3.init_handheld(self)
-        
+
         elif system_id in (
             "AYANEO 2",
             "GEEK",
             ):
             self.system_type = "AYA_GEN4"
             aya_gen4.init_handheld(self)
-    
+
         elif system_id in (
             "AIR Plus",
             ):
             self.system_type = "AYA_GEN5"
             aya_gen5.init_handheld(self)
     
+        elif system_id in (
+            "AYANEO 2S",
+            "GEEK 1S",
+            ):
+            self.system_type = "AYA_GEN6"
+            aya_gen6.init_handheld(self)
+
         ## GPD Devices.
         # Have 2 buttons with 3 modes (left, right, both)
         elif system_id in (
@@ -230,13 +239,12 @@ class HandheldController:
             ):
             self.system_type = "GPD_GEN3"
             gpd_gen3.init_handheld(self)
-    
+
     ## ONEXPLAYER and AOKZOE devices.
         # BIOS have inlete DMI data and most models report as "ONE XPLAYER" or "ONEXPLAYER".
         elif system_id in (
             "ONE XPLAYER",
             "ONEXPLAYER",
-            "ONEXPLAYER mini A07",
             ):
             if cpu_vendor == "GenuineIntel":
                 self.system_type = "OXP_GEN1"
@@ -244,14 +252,21 @@ class HandheldController:
             else:
                 self.system_type = "OXP_GEN2"
                 oxp_gen2.init_handheld(self)
-    
+
         elif system_id in (
-            "ONEXPLAYER Mini Pro",
-            "AOKZOE A1 AR07"
+            "ONEXPLAYER mini A07",
             ):
             self.system_type = "OXP_GEN3"
             oxp_gen3.init_handheld(self)
-    
+
+        elif system_id in (
+            "ONEXPLAYER Mini Pro",
+            "AOKZOE A1 AR07",
+            "AOKZOE A1 Pro",
+            ):
+            self.system_type = "OXP_GEN4"
+            oxp_gen4.init_handheld(self)
+
         # Block devices that aren't supported as this could cause issues.
         else:
             self.logger.error(f"{system_id} is not currently supported by this tool. Open an issue on \
