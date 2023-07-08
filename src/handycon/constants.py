@@ -11,6 +11,13 @@ HOME_PATH = Path('/home')
 CHIMERA_LAUNCHER_PATH = Path('/usr/share/chimera/bin/chimera-web-launcher')
 server_address = Path('/tmp/ryzenadj_socket')
 CONTROLLER_EVENTS = {
+    e.EV_SYN: [
+        e.SYN_REPORT,
+        e.SYN_CONFIG,
+        e.SYN_MT_REPORT,
+        e.SYN_MAX,
+        e.SYN_CNT,
+    ],
     e.EV_KEY: [
         e.KEY_ESC,
         e.KEY_1,
