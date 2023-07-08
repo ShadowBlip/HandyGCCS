@@ -595,7 +595,7 @@ class HandheldController:
                         # Debugging variables
                         self.logger.debug(f"Seed Value: {seed_event_2.value}, Seed Code: {seed_event_2.code}, Seed Type: {seed_event_2.type}.")
                         if active_keys_2 != []:
-                            self.logger.debug(f"Active Keys: {active_keys_2")
+                            self.logger.debug(f"Active Keys: {active_keys_2}")
                         else:
                             self.logger.debug("No active keys")
                         if self.event_queue != []:
