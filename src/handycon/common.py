@@ -705,32 +705,37 @@ class HandheldController:
                 try:
                     async for event in self.power_device.async_read_loop():
                         self.logger.debug(f"Got event: {event.type} | {event.code} | {event.value}")
-                        #active_keys = keyboard_device.active_keys()
                         if event.type == e.EV_KEY and event.code == 116: # KEY_POWER
                             if event.value == 0:
-                                #if active_keys == [125]: # KEY_LEFTMETA
-                                #    # For DeckUI Sessions
-                                #    shutdown = True
-                                #    steam_ifrunning_deckui("steam://longpowerpress")
-                                #else:
-                                    # For DeckUI Sessions
+                                # For DeckUI Sessions
                                 is_deckui = self.steam_ifrunning_deckui("steam://shortpowerpress")
+
+                                # For BPM and Desktop sessions
                                 if not is_deckui:
-                                    # For BPM and Desktop sessions
                                     os.system('systemctl suspend')
-    
-                        #if active_keys == [125]:
-                        #    await do_rumble(0, 150, 1000, 0)
-                
+
                 except Exception as err:
                     self.logger.error(f"{err} | Error reading events from power device.")
                     self.power_device = None
-            else:
-                self.logger.info("Attempting to grab power device...")
-                self.get_powerkey()
-                await asyncio.sleep(DETECT_DELAY)
-    
-    
+
+            if self.power_device_2 and not self.power_device:
+                try:
+                    async for event in self.power_device_2.async_read_loop():
+                        self.logger.debug(f"Got event: {event.type} | {event.code} | {event.value}")
+                        if event.type == e.EV_KEY and event.code == 116: # KEY_POWER
+                            if event.value == 0:
+                                # For DeckUI Sessions
+                                is_deckui = self.steam_ifrunning_deckui("steam://shortpowerpress")
+
+                                # For BPM and Desktop sessions
+                                if not is_deckui:
+                                    os.system('systemctl suspend')
+
+                except Exception as err:
+                    self.logger.error(f"{err} | Error reading events from power device.")
+                    self.power_device_2 = None
+
+
     # Handle FF event uploads
     async def capture_ff_events(self):
         ff_effect_id_set = set()
@@ -958,6 +963,12 @@ class HandheldController:
             except IOError as err:
                 self.logger.warn(f"{err} | Device wasn't grabbed.")
             self.restore_keyboard()
+        if self.keyboard_2_device:
+            try:
+                self.keyboard_2_device.ungrab()
+            except IOError as err:
+                self.logger.warn(f"{err} | Device wasn't grabbed.")
+            self.restore_keyboard_2()
         if self.power_device and self.CAPTURE_POWER:
             try:
                 self.power_device.ungrab()
