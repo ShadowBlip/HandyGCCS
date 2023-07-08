@@ -711,8 +711,8 @@ class HandheldController:
     
     # Emits passed or generated events to the virtual controller.
     async def emit_events(self, events: list):
-        clear_event = InputEvent(seed_event.sec, seed_event.usec, 00, 00, 00)
         for event in events:
+            clear_event = InputEvent(event.sec, event.usec, 00, 00, 00)
             self.logger.debug(f"Emitting event: {event}")
             self.ui_device.write_event(event)
             self.ui_device.write_event(clear_event)
