@@ -719,10 +719,7 @@ class HandheldController:
                     self.logger.error(f"{err} | Error reading events from power device.")
                     self.power_device = None
 
-
-    async def capture_power_2_events(self):
-        while self.running:
-            if self.power_device_2 and not self.power_device:
+            elif self.power_device_2 and not self.power_device:
                 try:
                     async for event in self.power_device_2.async_read_loop():
                         self.logger.debug(f"Got event: {event.type} | {event.code} | {event.value}")
@@ -739,6 +736,11 @@ class HandheldController:
                     self.logger.error(f"{err} | Error reading events from power device.")
                     self.power_device_2 = None
 
+            else:
+                self.logger.info("Attempting to grab controller device...")
+                self.get_power_device()
+                await asyncio.sleep(DETECT_DELAY)
+    
 
     # Handle FF event uploads
     async def capture_ff_events(self):
