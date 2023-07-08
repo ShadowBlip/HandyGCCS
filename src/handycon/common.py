@@ -126,6 +126,7 @@ class HandheldController:
         asyncio.ensure_future(self.capture_ff_events())
         asyncio.ensure_future(self.capture_keyboard_events())
         asyncio.ensure_future(self.capture_power_events())
+        asyncio.ensure_future(self.capture_power_2_events())
         asyncio.ensure_future(self.ryzenadj_control())
         self.logger.info("Handheld Game Console Controller Service started.")
     
@@ -718,6 +719,9 @@ class HandheldController:
                     self.logger.error(f"{err} | Error reading events from power device.")
                     self.power_device = None
 
+
+    async def capture_power_2_events(self)
+        while self.running:
             if self.power_device_2 and not self.power_device:
                 try:
                     async for event in self.power_device_2.async_read_loop():
