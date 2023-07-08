@@ -421,12 +421,12 @@ class HandheldController:
 
 
     def get_keyboard_2(self):
-        self.logger.debug(f"Attempting to grab {self.KEYBOARD_NAME_2}.")
+        self.logger.debug(f"Attempting to grab {self.KEYBOARD_2_NAME}.")
         try:
             # Grab the built-in devices. This will give us exclusive acces to the devices and their capabilities.
             for device in [InputDevice(path) for path in list_devices()]:
                 self.logger.debug(f"{device.name}, {device.phys}")
-                if device.name == self.KEYBOARD_NAME_2 and device.phys == self.KEYBOARD_ADDRESS_2:
+                if device.name == self.KEYBOARD_2_NAME and device.phys == self.KEYBOARD_2_ADDRESS:
                     self.keyboard_2_path = device.path
                     self.keyboard_2_device = InputDevice(self.keyboard_2_path)
                     if self.CAPTURE_KEYBOARD:
@@ -480,7 +480,7 @@ class HandheldController:
                 if self.CAPTURE_POWER:
                     self.power_device_2.grab()
     
-        if not self.power_device and not power_device_2:
+        if not self.power_device and not self.power_device_2:
             self.logger.warn("No Power Button found. Restarting scan.")
             sleep(DETECT_DELAY)
             return False
