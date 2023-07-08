@@ -720,7 +720,7 @@ class HandheldController:
                     self.power_device = None
 
 
-    async def capture_power_2_events(self)
+    async def capture_power_2_events(self):
         while self.running:
             if self.power_device_2 and not self.power_device:
                 try:
