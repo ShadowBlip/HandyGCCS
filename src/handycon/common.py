@@ -467,7 +467,7 @@ class HandheldController:
         for device in devices_original:
     
             # Power Button
-            if device.name == 'Power Button' and device.phys == self.POWER_BUTTON_PRIMARY:
+            if device.name == 'Power Button' and device.phys == self.POWER_BUTTON_PRIMARY and not self.power_device:
                 self.power_device = device
                 self.logger.debug(f"found power device {self.power_device.phys}")
                 if self.CAPTURE_POWER:
@@ -475,7 +475,7 @@ class HandheldController:
     
             # Some devices (e.g. AYANEO GEEK) have an extra power input device corresponding to the same
             # physical button that needs to be grabbed.
-            if device.name == 'Power Button' and device.phys == self.POWER_BUTTON_SECONDARY:
+            if device.name == 'Power Button' and device.phys == self.POWER_BUTTON_SECONDARY and not self.power_device_2:
                 self.power_device_2 = device
                 self.logger.debug(f"found alternate power device {self.power_device_2.phys}")
                 if self.CAPTURE_POWER:
@@ -738,7 +738,7 @@ class HandheldController:
 
             else:
                 self.logger.info("Attempting to grab controller device...")
-                self.get_power_device()
+                self.get_powerkey()
                 await asyncio.sleep(DETECT_DELAY)
     
 
