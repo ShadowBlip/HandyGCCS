@@ -126,7 +126,6 @@ class HandheldController:
         asyncio.ensure_future(self.capture_ff_events())
         asyncio.ensure_future(self.capture_keyboard_events())
         asyncio.ensure_future(self.capture_power_events())
-        asyncio.ensure_future(self.capture_power_2_events())
         asyncio.ensure_future(self.ryzenadj_control())
         self.logger.info("Handheld Game Console Controller Service started.")
     
