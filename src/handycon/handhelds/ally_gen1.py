@@ -22,10 +22,10 @@ def init_handheld(handheld_controller):
     handycon.CAPTURE_POWER = True
     handycon.GAMEPAD_ADDRESS = 'usb-0000:0a:00.3-2/input0'
     handycon.GAMEPAD_NAME = 'Microsoft X-Box 360 pad'
-    handycon.KEYBOARD_ADDRESS = 'usb-0000:0a:00.3-3/input2'
-    handycon.KEYBOARD_NAME = 'Asus keyboard'
-    handycon.KEYBOARD_2_ADDRESS = 'usb-0000:0a:00.3-3/input0'
-    handycon.KEYBOARD_2_NAME = 'Asus keyboard'
+    handycon.KEYBOARD_ADDRESS = 'usb-0000:0a:00.3-3/input0'
+    handycon.KEYBOARD_NAME = 'Asus Keyboard'
+    handycon.KEYBOARD_2_ADDRESS = 'usb-0000:0a:00.3-3/input2'
+    handycon.KEYBOARD_2_NAME = 'Asus Keyboard'
 
 
 # Captures keyboard events and translates them to virtual device events.
