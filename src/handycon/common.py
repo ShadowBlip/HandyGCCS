@@ -733,8 +733,8 @@ class HandheldController:
         self.logger.debug(f'Event list: {event_list}')
         if value == 0:
             for button_event in reversed(event_list):
-            new_event = InputEvent(seed_event.sec, seed_event.usec, button_event[0], button_event[1], value)
-            events.append(new_event)
+                new_event = InputEvent(seed_event.sec, seed_event.usec, button_event[0], button_event[1], value)
+                events.append(new_event)
         else:
             for button_event in event_list:
                 match button_event:
