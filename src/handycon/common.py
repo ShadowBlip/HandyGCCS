@@ -481,14 +481,14 @@ class HandheldController:
                     self.power_device_2.grab()
     
         if not self.power_device and not power_device_2:
-            self.logger.warn("Power Button device not yet found. Restarting scan.")
+            self.logger.warn("No Power Button found. Restarting scan.")
             sleep(DETECT_DELAY)
             return False
         else:
-            if power_device:
-                logger.info(f"Found {power_device.name}. Capturing input data.")
-            else:
-                logger.info(f"Found {power_device_2.name}. Capturing input data.")
+            if self.power_device:
+                logger.info(f"Found {self.power_device.name}. Capturing input data.")
+            if self.power_device_2:
+                logger.info(f"Found {self.power_device_2.name}. Capturing input data.")
             return True
     
     
