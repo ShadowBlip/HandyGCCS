@@ -806,8 +806,23 @@ class HandheldController:
         if not event_list:
             self.logger.error("emit_now received malfirmed event_list. No action") 
             return
-        if type(event_list[0]) == str and value == 0:
-            self.logger.debug("Received string event with value 0. KEY_UP event not required. Skipping")
+
+        # Handle string events
+        if type(event_list[0]) == str:
+            if value == 0:
+                self.logger.debug("Received string event with value 0. KEY_UP event not required. Skipping")
+                return
+            match event_list[0]:
+                case "RyzenAdj Toggle":
+                    self.logger.debug("RyzenAdj Toggle")
+                    await self.toggle_performance()
+                case "Open Chimera":
+                    self.logger.debug("Open Chimera")
+                    self.launch_chimera()
+                case "Toggle Gyro":
+                    self.logger.debug("Toggle Gyro is not currently enabled")
+                case _:
+                    self.logger.debug(f"{event_list[0]} not defined.")
             return
 
         self.logger.debug(f'Event list: {event_list}')
@@ -819,21 +834,13 @@ class HandheldController:
                 events.append(new_event)
         else:
             for button_event in event_list:
-                match button_event:
-                    case "RyzenAdj Toggle":
-                        self.logger.debug("RyzenAdj Toggle")
-                        await self.toggle_performance()
-                    case "Open Chimera":
-                        self.logger.debug("Open Chimera")
-                        self.launch_chimera()
-                    case _:
-                        new_event = InputEvent(seed_event.sec, seed_event.usec, button_event[0], button_event[1], value)
-                        events.append(new_event)
+                new_event = InputEvent(seed_event.sec, seed_event.usec, button_event[0], button_event[1], value)
+                events.append(new_event)
 
         if events != []:
             await self.emit_events(events)
-    
-    
+
+
     # Toggles enable/disable gyro input and do FF event to notify user of status.
     #async def toggle_gyro(self):
     #    self.gyro_enabled = not self.gyro_enabled
