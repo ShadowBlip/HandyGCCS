@@ -486,9 +486,9 @@ class HandheldController:
             return False
         else:
             if self.power_device:
-                logger.info(f"Found {self.power_device.name}. Capturing input data.")
+                self.logger.info(f"Found {self.power_device.name}. Capturing input data.")
             if self.power_device_2:
-                logger.info(f"Found {self.power_device_2.name}. Capturing input data.")
+                self.logger.info(f"Found {self.power_device_2.name}. Capturing input data.")
             return True
     
     
