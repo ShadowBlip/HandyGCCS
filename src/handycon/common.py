@@ -788,12 +788,6 @@ class HandheldController:
                 self.ui_device.end_erase(erase)
     
     
-    async def emit_qam_event(self, seed_event, value):
-        qam_event = InputEvent(seed_event.sec, seed_event.usec, e.EV_KEY, e.BTN_BASE, value)
-        self.ui_device.write_event(qam_event)
-        self.ui_device.syn()
-
-
     # Emits passed or generated events to the virtual controller.
     async def emit_events(self, events: list):
         for event in events:
@@ -807,6 +801,7 @@ class HandheldController:
     
     # Generates events from an event list to immediately emit, bypassing queue.
     async def emit_now(self, seed_event, event_list, value):
+
         # Ignore malformed requests
         if not event_list:
             self.logger.error("emit_now received malfirmed event_list. No action") 
@@ -814,12 +809,10 @@ class HandheldController:
         if type(event_list[0]) == str and value == 0:
             self.logger.debug("Received string event with value 0. KEY_UP event not required. Skipping")
             return
-        if event_list == EVENT_QAM:
-            self.logger.debug('Incomming QAM event!')
-            await self.emit_qam_event(seed_event, value)
-            return
-        events = []
+
         self.logger.debug(f'Event list: {event_list}')
+        events = []
+
         if value == 0:
             for button_event in reversed(event_list):
                 new_event = InputEvent(seed_event.sec, seed_event.usec, button_event[0], button_event[1], value)

@@ -167,7 +167,6 @@ CONTROLLER_EVENTS = {
         e.BTN_MODE,
         e.BTN_THUMBL,
         e.BTN_THUMBR,
-        e.BTN_BASE,
     ],
     e.EV_ABS: [
         (e.ABS_X, AbsInfo(0, -32768, 32767, 16, 128, 0)),
