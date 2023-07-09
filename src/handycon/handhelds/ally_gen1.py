@@ -93,6 +93,7 @@ async def process_event(seed_event, active_keys):
     # released another down/up for F18 on release. We use the F18 "KEY_UP" for release.
     if active_keys == [187] and button_on == 1 and button7 not in handycon.event_queue:
         handycon.event_queue.append(button7)
+        await handycon.do_rumble(0, 150, 1000, 0)
     elif active_keys == [] and seed_event.code in [188] and button_on == 0 and button7 in handycon.event_queue:
         this_button = button7
 
@@ -100,6 +101,7 @@ async def process_event(seed_event, active_keys):
     # This event triggers from KEYBOARD_2.
     if active_keys == [29, 56, 111] and button_on == 1 and button8 not in handycon.event_queue:
         handycon.event_queue.append(button8)
+        await handycon.do_rumble(0, 150, 1000, 0)
     elif active_keys == [] and seed_event.code in [29, 56, 111] and button_on == 0 and button8 in handycon.event_queue:
         this_button = button8
 
