@@ -125,6 +125,9 @@ class HandheldController:
         #asyncio.ensure_future(self.capture_gyro_events())
         asyncio.ensure_future(self.capture_ff_events())
         asyncio.ensure_future(self.capture_keyboard_events())
+        if self.KEYBOARD_2_NAME != '' and self.KEYBOARD_2_ADDRESS != '':
+            asyncio.ensure_future(self.capture_keyboard_2_events())
+
         asyncio.ensure_future(self.capture_power_events())
         asyncio.ensure_future(self.ryzenadj_control())
         self.logger.info("Handheld Game Console Controller Service started.")
@@ -549,7 +552,7 @@ class HandheldController:
                                 await aya_gen1.process_event(seed_event, active_keys)
                             case "AYA_GEN2":
                                 await aya_gen2.process_event(seed_event, active_keys)
-                            case "AYA_GEN3":
+                            case z"AYA_GEN3":
                                 await aya_gen3.process_event(seed_event, active_keys)
                             case "AYA_GEN4":
                                 await aya_gen4.process_event(seed_event, active_keys)
@@ -583,9 +586,14 @@ class HandheldController:
                 self.get_keyboard()
                 await asyncio.sleep(DETECT_DELAY)
 
-            if self.KEYBOARD_2_NAME == '' or self.KEYBOARD_2_ADDRESS == '':
-                continue
 
+    # Captures keyboard events and translates them to virtual device events.
+    async def capture_keyboard_2_events(self):
+        # Get access to global variables. These are globalized because the function
+        # is instanciated twice and need to persist accross both instances.
+
+        # Capture keyboard events and translate them to mapped events.
+        while self.running:
             if self.keyboard_2_device:
                 try:
                     async for seed_event_2 in self.keyboard_2_device.async_read_loop():
