@@ -70,8 +70,6 @@ class HandheldController:
     CAPTURE_POWER = False
     GAMEPAD_ADDRESS = ''
     GAMEPAD_NAME = ''
-    GYRO_I2C_ADDR = 0x00
-    GYRO_I2C_BUS = 0
     KEYBOARD_ADDRESS = ''
     KEYBOARD_NAME = ''
     KEYBOARD_2_ADDRESS = ''
@@ -100,12 +98,9 @@ class HandheldController:
     keyboard_2_event = None
     keyboard_2_path = None
     
-    # RyzenAdj settings
+    # Performance settings
     performance_mode = "--power-saving"
-    protocol = None
-    RYZENADJ_DELAY = 0.5
-    selected_performance = None
-    transport = None
+    self.thermal_mode = "0"
     
     def __init__(self):
         self.running = True
@@ -129,7 +124,6 @@ class HandheldController:
             asyncio.ensure_future(self.capture_keyboard_2_events())
 
         asyncio.ensure_future(self.capture_power_events())
-        asyncio.ensure_future(self.ryzenadj_control())
         self.logger.info("Handheld Game Console Controller Service started.")
     
         # Establish signaling to handle gracefull shutdown.
@@ -872,49 +866,32 @@ class HandheldController:
     
     # RYZENADJ
     async def toggle_performance(self):
-        if not self.transport:
-            return
-    
         if self.performance_mode == "--max-performance":
             self.performance_mode = "--power-saving"
-            await self.do_rumble(0, 75, 1000, 0)
+            await self.do_rumble(0, 100, 1000, 0)
             await asyncio.sleep(FF_DELAY)
-            await self.do_rumble(0, 75, 1000, 0)
-            await asyncio.sleep(FF_DELAY)
-            await self.do_rumble(0, 75, 1000, 0)
+            await self.do_rumble(0, 100, 1000, 0)
         else:
             self.performance_mode = "--max-performance"
             await self.do_rumble(0, 500, 1000, 0)
             await asyncio.sleep(FF_DELAY)
             await self.do_rumble(0, 75, 1000, 0)
             await asyncio.sleep(FF_DELAY)
-            await self.do_rumble(0, 75, 1000, 0)
-    
-        self.transport.write(bytes(self.performance_mode, 'utf-8'))
-        self.transport.close()
-        self.transport = None
-        self.protocol = None
-    
-    
-    async def ryzenadj_control(self):
-        while self.running:
-            # Wait for a server to be launched
-            if not os.path.exists(server_address):
-                await asyncio.sleep(self.RYZENADJ_DELAY)
-                continue
-    
-            # Wait for a connection to the server
-            if not self.transport or not self.protocol:
-                try:
-                    self.transport, self.protocol = await self.loop.create_unix_connection(asyncio.Protocol, path=server_address)
-                    self.logger.debug(f"got {self.transport}, {self.protocol}")
-                except ConnectionRefusedError:
-                    self.logger.debug('Could not connect to RyzenaAdj Control')
-                    await asyncio.sleep(self.RYZENADJ_DELAY)
-                    continue
-            await asyncio.sleep(self.RYZENADJ_DELAY)
-    
-    
+           z await self.do_rumble(0, 75, 1000, 0)
+
+        ryzenadj_command = f'ryzenadj {self.performance_mode}'
+        run = os.popen(ryzenadj_command, 'r', 1).read().strip()
+        self.logger.debug(run)
+
+        if self.system_type in ["ALY_GEN1",]
+            if self.thermal_mode == "1":
+                self.thermal_mode = "0"
+            else:
+                self.thermal_mode = "1"
+
+            command = f'echo {self.thermal_mode} > /sys/devices/platform/asus-nb-wmi/throttle_thermal_policy'
+            run = os.popen(command, 'r', 1).read().strip()
+            logger.debug(f'Thermal mode set to {thermal_mode}.')
     def steam_ifrunning_deckui(self, cmd):
         # Get the currently running Steam PID.
         steampid_path = self.HOME_PATH + '/.steam/steam.pid'

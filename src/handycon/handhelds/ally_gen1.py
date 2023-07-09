@@ -35,12 +35,12 @@ async def process_event(seed_event, active_keys):
     # Button map shortcuts for easy reference.
     button1 = handycon.button_map["button1"]  # Default Screenshot
     button2 = handycon.button_map["button2"]  # Default QAM
-    button3 = handycon.button_map["button3"]  # Default ESC
+    button3 = ["Not Defined 3"] #handycon.button_map["button3"]  # Default ESC
     button4 = handycon.button_map["button4"]  # Default OSK
     button5 = handycon.button_map["button5"]  # Default MODE
     button6 = ["Open Chimera"]
     button7 = ["RyzenAdj Toggle"]
-    button8 = button5
+    button8 = ["Not Defined 8"]
     button9 = ["Not Defined 9"]
     button10 = ["Not Defined 10"]
     button11 = ["Not Defined 11"]
@@ -66,7 +66,7 @@ async def process_event(seed_event, active_keys):
         handycon.event_queue.remove(button2)
         await handycon.emit_now(seed_event, button2, 0)
 
-    # BUTTON 3 (Default: ESC) Paddle + B 
+    # BUTTON 3 (Default: ESC) Paddle + B Temp disabled, goes nuts.
     # This event triggers from KEYBOARD_2.
     if active_keys == [49, 125] and button_on == 1 and button3 not in handycon.event_queue:
         handycon.event_queue.append(button3)
@@ -78,7 +78,6 @@ async def process_event(seed_event, active_keys):
     # BUTTON 4 (Default: OSK) Paddle + D-Pad UP
     if active_keys == [88] and button_on == 1 and button4 not in handycon.event_queue:
         handycon.event_queue.append(button4)
-        await handycon.do_rumble(0, 75, 1000, 0)
         await handycon.emit_now(seed_event, button4, 1)
     elif active_keys == [] and seed_event.code in [88] and button_on == 0 and button4 in handycon.event_queue:
         handycon.event_queue.remove(button4)
