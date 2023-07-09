@@ -78,7 +78,7 @@ async def process_event(seed_event, active_keys):
     # BUTTON 4 (Default: OSK) Paddle + D-Pad UP
     if active_keys == [88] and button_on == 1 and button4 not in handycon.event_queue:
         handycon.event_queue.append(button4)
-        await do_rumble(0, 75, 1000, 0)
+        await handycon.do_rumble(0, 75, 1000, 0)
         await handycon.emit_now(seed_event, button4, 1)
     elif active_keys == [] and seed_event.code in [88] and button_on == 0 and button4 in handycon.event_queue:
         handycon.event_queue.remove(button4)
