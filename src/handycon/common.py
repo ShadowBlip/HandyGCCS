@@ -282,7 +282,6 @@ class HandheldController:
             "AOKZOE A1 AR07",
             "AOKZOE A1 Pro",
             ):
-    selected_performance = None
             self.system_type = "OXP_GEN4"
             oxp_gen4.init_handheld(self)
 
