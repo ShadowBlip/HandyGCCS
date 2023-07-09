@@ -552,7 +552,7 @@ class HandheldController:
                                 await aya_gen1.process_event(seed_event, active_keys)
                             case "AYA_GEN2":
                                 await aya_gen2.process_event(seed_event, active_keys)
-                            case z"AYA_GEN3":
+                            case "AYA_GEN3":
                                 await aya_gen3.process_event(seed_event, active_keys)
                             case "AYA_GEN4":
                                 await aya_gen4.process_event(seed_event, active_keys)
