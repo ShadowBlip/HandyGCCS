@@ -883,7 +883,7 @@ class HandheldController:
         run = os.popen(ryzenadj_command, 'r', 1).read().strip()
         self.logger.debug(run)
 
-        if self.system_type in ["ALY_GEN1",]
+        if self.system_type in ["ALY_GEN1"]:
             if self.thermal_mode == "1":
                 self.thermal_mode = "0"
             else:
