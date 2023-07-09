@@ -100,7 +100,7 @@ class HandheldController:
     
     # Performance settings
     performance_mode = "--power-saving"
-    self.thermal_mode = "0"
+    thermal_mode = "0"
     
     def __init__(self):
         self.running = True
