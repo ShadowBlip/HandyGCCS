@@ -116,7 +116,7 @@ async def process_event(seed_event, active_keys):
         handycon.event_queue.append(button8)
         await handycon.emit_now(seed_event, button8, 1)
     elif active_keys == [] and seed_event.code in [29, 56, 111] and button_on == 0 and button8 in handycon.event_queue:
-        handycon.event_queue.append(button8)
+        handycon.event_queue.remove(button8)
         await handycon.emit_now(seed_event, button8, 0)
 
     # BUTTON 9 (Default:) Paddle + D-Pad DOWN
@@ -125,7 +125,7 @@ async def process_event(seed_event, active_keys):
         handycon.event_queue.append(button9)
         await handycon.emit_now(seed_event, button9, 1)
     elif active_keys == [] and seed_event.code in [1, 29, 42] and button_on == 0 and button9 in handycon.event_queue:
-        handycon.event_queue.append(button9)
+        handycon.event_queue.remove(button9)
         await handycon.emit_now(seed_event, button9, 0)
 
     # BUTTON 10 (Default:) Paddle + D-Pad LEFT
@@ -134,7 +134,7 @@ async def process_event(seed_event, active_keys):
         handycon.event_queue.append(button10)
         await handycon.emit_now(seed_event, button10, 1)
     elif active_keys == [] and seed_event.code in [32, 125] and button_on == 0 and button10 in handycon.event_queue:
-        handycon.event_queue.append(button10)
+        handycon.event_queue.remove(button10)
         await handycon.emit_now(seed_event, button10, 0)
 
     # BUTTON 11 (Default:) Paddle + D-Pad RIGHT
@@ -143,7 +143,7 @@ async def process_event(seed_event, active_keys):
         handycon.event_queue.append(button11)
         await handycon.emit_now(seed_event, button11, 1)
     elif active_keys == [] and seed_event.code in [15, 125] and button_on == 0 and button11 in handycon.event_queue:
-        handycon.event_queue.append(button11)
+        handycon.event_queue.remove(button11)
         await handycon.emit_now(seed_event, button11, 0)
 
     # BUTTON 12 (Default:) Paddle + X
@@ -152,5 +152,5 @@ async def process_event(seed_event, active_keys):
         handycon.event_queue.append(button12)
         await handycon.emit_now(seed_event, button12, 1)
     elif active_keys == [] and seed_event.code in [25, 125] and button_on == 0 and button12 in handycon.event_queue:
-        handycon.event_queue.append(button12)
+        handycon.event_queue.remove(button12)
         await handycon.emit_now(seed_event, button12, 0)
