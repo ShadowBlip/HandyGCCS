@@ -54,33 +54,33 @@ async def process_event(seed_event, active_keys):
     if active_keys == [184] and button_on == 1 and button1 not in handycon.event_queue:
         handycon.event_queue.append(button1)
     elif active_keys == [] and seed_event.code in [184] and button_on == 0 and button1 in handycon.event_queue:
-        this_button = button5
+        this_button = button1
 
 
     # BUTTON 2 (Default: QAM) Armory Crate Button Short Press
     if active_keys == [148] and button_on == 1 and button2 not in handycon.event_queue:
         handycon.event_queue.append(button2)
     elif active_keys == [] and seed_event.code in [148] and button_on == 0 and button2 in handycon.event_queue:
-        this_button = button1
+        this_button = button2
 
     # BUTTON 3 (Default: ESC) Paddle + B Temp disabled, goes nuts.
     # This event triggers from KEYBOARD_2.
     if active_keys == [49, 125] and button_on == 1 and button3 not in handycon.event_queue:
         handycon.event_queue.append(button3)
     elif active_keys == [] and seed_event.code in [49, 125] and button_on == 0 and button3 in handycon.event_queue:
-        this_button = button2
+        this_button = button3
 
     # BUTTON 4 (Default: OSK) Paddle + D-Pad UP
     if active_keys == [88] and button_on == 1 and button4 not in handycon.event_queue:
         handycon.event_queue.append(button4)
     elif active_keys == [] and seed_event.code in [88] and button_on == 0 and button4 in handycon.event_queue:
-        this_button = button3
+        this_button = button4
 
     # BUTTON 5 (Default: GUIDE) Ally Home Short Press.
     if active_keys == [186] and button_on == 1 and button5 not in handycon.event_queue:
         handycon.event_queue.append(button5)
     elif active_keys == [] and seed_event.code in [186] and button_on == 0 and button5 in handycon.event_queue:
-        this_button = button4
+        this_button = button5
 
     # BUTTON 6 (Default: Launch Chimera. Paddle + A
     if active_keys == [68] and button_on == 1 and button6 not in handycon.event_queue:

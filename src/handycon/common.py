@@ -891,7 +891,7 @@ class HandheldController:
 
             command = f'echo {self.thermal_mode} > /sys/devices/platform/asus-nb-wmi/throttle_thermal_policy'
             run = os.popen(command, 'r', 1).read().strip()
-            logger.debug(f'Thermal mode set to {thermal_mode}.')
+            self.logger.debug(f'Thermal mode set to {thermal_mode}.')
     def steam_ifrunning_deckui(self, cmd):
         # Get the currently running Steam PID.
         steampid_path = self.HOME_PATH + '/.steam/steam.pid'
