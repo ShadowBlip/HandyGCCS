@@ -282,6 +282,7 @@ class HandheldController:
             "AOKZOE A1 AR07",
             "AOKZOE A1 Pro",
             ):
+    selected_performance = None
             self.system_type = "OXP_GEN4"
             oxp_gen4.init_handheld(self)
 
@@ -877,7 +878,7 @@ class HandheldController:
             await asyncio.sleep(FF_DELAY)
             await self.do_rumble(0, 75, 1000, 0)
             await asyncio.sleep(FF_DELAY)
-           z await self.do_rumble(0, 75, 1000, 0)
+            await self.do_rumble(0, 75, 1000, 0)
 
         ryzenadj_command = f'ryzenadj {self.performance_mode}'
         run = os.popen(ryzenadj_command, 'r', 1).read().strip()
