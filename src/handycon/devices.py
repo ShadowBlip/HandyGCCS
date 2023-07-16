@@ -172,7 +172,7 @@ def get_powerkey():
         return True
 
 
-async def do_rumble(, button=0, interval=10, length=1000, delay=0):
+async def do_rumble(button=0, interval=10, length=1000, delay=0):
     # Prevent look crash if controller_device was taken.
     if not handycon.controller_device:
         return
