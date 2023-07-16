@@ -118,7 +118,7 @@ class HandheldController:
             sys.exit(exit_code)
 
 
-    def launch_chimera():
+    def launch_chimera(self):
         utilities.launch_chimera()
 
     async def emit_events(self, events: list):
