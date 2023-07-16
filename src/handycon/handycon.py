@@ -29,11 +29,13 @@ class HandheldController:
     logger= logging.getLogger(__name__)
     
     # Session Variables
+    config = None
     button_map = {}
     event_queue = [] # Stores inng button presses to block spam
     last_button = None
     last_x_val = 0
     last_y_val = 0
+    power_action = "Suspend"
     running = False
     shutdown = False
     
@@ -117,21 +119,18 @@ class HandheldController:
             self.loop.stop()
             sys.exit(exit_code)
 
-
+    # These functions avoid recursive imports.
     def launch_chimera(self):
         utilities.launch_chimera()
 
     async def emit_events(self, events: list):
         await devices.emit_events(events)
 
-
     async def emit_now(self, seed_event, event_list, value):
         await devices.emit_now(seed_event, event_list, value)
 
-
     async def do_rumble(self, button=0, interval=10, length=1000, delay=0):
         await devices.do_rumble(button, interval, length, delay)
-
 
     # Gracefull shutdown.
     async def exit(self):

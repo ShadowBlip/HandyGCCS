@@ -351,12 +351,7 @@ async def capture_power_events():
                     handycon.logger.debug(f"Got event: {event.type} | {event.code} | {event.value}")
                     if event.type == e.EV_KEY and event.code == 116: # KEY_POWER
                         if event.value == 0:
-                            # For DeckUI Sessions
-                            is_deckui = handycon.steam_ifrunning_deckui("steam://shortpowerpress")
-
-                            # For BPM and Desktop sessions
-                            if not is_deckui:
-                                os.system('systemctl suspend')
+                            handle_power_action()
 
             except Exception as err:
                 handycon.logger.error(f"{err} | Error reading events from power device.")
@@ -368,12 +363,7 @@ async def capture_power_events():
                     handycon.logger.debug(f"Got event: {event.type} | {event.code} | {event.value}")
                     if event.type == e.EV_KEY and event.code == 116: # KEY_POWER
                         if event.value == 0:
-                            # For DeckUI Sessions
-                            is_deckui = handycon.steam_ifrunning_deckui("steam://shortpowerpress")
-
-                            # For BPM and Desktop sessions
-                            if not is_deckui:
-                                os.system('systemctl suspend')
+                            handle_power_action()
 
             except Exception as err:
                 handycon.logger.error(f"{err} | Error reading events from power device.")
@@ -384,6 +374,26 @@ async def capture_power_events():
             get_powerkey()
             await asyncio.sleep(DETECT_DELAY)
 
+
+# Performs specific power actions based on user config.
+def handle_power_action():
+    match handycon.power_action:
+        case "Suspend":
+            # For DeckUI Sessions
+            is_deckui = handycon.steam_ifrunning_deckui("steam://shortpowerpress")
+
+            # For BPM and Desktop sessions
+            if not is_deckui:
+                os.system('systemctl suspend')
+
+        case "Hibernate":
+            os.system('systemctl hibernate')
+
+        case "Shutdown":
+            is_deckui = handycon.steam_ifrunning_deckui("steam://longpowerpress")
+
+            if not is_deckui:
+                os.system('systemctl shutdown')
 
 # Handle FF event uploads
 async def capture_ff_events():
@@ -455,6 +465,8 @@ def restore_device(event, path):
 
 
 # Emits passed or generated events to the virtual controller.
+# This shouldn't be called directly for custom events, only to pass realtime events.
+# Use emit_now and the device's event_queue.
 async def emit_events(events: list):
     global handycon
 
@@ -467,7 +479,8 @@ async def emit_events(events: list):
             await asyncio.sleep(handycon.BUTTON_DELAY)
 
 
-# Generates events from an event list to immediately emit, bypassing queue.
+# Generates events from an event list. Can be called directly or when looping through
+# the event queue.
 async def emit_now(seed_event, event_list, value):
     global handycon
 
@@ -482,16 +495,20 @@ async def emit_now(seed_event, event_list, value):
             handycon.logger.debug("Received string event with value 0. KEY_UP event not required. Skipping")
             return
         match event_list[0]:
-            case "RyzenAdj Toggle":
-                handycon.logger.debug("RyzenAdj Toggle")
-                await toggle_performance()
             case "Open Chimera":
                 handycon.logger.debug("Open Chimera")
                 handycon.launch_chimera()
             case "Toggle Gyro":
                 handycon.logger.debug("Toggle Gyro is not currently enabled")
+            case "Toggle Mouse Mode":
+                handycon.logger.debug("Toggle Mouse Mode is not currently enabled")
+            case "Toggle Performance":
+                handycon.logger.debug("Toggle Performance")
+                await toggle_performance()
+            case "Hibernate", "Suspend", "Shutdown":
+                handycon.logger.error(f"Power mode {event_list[0]} set to button action. Check your configuration file.")
             case _:
-                handycon.logger.debug(f"{event_list[0]} not defined.")
+                handycon.logger.warn(f"{event_list[0]} not defined.")
         return
 
     handycon.logger.debug(f'Event list: {event_list}')

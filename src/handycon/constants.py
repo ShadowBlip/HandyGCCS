@@ -5,10 +5,9 @@
 from evdev import AbsInfo, ecodes as e
 from pathlib import Path
 
-HIDE_PATH = Path("/dev/input/.hidden/")
-HOME_PATH = Path('/home')
 CHIMERA_LAUNCHER_PATH = Path('/usr/share/chimera/bin/chimera-web-launcher')
-server_address = Path('/tmp/ryzenadj_socket')
+CONFIG_DIR = "/etc/handygccs/"
+CONFIG_PATH = "/etc/handygccs/handygccs.conf"
 CONTROLLER_EVENTS = {
     e.EV_KEY: [
         e.KEY_ESC,
@@ -202,21 +201,33 @@ EVENT_MODE = [[e.EV_KEY, e.BTN_MODE]]
 EVENT_OPEN_CHIM = ["Open Chimera"]
 EVENT_OSK = [[e.EV_KEY, e.BTN_MODE], [e.EV_KEY, e.BTN_NORTH]]
 EVENT_QAM = [[e.EV_KEY, e.BTN_MODE], [e.EV_KEY, e.BTN_SOUTH]]
-EVENT_RYZEN_TOGGLE = ["RyzenAdj Toggle"]
 EVENT_SCR = [[e.EV_KEY, e.BTN_MODE], [e.EV_KEY, e.BTN_TR]]
-
-FF_DELAY = 0.2
-JOY_MAX = 32767
-JOY_MIN = -32767
-EVENT_MAP= {
+EVENT_TOGGLE_GYRO = ["Toggle Gyro"]
+EVENT_TOGGLE_MOUSE = ["Toggle Mouse Mode"]
+EVENT_TOGGLE_PERF = ["Toggle Performance"]
+EVENT_MAP = {
         "ALT_TAB": EVENT_ALT_TAB,
         "ESC": EVENT_ESC,
-        "MODE": EVENT_MODE,
-        "HOME": EVENT_MODE,
         "KILL": EVENT_KILL,
+        "MODE": EVENT_MODE,
+        "OPEN_CHIMERA": EVENT_OPEN_CHIM,
         "OSK": EVENT_OSK,
         "QAM": EVENT_QAM,
         "SCR": EVENT_SCR,
-        "OPEN_CHIMERA": EVENT_OPEN_CHIM,
-        "RYZENADJ_TOGGLE": EVENT_RYZEN_TOGGLE
+        "TOGGLE_GYRO": EVENT_TOGGLE_GYRO,
+        "TOGGLE_MOUSE": EVENT_TOGGLE_MOUSE,
+        "TOGGLE_PERFORMANCE": EVENT_TOGGLE_PERF,
     }
+POWER_ACTION_HIBERNATE = ["Hibernate"]
+POWER_ACTION_SHUTDOWN = ["Shutdown"]
+POWER_ACTION_SUSPEND = ["Suspend"]
+POWER_ACTION_MAP = {
+        "HIBERNATE": POWER_ACTION_HIBERNATE,
+        "SHUTDOWN":  POWER_ACTION_SHUTDOWN,
+        "SUSPEND":   POWER_ACTION_SUSPEND,
+    }
+FF_DELAY = 0.2
+HIDE_PATH = Path("/dev/input/.hidden/")
+HOME_PATH = Path('/home')
+JOY_MAX = 32767
+JOY_MIN = -32767

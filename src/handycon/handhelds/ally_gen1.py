@@ -31,16 +31,16 @@ async def process_event(seed_event, active_keys):
     # Button map shortcuts for easy reference.
     button1 = handycon.button_map["button1"]  # Default Screenshot
     button2 = handycon.button_map["button2"]  # Default QAM
-    button3 = ["Not Defined 3"] #handycon.button_map["button3"]  # Default ESC
+    button3 = handycon.button_map["button3"]  # Default ESC 
     button4 = handycon.button_map["button4"]  # Default OSK
     button5 = handycon.button_map["button5"]  # Default MODE
-    button6 = ["Open Chimera"]
-    button7 = ["RyzenAdj Toggle"]
-    button8 = ["Not Defined 8"]
-    button9 = ["Not Defined 9"]
-    button10 = ["Not Defined 10"]
-    button11 = ["Not Defined 11"]
-    button12  = ["Not Defined 12"]
+    button6 = handycon.button_map["button6"] 
+    button7 = handycon.button_map["button7"] 
+    button8 = handycon.button_map["button8"] 
+    button9 = handycon.button_map["button9"] 
+    button10 = handycon.button_map["button10"] 
+    button11 = handycon.button_map["button11"] 
+    button12 = handycon.button_map["button12"] 
 
     ## Loop variables
     button_on = seed_event.value
@@ -59,9 +59,9 @@ async def process_event(seed_event, active_keys):
     elif active_keys == [] and seed_event.code in [148] and button_on == 0 and button2 in handycon.event_queue:
         this_button = button2
 
-    # BUTTON 3 (Default: ESC) Paddle + B Temp disabled, goes nuts.
+    # BUTTON 3 (Default: ESC) Paddle + X Temp disabled, goes nuts.
     # This event triggers from KEYBOARD_2.
-    if active_keys == [49, 125] and button_on == 1 and button3 not in handycon.event_queue:
+    if active_keys == [25, 125] and button_on == 1 and button3 not in handycon.event_queue:
         handycon.event_queue.append(button3)
     elif active_keys == [] and seed_event.code in [49, 125] and button_on == 0 and button3 in handycon.event_queue:
         this_button = button3
@@ -72,13 +72,13 @@ async def process_event(seed_event, active_keys):
     elif active_keys == [] and seed_event.code in [88] and button_on == 0 and button4 in handycon.event_queue:
         this_button = button4
 
-    # BUTTON 5 (Default: GUIDE) Ally Home Short Press.
+    # BUTTON 5 (Default: Mode) Ally Home Short Press.
     if active_keys == [186] and button_on == 1 and button5 not in handycon.event_queue:
         handycon.event_queue.append(button5)
     elif active_keys == [] and seed_event.code in [186] and button_on == 0 and button5 in handycon.event_queue:
         this_button = button5
 
-    # BUTTON 6 (Default: Launch Chimera. Paddle + A
+    # BUTTON 6 (Default: Launch Chimera) Paddle + A
     if active_keys == [68] and button_on == 1 and button6 not in handycon.event_queue:
         handycon.event_queue.append(button6)
     elif active_keys == [] and seed_event.code in [68] and button_on == 0 and button6 in handycon.event_queue:
@@ -93,7 +93,7 @@ async def process_event(seed_event, active_keys):
     elif active_keys == [] and seed_event.code in [188] and button_on == 0 and button7 in handycon.event_queue:
         this_button = button7
 
-    # BUTTON 8 (Default: GUIDE) Ally Home Long Press.
+    # BUTTON 8 (Default: Mode) Ally Home Long Press.
     # This event triggers from KEYBOARD_2.
     if active_keys == [29, 56, 111] and button_on == 1 and button8 not in handycon.event_queue:
         handycon.event_queue.append(button8)
@@ -101,30 +101,30 @@ async def process_event(seed_event, active_keys):
     elif active_keys == [] and seed_event.code in [29, 56, 111] and button_on == 0 and button8 in handycon.event_queue:
         this_button = button8
 
-    # BUTTON 9 (Default:) Paddle + D-Pad DOWN
+    # BUTTON 9 (Default: Toggle Mouse) Paddle + D-Pad DOWN
     # This event triggers from KEYBOARD_2.
     if active_keys == [1, 29, 42] and button_on == 1 and button9 not in handycon.event_queue:
         handycon.event_queue.append(button9)
     elif active_keys == [] and seed_event.code in [1, 29, 42] and button_on == 0 and button9 in handycon.event_queue:
         this_button = button9
 
-    # BUTTON 10 (Default:) Paddle + D-Pad LEFT
+    # BUTTON 10 (Default: ALT+TAB) Paddle + D-Pad LEFT
     # This event triggers from KEYBOARD_2.
     if active_keys == [32, 125] and button_on == 1 and button10 not in handycon.event_queue:
         handycon.event_queue.append(button10)
     elif active_keys == [] and seed_event.code in [32, 125] and button_on == 0 and button10 in handycon.event_queue:
         this_button = button10
 
-    # BUTTON 11 (Default:) Paddle + D-Pad RIGHT
+    # BUTTON 11 (Default: KILL) Paddle + D-Pad RIGHT
     # This event triggers from KEYBOARD_2.
     if active_keys == [15, 125] and button_on == 1 and button11 not in handycon.event_queue:
         handycon.event_queue.append(button11)
     elif active_keys == [] and seed_event.code in [15, 125] and button_on == 0 and button11 in handycon.event_queue:
         this_button = button11
 
-    # BUTTON 12 (Default:) Paddle + X
+    # BUTTON 12 (Default: Toggle Gyro) Paddle + B
     # This event triggers from KEYBOARD_2.
-    if active_keys == [25, 125] and button_on == 1 and button12 not in handycon.event_queue:
+    if active_keys == [49, 125] and button_on == 1 and button12 not in handycon.event_queue:
         handycon.event_queue.append(button12)
     elif active_keys == [] and seed_event.code in [25, 125] and button_on == 0 and button12 in handycon.event_queue:
         this_button = button12

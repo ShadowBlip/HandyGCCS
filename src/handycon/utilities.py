@@ -32,9 +32,7 @@ from .constants import *
 ## Partial imports
 from time import sleep
 
-
 handycon = None
-
 def set_handycon(handheld_controller):
     global handycon
     handycon = handheld_controller
@@ -207,31 +205,23 @@ def get_cpu_vendor():
 
 def get_config():
     global handycon
-
     # Check for an existing config file and load it.
-    config = configparser.ConfigParser()
-    config_dir = "/etc/handygccs/"
-    config_path = config_dir+"handygccs.conf"
-    if os.path.exists(config_path):
+    handycon.config = configparser.ConfigParser()
+    if os.path.exists(CONFIG_PATH):
         handycon.logger.info(f"Loading existing config: {config_path}")
-        config.read(config_path)
+        handycon.config.read(CONFIG_PATH)
+        if not "power_button" in handycon.config["Button Map"]:
+            logger.info("Config file out of date. Generating new config.")
+            set_sefault_config()
+            write_config()
     else:
-        # Make the HandyGCCS directory if it doesn't exist.
-        if not os.path.exists(config_dir):
-            os.mkdir(config_dir)
+        set_default_config()
+        write_config()
+    map_config()
 
-        # Write a basic config file.
-        config["Button Map"] = {
-                "button1": "SCR",
-                "button2": "QAM",
-                "button3": "ESC",
-                "button4": "OSK",
-                "button5": "MODE",
-                }
-        with open(config_path, 'w') as config_file:
-            config.write(config_file)
-            handycon.logger.info(f"Created new config: {config_path}")
 
+# Match runtime variables to the config 
+def map_config():
     # Assign config file values
     handycon.button_map = {
     "button1": EVENT_MAP[config["Button Map"]["button1"]],
@@ -239,7 +229,47 @@ def get_config():
     "button3": EVENT_MAP[config["Button Map"]["button3"]],
     "button4": EVENT_MAP[config["Button Map"]["button4"]],
     "button5": EVENT_MAP[config["Button Map"]["button5"]],
+    "button6": EVENT_MAP[config["Button Map"]["button6"]],
+    "button7": EVENT_MAP[config["Button Map"]["button7"]],
+    "button8": EVENT_MAP[config["Button Map"]["button8"]],
+    "button9": EVENT_MAP[config["Button Map"]["button9"]],
+    "button10": EVENT_MAP[config["Button Map"]["button10"]],
+    "button11": EVENT_MAP[config["Button Map"]["button11"]],
+    "button12": EVENT_MAP[config["Button Map"]["button12"]],
     }
+    handycon.power_action = POWER_ACTION_MAP[config["Button Map"]["power_button"]]
+
+
+# Sets the default configuration.
+def set_default_config():
+    global handycon
+    handycon.config["Button Map"] = {
+            "button1": "SCR",
+            "button2": "QAM",
+            "button3": "ESC",
+            "button4": "OSK",
+            "button5": "MODE",
+            "button6": "OPEN_CHIMERA",
+            "button7": "TOGGLE_PERFORMANCE",
+            "button8": "MODE",
+            "button9": "TOGGLE_MOUSE",
+            "button10": "ALT_TAB",
+            "button11": "KILL",
+            "button12": "TOGGLE_GYRO",
+            "power_button": "SUSPEND",
+            }
+
+
+# Writes current config to disk.
+def write_config(config):
+    global handycon
+        # Make the HandyGCCS directory if it doesn't exist.
+        if not os.path.exists(CONFIG_DIR):
+            os.mkdir(CONFIG_DIR)
+
+        with open(CONFIG_PATH, 'w') as config_file:
+            handycon.config.write(config_file)
+            handycon.logger.info(f"Created new config: {CONFIG_PATH}")
 
 
 def steam_ifrunning_deckui(cmd):
