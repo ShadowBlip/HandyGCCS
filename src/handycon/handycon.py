@@ -12,8 +12,8 @@ import warnings
 
 ## Local modules
 from .constants import *
-import devices
-import utilities
+from . import devices
+from . import utilities
 
 ## Partial imports
 from pathlib import Path
