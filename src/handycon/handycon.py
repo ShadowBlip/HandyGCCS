@@ -117,6 +117,10 @@ class HandheldController:
             self.loop.stop()
             sys.exit(exit_code)
 
+
+    def launch_chimera():
+        utilities.launch_chimera()
+
     async def emit_events(self, events: list):
         await devices.emit_events(events)
 
@@ -126,7 +130,7 @@ class HandheldController:
 
 
     async def do_rumble(self, button=0, interval=10, length=1000, delay=0):
-        await devices.do_rumble(button, interval, length, delay)
+        await devices.do_rumble(button, interval, length, delay)a
 
 
     # Gracefull shutdown.
