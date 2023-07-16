@@ -264,13 +264,13 @@ async def capture_keyboard_events():
 
             except Exception as err:
                 handycon.logger.error(f"{err} | Error reading events from {handycon.keyboard_device.name}")
-                handycon.restore_keyboard()
+                restore_device(handycon.keyboard_event, handycon.keyboard_path)
                 handycon.keyboard_device = None
                 handycon.keyboard_event = None
                 handycon.keyboard_path = None
         else:
             handycon.logger.info("Attempting to grab keyboard device...")
-            handycon.get_keyboard()
+            get_keyboard()
             await asyncio.sleep(DETECT_DELAY)
 
 
@@ -304,13 +304,13 @@ async def capture_keyboard_2_events():
 
             except Exception as err:
                 handycon.logger.error(f"{err} | Error reading events from {handycon.keyboard_2_device.name}")
-                handycon.restore_keyboard_2()
+                restore_device(handycon.keyboard_2_event, handycon.keyboard_2_path)
                 handycon.keyboard_2_device = None
                 handycon.keyboard_2_event = None
                 handycon.keyboard_2_path = None
         else:
             handycon.logger.info("Attempting to grab keyboard device 2...")
-            handycon.get_keyboard_2()
+            get_keyboard_2()
             await asyncio.sleep(DETECT_DELAY)
 
 
@@ -330,13 +330,13 @@ async def capture_controller_events():
                     await handycon.emit_events([event])
             except Exception as err:
                 handycon.logger.error(f"{err} | Error reading events from {handycon.controller_device.name}.")
-                handycon.restore_controller()
+                restore_device(handycon.controller_event, handycon.controller_path)
                 handycon.controller_device = None
                 handycon.controller_event = None
                 handycon.controller_path = None
         else:
             handycon.logger.info("Attempting to grab controller device...")
-            handycon.get_controller()
+            get_controller()
             await asyncio.sleep(DETECT_DELAY)
 
 
@@ -381,7 +381,7 @@ async def capture_power_events():
 
         else:
             handycon.logger.info("Attempting to grab controller device...")
-            handycon.get_powerkey()
+            get_powerkey()
             await asyncio.sleep(DETECT_DELAY)
 
 
@@ -453,6 +453,7 @@ def restore_device(event, path):
     except FileNotFoundError:
         pass
 
+
 # Emits passed or generated events to the virtual controller.
 async def emit_events(events: list):
     global handycon
@@ -521,5 +522,3 @@ def make_controller():
             product=0x028e,
             version=0x110
             )
-
-

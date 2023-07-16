@@ -49,7 +49,7 @@ def id_system():
     global handycon
 
     system_id = open("/sys/devices/virtual/dmi/id/product_name", "r").read().strip()
-    cpu_vendor = handycon.get_cpu_vendor()
+    cpu_vendor = get_cpu_vendor()
     handycon.logger.debug(f"Found CPU Vendor: {cpu_vendor}")
 
     ## ANBERNIC Devices
@@ -57,14 +57,14 @@ def id_system():
             "Win600",
             ):
         handycon.system_type = "ANB_GEN1"
-        anb_gen1.init_handheld()
+        anb_gen1.init_handheld(handycon)
 
     ## ASUS Devices
     elif system_id in (
         "ROG Ally RC71L_RC71L",
         ):
         handycon.system_type = "ALY_GEN1"
-        ally_gen1.init_handheld()
+        ally_gen1.init_handheld(handycon)
 
     ## Aya Neo Devices
     elif system_id in (
@@ -75,7 +75,7 @@ def id_system():
         "AYANEO 2021 Pro Retro Power",
         ):
         handycon.system_type = "AYA_GEN1"
-        aya_gen1.init_handheld()
+        aya_gen1.init_handheld(handycon)
 
     elif system_id in (
         "NEXT",
@@ -86,41 +86,41 @@ def id_system():
         "AYANEO NEXT Advance",
         ):
         handycon.system_type = "AYA_GEN2"
-        aya_gen2.init_handheld()
+        aya_gen2.init_handheld(handycon)
 
     elif system_id in (
         "AIR",
         "AIR Pro",
         ):
         handycon.system_type = "AYA_GEN3"
-        aya_gen3.init_handheld()
+        aya_gen3.init_handheld(handycon)
 
     elif system_id in (
         "AYANEO 2",
         "GEEK",
         ):
         handycon.system_type = "AYA_GEN4"
-        aya_gen4.init_handheld()
+        aya_gen4.init_handheld(handycon)
 
     elif system_id in (
         "AIR Plus",
         ):
         handycon.system_type = "AYA_GEN5"
-        aya_gen5.init_handheld()
+        aya_gen5.init_handheld(handycon)
 
     elif system_id in (
         "AYANEO 2S",
         "GEEK 1S",
         ):
         handycon.system_type = "AYA_GEN6"
-        aya_gen6.init_handheld()
+        aya_gen6.init_handheld(handycon)
 
     ## Ayn Devices
     elif system_id in (
             "Loki Max",
         ):
         handycon.system_type = "AYN_GEN1"
-        ayn_gen1.init_handheld()
+        ayn_gen1.init_handheld(handycon)
 
     ## GPD Devices.
     # Have 2 buttons with 3 modes (left, right, both)
@@ -128,19 +128,19 @@ def id_system():
         "G1618-03", #Win3
         ):
         handycon.system_type = "GPD_GEN1"
-        gpd_gen1.init_handheld()
+        gpd_gen1.init_handheld(handycon)
 
     elif system_id in (
         "G1618-04", #WinMax2
         ):
         handycon.system_type = "GPD_GEN2"
-        gpd_gen2.init_handheld()
+        gpd_gen2.init_handheld(handycon)
 
     elif system_id in (
         "G1619-04", #Win4
         ):
         handycon.system_type = "GPD_GEN3"
-        gpd_gen3.init_handheld()
+        gpd_gen3.init_handheld(handycon)
 
 ## ONEXPLAYER and AOKZOE devices.
     # BIOS have inlete DMI data and most models report as "ONE XPLAYER" or "ONEXPLAYER".
@@ -150,16 +150,16 @@ def id_system():
         ):
         if cpu_vendor == "GenuineIntel":
             handycon.system_type = "OXP_GEN1"
-            oxp_gen1.init_handheld()
+            oxp_gen1.init_handheld(handycon)
         else:
             handycon.system_type = "OXP_GEN2"
-            oxp_gen2.init_handheld()
+            oxp_gen2.init_handheld(handycon)
 
     elif system_id in (
         "ONEXPLAYER mini A07",
         ):
         handycon.system_type = "OXP_GEN3"
-        oxp_gen3.init_handheld()
+        oxp_gen3.init_handheld(handycon)
 
     elif system_id in (
         "ONEXPLAYER Mini Pro",
@@ -167,7 +167,7 @@ def id_system():
         "AOKZOE A1 Pro",
         ):
         handycon.system_type = "OXP_GEN4"
-        oxp_gen4.init_handheld()
+        oxp_gen4.init_handheld(handycon)
 
     # Block devices that aren't supported as this could cause issues.
     else:
