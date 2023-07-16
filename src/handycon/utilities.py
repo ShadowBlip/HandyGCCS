@@ -224,20 +224,20 @@ def get_config():
 def map_config():
     # Assign config file values
     handycon.button_map = {
-    "button1": EVENT_MAP[config["Button Map"]["button1"]],
-    "button2": EVENT_MAP[config["Button Map"]["button2"]],
-    "button3": EVENT_MAP[config["Button Map"]["button3"]],
-    "button4": EVENT_MAP[config["Button Map"]["button4"]],
-    "button5": EVENT_MAP[config["Button Map"]["button5"]],
-    "button6": EVENT_MAP[config["Button Map"]["button6"]],
-    "button7": EVENT_MAP[config["Button Map"]["button7"]],
-    "button8": EVENT_MAP[config["Button Map"]["button8"]],
-    "button9": EVENT_MAP[config["Button Map"]["button9"]],
-    "button10": EVENT_MAP[config["Button Map"]["button10"]],
-    "button11": EVENT_MAP[config["Button Map"]["button11"]],
-    "button12": EVENT_MAP[config["Button Map"]["button12"]],
+    "button1": EVENT_MAP[handycon.config["Button Map"]["button1"]],
+    "button2": EVENT_MAP[handycon.config["Button Map"]["button2"]],
+    "button3": EVENT_MAP[handycon.config["Button Map"]["button3"]],
+    "button4": EVENT_MAP[handycon.config["Button Map"]["button4"]],
+    "button5": EVENT_MAP[handycon.config["Button Map"]["button5"]],
+    "button6": EVENT_MAP[handycon.config["Button Map"]["button6"]],
+    "button7": EVENT_MAP[handycon.config["Button Map"]["button7"]],
+    "button8": EVENT_MAP[handycon.config["Button Map"]["button8"]],
+    "button9": EVENT_MAP[handycon.config["Button Map"]["button9"]],
+    "button10": EVENT_MAP[handycon.config["Button Map"]["button10"]],
+    "button11": EVENT_MAP[handycon.config["Button Map"]["button11"]],
+    "button12": EVENT_MAP[handycon.config["Button Map"]["button12"]],
     }
-    handycon.power_action = POWER_ACTION_MAP[config["Button Map"]["power_button"]]
+    handycon.power_action = POWER_ACTION_MAP[ndycon.config["Button Map"]["power_button"]]
 
 
 # Sets the default configuration.
