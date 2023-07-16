@@ -263,13 +263,13 @@ def set_default_config():
 # Writes current config to disk.
 def write_config(config):
     global handycon
-        # Make the HandyGCCS directory if it doesn't exist.
-        if not os.path.exists(CONFIG_DIR):
-            os.mkdir(CONFIG_DIR)
+    # Make the HandyGCCS directory if it doesn't exist.
+    if not os.path.exists(CONFIG_DIR):
+        os.mkdir(CONFIG_DIR)
 
-        with open(CONFIG_PATH, 'w') as config_file:
-            handycon.config.write(config_file)
-            handycon.logger.info(f"Created new config: {CONFIG_PATH}")
+    with open(CONFIG_PATH, 'w') as config_file:
+        handycon.config.write(config_file)
+        handycon.logger.info(f"Created new config: {CONFIG_PATH}")
 
 
 def steam_ifrunning_deckui(cmd):
