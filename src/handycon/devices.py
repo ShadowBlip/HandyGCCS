@@ -50,7 +50,7 @@ def get_controller():
             handycon.controller_device = InputDevice(.controller_path)
             if handycon.CAPTURE_CONTROLLER:
                 handycon.controller_device.grab()
-                handycon.controller_event = Path(.controller_path).name
+                handycon.controller_event = Path(handycon.controller_path).name
                 move(.controller_path, str(HIDE_PATH / handycon.controller_event))
             break
 
@@ -75,7 +75,7 @@ def get_keyboard():
                 handycon.keyboard_device = InputDevice(.keyboard_path)
                 if handycon.CAPTURE_KEYBOARD:
                     handycon.keyboard_device.grab()
-                    handycon.keyboard_event = Path(.keyboard_path).name
+                    handycon.keyboard_event = Path(handycon..keyboard_path).name
                     move(.keyboard_path, str(HIDE_PATH / handycon.keyboard_event))
                 break
 
@@ -103,7 +103,7 @@ def get_keyboard_2():
             handycon.logger.debug(f"{device.name}, {device.phys}")
             if device.name == handycon.KEYBOARD_2_NAME and device.phys == handycon.KEYBOARD_2_ADDRESS:
                 handycon.keyboard_2_path = device.path
-                handycon.keyboard_2_device = InputDevice(.keyboard_2_path)
+                handycon.keyboard_2_device = InputDevice(handycon.keyboard_2_path)
                 if handycon.CAPTURE_KEYBOARD:
                     handycon.keyboard_2_device.grab()
                     handycon.keyboard_2_event = Path(.keyboard_2_path).name
