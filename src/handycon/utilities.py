@@ -211,7 +211,7 @@ def get_config():
         handycon.logger.info(f"Loading existing config: {CONFIG_PATH}")
         handycon.config.read(CONFIG_PATH)
         if not "power_button" in handycon.config["Button Map"]:
-            logger.info("Config file out of date. Generating new config.")
+            handycon.logger.info("Config file out of date. Generating new config.")
             set_sefault_config()
             write_config()
     else:
