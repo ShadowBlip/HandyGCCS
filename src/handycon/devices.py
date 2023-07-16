@@ -431,43 +431,43 @@ def restore_device(event, path):
         pass
 
 # Emits passed or generated events to the virtual controller.
-async def emit_events(self, events: list):
+async def emit_events(events: list):
     for event in events:
-        self.logger.debug(f"Emitting event: {event}")
-        self.ui_device.write_event(event)
-        self.ui_device.syn()
+        handycon.logger.debug(f"Emitting event: {event}")
+        handycon.ui_device.write_event(event)
+        handycon.ui_device.syn()
         # Pause between multiple events, but not after the last one in the list.
         if event != events[len(events)-1]:
-            await asyncio.sleep(self.BUTTON_DELAY)
+            await asyncio.sleep(handycon.BUTTON_DELAY)
 
 
 # Generates events from an event list to immediately emit, bypassing queue.
-async def emit_now(self, seed_event, event_list, value):
+async def emit_now(seed_event, event_list, value):
 
     # Ignore malformed requests
     if not event_list:
-        self.logger.error("emit_now received malfirmed event_list. No action") 
+        handycon.logger.error("emit_now received malfirmed event_list. No action") 
         return
 
     # Handle string events
     if type(event_list[0]) == str:
         if value == 0:
-            self.logger.debug("Received string event with value 0. KEY_UP event not required. Skipping")
+            handycon.logger.debug("Received string event with value 0. KEY_UP event not required. Skipping")
             return
         match event_list[0]:
             case "RyzenAdj Toggle":
-                self.logger.debug("RyzenAdj Toggle")
-                await self.toggle_performance()
+                handycon.logger.debug("RyzenAdj Toggle")
+                await handycon.toggle_performance()
             case "Open Chimera":
-                self.logger.debug("Open Chimera")
-                self.launch_chimera()
+                handycon.logger.debug("Open Chimera")
+                handycon.launch_chimera()
             case "Toggle Gyro":
-                self.logger.debug("Toggle Gyro is not currently enabled")
+                handycon.logger.debug("Toggle Gyro is not currently enabled")
             case _:
-                self.logger.debug(f"{event_list[0]} not defined.")
+                handycon.logger.debug(f"{event_list[0]} not defined.")
         return
 
-    self.logger.debug(f'Event list: {event_list}')
+    handycon.logger.debug(f'Event list: {event_list}')
     events = []
 
     if value == 0:
