@@ -1,10 +1,6 @@
 #!/usr/bin/env python3
-# HandyGCCS HandyCon
-# Copyright 2022 Derek J. Clark <derekjohn dot clark at gmail dot 
-# This will create a virtual UInput device and pull data from the built-in
-# controller and "keyboard". Right side buttons are keyboard buttons that
-# send macros (i.e. CTRL/ALT/DEL). We capture those events and send button
-# presses that Steam understands.
+# This file is part of Handheld Game Console Controlelr System (HandyGCCS)
+# Copyright 2022-2023 Derek J. Clark <derekjohn.clark@gmail.com>
 
 # Python Modules
 import asyncio
@@ -55,8 +51,6 @@ class HandheldController:
     # Session Variables
     button_map = {}
     event_queue = [] # Stores inng button presses to block spam
-    #gyro_enabled = False
-    #gyro_sensitivity = 0
     last_button = None
     last_x_val = 0
     last_y_val = 0
@@ -117,7 +111,6 @@ class HandheldController:
     
         # Attach the event loop of each device to the asyncio loop.
         asyncio.ensure_future(self.capture_controller_events())
-        #asyncio.ensure_future(self.capture_gyro_events())
         asyncio.ensure_future(self.capture_ff_events())
         asyncio.ensure_future(self.capture_keyboard_events())
         if self.KEYBOARD_2_NAME != '' and self.KEYBOARD_2_ADDRESS != '':
@@ -288,9 +281,9 @@ class HandheldController:
         # Block devices that aren't supported as this could cause issues.
         else:
             self.logger.error(f"{system_id} is not currently supported by this tool. Open an issue on \
-    GitHub at https://github.ShadowBlip/aya-neo-fixes if this is a bug. If possible, \
-    please run the capture-system.py utility found on the GitHub repository and upload \
-    that file with your issue.")
+GitHub at https://github.ShadowBlip/HandyGCCS if this is a bug. If possible, \
+please run the capture-system.py utility found on the GitHub repository and upload \
+that file with your issue.")
             sys.exit(0)
         self.logger.info(f"Identified host system as {system_id} and configured defaults for {self.system_type}.")
     
@@ -304,10 +297,8 @@ class HandheldController:
     
     
     def get_config(self):
-    
-        config = configparser.ConfigParser()
-    
         # Check for an existing config file and load it.
+        config = configparser.ConfigParser()
         config_dir = "/etc/handygccs/"
         config_path = config_dir+"handygccs.conf"
         if os.path.exists(config_path):
@@ -326,7 +317,6 @@ class HandheldController:
                     "button4": "OSK",
                     "button5": "MODE",
                     }
-            config["Gyro"] = {"sensitivity": "20"}
             with open(config_path, 'w') as config_file:
                 config.write(config_file)
                 self.logger.info(f"Created new config: {config_path}")
@@ -339,7 +329,6 @@ class HandheldController:
         "button4": EVENT_MAP[config["Button Map"]["button4"]],
         "button5": EVENT_MAP[config["Button Map"]["button5"]],
         }
-        #self.gyro_sensitivity = int(config["Gyro"]["sensitivity"])
     
     
     def make_controller(self):
@@ -449,7 +438,7 @@ class HandheldController:
     
     
     def get_powerkey(self):
-        self.logger.debug(f"Attempting to grab power button.")
+        self.logger.debug(f"Attempting to grab power buttons.")
         # Identify system input event devices.
         try:
             devices_original = [InputDevice(path) for path in list_devices()]
@@ -469,7 +458,7 @@ class HandheldController:
                 if self.CAPTURE_POWER:
                     self.power_device.grab()
     
-            # Some devices (e.g. AYANEO GEEK) have an extra power input device corresponding to the same
+            # Some devices have an extra power input device corresponding to the same
             # physical button that needs to be grabbed.
             if device.name == 'Power Button' and device.phys == self.POWER_BUTTON_SECONDARY and not self.power_device_2:
                 self.power_device_2 = device
@@ -514,9 +503,6 @@ class HandheldController:
     
     # Captures keyboard events and translates them to virtual device events.
     async def capture_keyboard_events(self):
-        # Get access to global variables. These are globalized because the function
-        # is instanciated twice and need to persist accross both instances.
-
         # Capture keyboard events and translate them to mapped events.
         while self.running:
             if self.keyboard_device:
@@ -583,9 +569,6 @@ class HandheldController:
 
     # Captures keyboard events and translates them to virtual device events.
     async def capture_keyboard_2_events(self):
-        # Get access to global variables. These are globalized because the function
-        # is instanciated twice and need to persist accross both instances.
-
         # Capture keyboard events and translate them to mapped events.
         while self.running:
             if self.keyboard_2_device:
@@ -631,29 +614,7 @@ class HandheldController:
                         # Block FF events, or get infinite recursion. Up to you I guess...
                         if event.type in [e.EV_FF, e.EV_UINPUT]:
                             continue
-                        #self.logger.debug(f"Got event: {event}")
-                        # If gyro is enabled, queue all events so the gyro event handler can manage them.
-                        #if self.gyro_device is not None and self.gyro_enabled:
-                        #    adjusted_val = None
-    
-                        #    # We only modify RX/RY ABS events.
-                        #    if event.type == e.EV_ABS and event.code == e.ABS_RX:
-                        #        # Record last_x_val before adjustment. 
-                        #        # If right stick returns to the original position there is always an event that sets last_x_val back to zero. 
-                        #        self.last_x_val = event.value
-                        #        angular_velocity_x = float(self.gyro_device.getRotationX()[0] / 32768.0 * 2000)
-                        #        adjusted_val = max(min(int(angular_velocity_x * self.gyro_sensitivity) + event.value, JOY_MAX), JOY_MIN)
-                        #    if event.type == e.EV_ABS and event.code == e.ABS_RY:
-                        #        # Record last_y_val before adjustment. 
-                        #        # If right stick returns to the original position there is always an event that sets last_y_val back to zero. 
-                        #        self.last_y_val = event.value
-                        #        angular_velocity_y = float(self.gyro_device.getRotationY()[0] / 32768.0 * 2000)
-                        #        adjusted_val = max(min(int(angular_velocity_y * self.gyro_sensitivity) + event.value, JOY_MAX), JOY_MIN)
-    
-                        #    if adjusted_val:
-                        #        # Overwrite the event.
-                        #        event = InputEvent(event.sec, event.usec, event.type, event.code, adjusted_val)
-    
+
                         # Output the event.
                         await self.emit_events([event])
                 except Exception as err:
@@ -666,38 +627,6 @@ class HandheldController:
                 self.logger.info("Attempting to grab controller device...")
                 self.get_controller()
                 await asyncio.sleep(DETECT_DELAY)
-    
-    
-    # Captures gyro events and translates them to joystick events.
-    # TODO: Add mouse mode.
-    #async def capture_gyro_events(self):
-    #    self.logger.debug(f"capture_gyro_events, {self.running}")
-    #    while self.running:
-    #        # Only run this loop if gyro is enabled
-    #        if self.gyro_device: 
-    #            if self.gyro_enabled:
-    #                # Periodically output the EV_ABS events according to the gyro readings.
-    #                angular_velocity_x = float(self.gyro_device.getRotationX()[0] / 32768.0 * 2000)
-    #                adjusted_x = max(min(int(angular_velocity_x * self.gyro_sensitivity) + self.last_x_val, JOY_MAX), JOY_MIN)
-    #                x_event = InputEvent(0, 0, e.EV_ABS, e.ABS_RX, adjusted_x)
-    #                angular_velocity_y = float(self.gyro_device.getRotationY()[0] / 32768.0 * 2000)
-    #                adjusted_y = max(min(int(angular_velocity_y * self.gyro_sensitivity) + self.last_y_val, JOY_MAX), JOY_MIN)
-    #                y_event = InputEvent(0, 0, e.EV_ABS, e.ABS_RY, adjusted_y)
-    #
-    #                await self.emit_events([x_event])
-    #                await self.emit_events([y_event])
-    #                await asyncio.sleep(0.01)
-    #
-    #            else:
-    #                # Slow down the loop so we don't waste millions of cycles and overheat our controller.
-    #                await asyncio.sleep(0.5)
-    #
-    #        else:
-    #            if self.gyro_device == None:
-    #                self.get_gyro()
-    #            
-    #            elif self.gyro_device == False:
-    #                break
     
     
     # Captures power events and handles long or short press events.
@@ -853,18 +782,6 @@ class HandheldController:
             await self.emit_events(events)
 
 
-    # Toggles enable/disable gyro input and do FF event to notify user of status.
-    #async def toggle_gyro(self):
-    #    self.gyro_enabled = not self.gyro_enabled
-    #    if self.gyro_enabled:
-    #        await self.do_rumble(0, 250, 1000, 0)
-    #    else:
-    #        await self.do_rumble(0, 100, 1000, 0)
-    #        await asyncio.sleep(FF_DELAY)
-    #        await self.do_rumble(0, 100, 1000, 0)
-    
-    
-    # RYZENADJ
     async def toggle_performance(self):
         if self.performance_mode == "--max-performance":
             self.performance_mode = "--power-saving"
@@ -892,6 +809,8 @@ class HandheldController:
             command = f'echo {self.thermal_mode} > /sys/devices/platform/asus-nb-wmi/throttle_thermal_policy'
             run = os.popen(command, 'r', 1).read().strip()
             self.logger.debug(f'Thermal mode set to {thermal_mode}.')
+
+
     def steam_ifrunning_deckui(self, cmd):
         # Get the currently running Steam PID.
         steampid_path = self.HOME_PATH + '/.steam/steam.pid'
@@ -945,30 +864,31 @@ class HandheldController:
             try:
                 self.controller_device.ungrab()
             except IOError as err:
-                self.logger.warn(f"{err} | Device wasn't grabbed.")
+                pass
             self.restore_controller()
+            self.restore_device(self.controller_event, self.controller_path)
         if self.keyboard_device:
             try:
                 self.keyboard_device.ungrab()
             except IOError as err:
-                self.logger.warn(f"{err} | Device wasn't grabbed.")
-            self.restore_keyboard()
+                pass
+            self.restore_device(self.keyboard_event, self.keyboard_path)
         if self.keyboard_2_device:
             try:
                 self.keyboard_2_device.ungrab()
             except IOError as err:
-                self.logger.warn(f"{err} | Device wasn't grabbed.")
-            self.restore_keyboard_2()
+                pass
+            self.restore_device(self.keyboard_2_event, self.keyboard_2_path)
         if self.power_device and self.CAPTURE_POWER:
             try:
                 self.power_device.ungrab()
             except IOError as err:
-                self.logger.warn(f"{err} | Device wasn't grabbed.")
+                pass
         if self.power_device_2 and self.CAPTURE_POWER:
             try:
                 self.power_device_2.ungrab()
             except IOError as err:
-                self.logger.warn(f"{err} | Device wasn't grabbed.")
+                pass
         self.logger.info("Devices restored.")
     
         # Kill all tasks. They are infinite loops so we will wait forver.
@@ -982,26 +902,10 @@ class HandheldController:
         self.logger.info("Handheld Game Console Controller Service stopped.")
     
     
-    def restore_keyboard(self):
+    def restore_device(self, event, path):
         # Both devices threads will attempt this, so ignore if they have been moved.
         try:
-            move(str(HIDE_PATH / self.keyboard_event), self.keyboard_path)
-        except FileNotFoundError:
-            pass
-    
-    
-    def restore_keyboard_2(self):
-        # Both devices threads will attempt this, so ignore if they have been moved.
-        try:
-            move(str(HIDE_PATH / self.keyboard_2_event), self.keyboard_2_path)
-        except FileNotFoundError:
-            pass
-    
-    
-    def restore_controller(self):
-        # Both devices threads will attempt this, so ignore if they have been moved.
-        try:
-            move(str(HIDE_PATH / self.controller_event), self.controller_path)
+            move(str(HIDE_PATH / event), path)
         except FileNotFoundError:
             pass
 

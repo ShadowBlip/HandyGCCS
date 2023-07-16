@@ -1,7 +1,6 @@
 #!/sbin/python3
-# HandyGCCS HandyCon
-# Copyright 2022 Derek J. Clark <derekjohn dot clark at gmail dot com>
-# List of constants for handycon.py
+# This file is part of Handheld Game Console Controlelr System (HandyGCCS)
+# Copyright 2022-2023 Derek J. Clark <derekjohn.clark@gmail.com>
 
 from evdev import AbsInfo, ecodes as e
 from pathlib import Path
