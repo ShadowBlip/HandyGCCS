@@ -515,16 +515,16 @@ async def toggle_performance():
 
     if handycon.performance_mode == "--max-performance":
         handycon.performance_mode = "--power-saving"
-        await handycon.do_rumble(0, 100, 1000, 0)
+        await do_rumble(0, 100, 1000, 0)
         await asyncio.sleep(FF_DELAY)
-        await handycon.do_rumble(0, 100, 1000, 0)
+        await do_rumble(0, 100, 1000, 0)
     else:
         handycon.performance_mode = "--max-performance"
-        await handycon.do_rumble(0, 500, 1000, 0)
+        await do_rumble(0, 500, 1000, 0)
         await asyncio.sleep(FF_DELAY)
-        await handycon.do_rumble(0, 75, 1000, 0)
+        await do_rumble(0, 75, 1000, 0)
         await asyncio.sleep(FF_DELAY)
-        await handycon.do_rumble(0, 75, 1000, 0)
+        await do_rumble(0, 75, 1000, 0)
 
     ryzenadj_command = f'ryzenadj {handycon.performance_mode}'
     run = os.popen(ryzenadj_command, 'r', 1).read().strip()
