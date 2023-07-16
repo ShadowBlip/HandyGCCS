@@ -538,7 +538,7 @@ async def toggle_performance():
 
         command = f'echo {handycon.thermal_mode} > /sys/devices/platform/asus-nb-wmi/throttle_thermal_policy'
         run = os.popen(command, 'r', 1).read().strip()
-        handycon.logger.debug(f'Thermal mode set to {thermal_mode}.')
+        handycon.logger.debug(f'Thermal mode set to {handycon.thermal_mode}.')
 
 
 def make_controller():
