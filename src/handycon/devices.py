@@ -327,7 +327,7 @@ async def capture_controller_events():
                         continue
 
                     # Output the event.
-                    await handycon.emit_events([event])
+                    await emit_events([event])
             except Exception as err:
                 handycon.logger.error(f"{err} | Error reading events from {handycon.controller_device.name}.")
                 restore_device(handycon.controller_event, handycon.controller_path)

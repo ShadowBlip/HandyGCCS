@@ -92,9 +92,9 @@ async def process_event(seed_event, active_keys):
     if this_button and not handycon.last_button:
         handycon.event_queue.remove(this_button)
         handycon.last_button = this_button
-        await handycon.emit_now(seed_event, this_button, 1)
+        await handycon.devices.emit_now(seed_event, this_button, 1)
 
     # Clean up old button presses.
     elif handycon.last_button and not this_button:
-        await handycon.emit_now(seed_event, handycon.last_button, 0)
+        await handycon.devices.emit_now(seed_event, handycon.last_button, 0)
         handycon.last_button = None

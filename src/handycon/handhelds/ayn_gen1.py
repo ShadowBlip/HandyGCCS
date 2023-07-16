@@ -38,12 +38,12 @@ async def process_event(seed_event, active_keys):
 
     # Automatically pass default keycodes we dont intend to replace.
     if seed_event.code in [e.KEY_VOLUMEDOWN, e.KEY_VOLUMEUP]:
-        await handycon.emit_events([seed_event])
+        await handycon.devices.emit_events([seed_event])
 
     # BUTTON 2 (Default: QAM) Front lower-right
     if active_keys == [20, 29, 42, 56] and button_on == 1 and button2 not in handycon.event_queue:
         handycon.event_queue.append(button2)
-        await handycon.emit_now(seed_event, button2, 1)
+        await handycon.devices.emit_now(seed_event, button2, 1)
     elif active_keys == [] and seed_event.code in [20, 29, 42, 56] and button_on == 0 and button2 in handycon.event_queue:
         handycon.event_queue.remove(button2)
-        await handycon.emit_now(seed_event, button2, 0)
+        await handycon.devices.emit_now(seed_event, button2, 0)
