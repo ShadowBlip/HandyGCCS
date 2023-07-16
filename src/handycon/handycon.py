@@ -121,7 +121,7 @@ class HandheldController:
 
     # These functions avoid recursive imports.
     def steam_ifrunning_deckui(self, cmd):
-        utilities.steam_ifrunning_deckui(cmd):
+        utilities.steam_ifrunning_deckui(cmd)
 
     def launch_chimera(self):
         utilities.launch_chimera()
