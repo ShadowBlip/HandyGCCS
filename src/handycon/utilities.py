@@ -11,6 +11,22 @@ import subprocess
 import sys
 
 ## Local modules
+import handycon.handhelds.ally_gen1 as ally_gen1
+import handycon.handhelds.anb_gen1 as anb_gen1
+import handycon.handhelds.aya_gen1 as aya_gen1
+import handycon.handhelds.aya_gen2 as aya_gen2
+import handycon.handhelds.aya_gen3 as aya_gen3
+import handycon.handhelds.aya_gen4 as aya_gen4
+import handycon.handhelds.aya_gen5 as aya_gen5
+import handycon.handhelds.aya_gen6 as aya_gen6
+import handycon.handhelds.ayn_gen1 as ayn_gen1
+import handycon.handhelds.gpd_gen1 as gpd_gen1
+import handycon.handhelds.gpd_gen2 as gpd_gen2
+import handycon.handhelds.gpd_gen3 as gpd_gen3
+import handycon.handhelds.oxp_gen1 as oxp_gen1
+import handycon.handhelds.oxp_gen2 as oxp_gen2
+import handycon.handhelds.oxp_gen3 as oxp_gen3
+import handycon.handhelds.oxp_gen4 as oxp_gen4
 from .constants import *
 
 ## Partial imports
