@@ -20,11 +20,14 @@ from time import sleep
 handycon = None
 
 def set_handycon(handheld_controller):
+    global handycon
     handycon = handheld_controller
 
 
 # Capture the username and home path of the user who has been logged in the longest.
 def get_user():
+    global handycon
+
     handycon.logger.debug("Identifying user.")
     cmd = "who | awk '{print $1}' | sort | head -1"
     while handycon.USER is None:
@@ -43,6 +46,7 @@ def get_user():
 
 # Identify the current device type. Kill script if not atible.
 def id_system():
+    global handycon
 
     system_id = open("/sys/devices/virtual/dmi/id/product_name", "r").read().strip()
     cpu_vendor = handycon.get_cpu_vendor()
@@ -176,6 +180,8 @@ se run the capture-system.py utility found on the GitHub repository and upload \
 
 
 def get_cpu_vendor():
+    global handycon
+
     cmd = "cat /proc/cpuinfo"
     all_info = subprocess.check_output(cmd, shell=True).decode().strip()
     for line in all_info.split("\n"):
@@ -184,6 +190,8 @@ def get_cpu_vendor():
 
 
 def get_config():
+    global handycon
+
     # Check for an existing config file and load it.
     config = configparser.ConfigParser()
     config_dir = "/etc/handygccs/"
@@ -219,6 +227,8 @@ def get_config():
 
 
 async def toggle_performance():
+    global handycon
+
     if handycon.performance_mode == "--max-performance":
         handycon.performance_mode = "--power-saving"
         await handycon.do_rumble(0, 100, 1000, 0)
@@ -248,6 +258,8 @@ async def toggle_performance():
 
 
 def steam_ifrunning_deckui(cmd):
+    global handycon
+
     # Get the currently running Steam PID.
     steampid_path = handycon.HOME_PATH + '/.steam/steam.pid'
     try:
@@ -286,6 +298,8 @@ def steam_ifrunning_deckui(cmd):
 
 
 def launch_chimera():
+    global handycon
+
     if not handycon.HAS_CHIMERA_LAUNCHER:
         return
     subprocess.run([ "su", handycon.USER, "-c", CHIMERA_LAUNCHER_PATH ])

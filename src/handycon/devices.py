@@ -34,10 +34,13 @@ from time import sleep
 handycon = None
 
 def set_handycon(handheld_controller):
+    global handycon
     handycon = handheld_controller
 
 
 def get_controller():
+    global handycon
+
     handycon.logger.debug(f"Attempting to grab {handycon.GAMEPAD_NAME}.")
     # Identify system input event devices.
     try:
@@ -70,6 +73,8 @@ def get_controller():
 
 
 def get_keyboard():
+    global handycon
+
     handycon.logger.debug(f"Attempting to grab {handycon.KEYBOARD_NAME}.")
     try:
         # Grab the built-in devices. This will give us exclusive acces to the devices and their capabilities.
@@ -101,6 +106,8 @@ def get_keyboard():
 
 
 def get_keyboard_2():
+    global handycon
+
     handycon.logger.debug(f"Attempting to grab {handycon.KEYBOARD_2_NAME}.")
     try:
         # Grab the built-in devices. This will give us exclusive acces to the devices and their capabilities.
@@ -132,6 +139,8 @@ def get_keyboard_2():
 
 
 def get_powerkey():
+    global handycon
+
     handycon.logger.debug(f"Attempting to grab power buttons.")
     # Identify system input event devices.
     try:
@@ -173,6 +182,8 @@ def get_powerkey():
 
 
 async def do_rumble(button=0, interval=10, length=1000, delay=0):
+    global handycon
+
     # Prevent look crash if controller_device was taken.
     if not handycon.controller_device:
         return
@@ -197,6 +208,8 @@ async def do_rumble(button=0, interval=10, length=1000, delay=0):
 
 # Captures keyboard events and translates them to virtual device events.
 async def capture_keyboard_events():
+    global handycon
+
     # Capture keyboard events and translate them to mapped events.
     while handycon.running:
         if handycon.keyboard_device:
@@ -263,6 +276,8 @@ async def capture_keyboard_events():
 
 # Captures keyboard events and translates them to virtual device events.
 async def capture_keyboard_2_events():
+    global handycon
+
     # Capture keyboard events and translate them to mapped events.
     while handycon.running:
         if handycon.keyboard_2_device:
@@ -300,6 +315,8 @@ async def capture_keyboard_2_events():
 
 
 async def capture_controller_events():
+    global handycon
+
     handycon.logger.debug(f"capture_controller_events, {handycon.running}")
     while handycon.running:
         if handycon.controller_device:
@@ -325,6 +342,8 @@ async def capture_controller_events():
 
 # Captures power events and handles long or short press events.
 async def capture_power_events():
+    global handycon
+
     while handycon.running:
         if handycon.power_device:
             try:
@@ -368,6 +387,8 @@ async def capture_power_events():
 
 # Handle FF event uploads
 async def capture_ff_events():
+    global handycon
+
     ff_effect_id_set = set()
 
     async for event in handycon.ui_device.async_read_loop():
@@ -424,6 +445,8 @@ async def capture_ff_events():
 
 
 def restore_device(event, path):
+    global handycon
+
     # Both devices threads will attempt this, so ignore if they have been moved.
     try:
         move(str(HIDE_PATH / event), path)
@@ -432,6 +455,8 @@ def restore_device(event, path):
 
 # Emits passed or generated events to the virtual controller.
 async def emit_events(events: list):
+    global handycon
+
     for event in events:
         handycon.logger.debug(f"Emitting event: {event}")
         handycon.ui_device.write_event(event)
@@ -443,6 +468,7 @@ async def emit_events(events: list):
 
 # Generates events from an event list to immediately emit, bypassing queue.
 async def emit_now(seed_event, event_list, value):
+    global handycon
 
     # Ignore malformed requests
     if not event_list:
@@ -484,6 +510,8 @@ async def emit_now(seed_event, event_list, value):
 
 
 def make_controller():
+    global handycon
+
     # Create the virtual controller.
     handycon.ui_device = UInput(
             CONTROLLER_EVENTS,
