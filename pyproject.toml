@@ -23,4 +23,4 @@ dependencies = []
 "Bug Tracker" = "https://github.com/ShadowBlip/HandyGCCS/issues"
 
 [project.scripts]
-handycon = "handycon.common:main"
+handycon = "handycon.handycon:main"
