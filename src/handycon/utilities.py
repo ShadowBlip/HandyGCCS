@@ -208,7 +208,7 @@ def get_config():
     # Check for an existing config file and load it.
     handycon.config = configparser.ConfigParser()
     if os.path.exists(CONFIG_PATH):
-        handycon.logger.info(f"Loading existing config: {config_path}")
+        handycon.logger.info(f"Loading existing config: {CONFIG_PATH}")
         handycon.config.read(CONFIG_PATH)
         if not "power_button" in handycon.config["Button Map"]:
             logger.info("Config file out of date. Generating new config.")
