@@ -26,7 +26,7 @@ import handycon.handhelds.oxp_gen4 as oxp_gen4
 from .constants import *
 
 ## Partial imports
-from evdev import ecodes as e, ff, InputDevice, list_devices, UInput
+from evdev import ecodes as e, ff, InputDevice, InputEvent, list_devices, UInput
 from pathlib import Path
 from shutil import move
 from time import sleep
