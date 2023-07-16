@@ -58,7 +58,6 @@ class HandheldController:
     
     # UInput Devices
     controller_device = None
-    #gyro_device = None
     keyboard_device = None
     keyboard_2_device = None
     power_device = None
