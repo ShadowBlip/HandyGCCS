@@ -261,7 +261,7 @@ def set_default_config():
 
 
 # Writes current config to disk.
-def write_config(config):
+def write_config():
     global handycon
     # Make the HandyGCCS directory if it doesn't exist.
     if not os.path.exists(CONFIG_DIR):
