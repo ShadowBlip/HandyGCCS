@@ -480,6 +480,7 @@ async def emit_now(self, seed_event, event_list, value):
             events.append(new_event)
 
     if events != []:
+        await emit_events(events)
 
 
 def make_controller():
