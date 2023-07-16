@@ -237,7 +237,7 @@ def map_config():
     "button11": EVENT_MAP[handycon.config["Button Map"]["button11"]],
     "button12": EVENT_MAP[handycon.config["Button Map"]["button12"]],
     }
-    handycon.power_action = POWER_ACTION_MAP[handycon.config["Button Map"]["power_button"]]
+    handycon.power_action = POWER_ACTION_MAP[handycon.config["Button Map"]["power_button"]][0]
 
 
 # Sets the default configuration.

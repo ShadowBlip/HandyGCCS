@@ -377,7 +377,7 @@ async def capture_power_events():
 
 # Performs specific power actions based on user config.
 def handle_power_action():
-    logger.debug(f"Power Action: {handycon.power_action}")
+    handycon.logger.debug(f"Power Action: {handycon.power_action}")
     match handycon.power_action:
         case "Suspend":
             # For DeckUI Sessions
