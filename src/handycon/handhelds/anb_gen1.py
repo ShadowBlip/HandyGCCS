@@ -42,6 +42,10 @@ async def process_event(seed_event, active_keys):
     if seed_event.code in [e.KEY_VOLUMEDOWN, e.KEY_VOLUMEUP]:
         events.append(seed_event)
 
+    # Handle missed keys. 
+    if active_keys == [] and handycon.event_queue != []:
+        this_button = handycon.event_queue[0]
+
     # BUTTON 1 (BUTTON 4 ALT Mode) (Default: Screenshot) Long press KB
     if active_keys == [24, 29, 125] and button_on == 2 and button1 not in handycon.event_queue:
         if button4 in handycon.event_queue:
@@ -53,11 +57,11 @@ async def process_event(seed_event, active_keys):
         this_button = button1
 
     # BUTTON 2 (Default: QAM) Home key.
-    if active_keys == [34, 125] and button_on == 1 and button2 not in handycon.event_queue:
+    if active_keys == [125] and button_on == 1 and button2 not in handycon.event_queue:
         if button5 in handycon.event_queue:
             handycon.event_queue.remove(button5)
         handycon.event_queue.append(button2)
-    elif active_keys == [] and seed_event.code in [34, 125] and button_on == 0 and button2 in handycon.event_queue:
+    elif active_keys == [] and seed_event.code in [125] and button_on == 0 and button2 in handycon.event_queue:
         this_button = button2
 
     # BUTTON 3, BUTTON 2 ALt mode (Defalt ESC)
@@ -78,9 +82,9 @@ async def process_event(seed_event, active_keys):
         this_button = button4
 
     # BUTTON 5 (Default: GUIDE) Meta/Windows key.
-    if active_keys == [125] and button_on == 1 and button5 not in handycon.event_queue:
+    if active_keys == [34, 125] and button_on == 1 and button5 not in handycon.event_queue:
         handycon.event_queue.append(button5)
-    elif active_keys == [] and seed_event.code == 125 and button_on == 0 and button5 in handycon.event_queue:
+    elif active_keys == [] and seed_event.code in [34, 125] and button_on == 0 and button5 in handycon.event_queue:
         this_button = button5
 
     # Handle L_META from power button

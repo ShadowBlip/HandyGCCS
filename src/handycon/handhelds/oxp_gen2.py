@@ -41,6 +41,10 @@ async def process_event(seed_event, active_keys):
     if seed_event.code in [e.KEY_VOLUMEDOWN, e.KEY_VOLUMEUP]:
         await handycon.emit_events([seed_event])
 
+    # Handle missed keys. 
+    if active_keys == [] and handycon.event_queue != []:
+        this_button = handycon.event_queue[0]
+
     # BUTTON 1 (Possible dangerous fan activity!) Short press orange + |||||
     if active_keys == [99, 125] and button_on == 1 and button1 not in handycon.event_queue:
         handycon.event_queue.append(button1)
