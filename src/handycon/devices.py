@@ -394,7 +394,7 @@ def handle_power_action():
             is_deckui = handycon.steam_ifrunning_deckui("steam://longpowerpress")
 
             if not is_deckui:
-                os.system('systemctl shutdown')
+                os.system('systemctl poweroff')
 
 # Handle FF event uploads
 async def capture_ff_events():
