@@ -47,7 +47,7 @@ def get_controller():
     for device in devices_original:
         if device.name == handycon.GAMEPAD_NAME and device.phys == handycon.GAMEPAD_ADDRESS:
             handycon.controller_path = device.path
-            handycon.controller_device = InputDevice(.controller_path)
+            handycon.controller_device = InputDevice(handycon.controller_path)
             if handycon.CAPTURE_CONTROLLER:
                 handycon.controller_device.grab()
                 handycon.controller_event = Path(handycon.controller_path).name
