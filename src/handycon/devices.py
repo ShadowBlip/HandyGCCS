@@ -81,7 +81,7 @@ def get_keyboard():
                 if handycon.CAPTURE_KEYBOARD:
                     handycon.keyboard_device.grab()
                     handycon.keyboard_event = Path(handycon.keyboard_path).name
-                    move(.keyboard_path, str(HIDE_PATH / handycon.keyboard_event))
+                    move(handycon.keyboard_path, str(HIDE_PATH / handycon.keyboard_event))
                 break
 
         # Sometimes the service loads before all input devices have full initialized. Try a few times.
