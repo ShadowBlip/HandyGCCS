@@ -24,7 +24,6 @@ import handycon.handhelds.oxp_gen2 as oxp_gen2
 import handycon.handhelds.oxp_gen3 as oxp_gen3
 import handycon.handhelds.oxp_gen4 as oxp_gen4
 from .constants import *
-from .common 
 
 ## Partial imports
 from evdev import InputDevice, ecodes as e, list_devices, ff

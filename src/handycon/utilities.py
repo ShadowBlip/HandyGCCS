@@ -241,7 +241,7 @@ async def toggle_performance():
         handycon.logger.debug(f'Thermal mode set to {thermal_mode}.')
 
 
-def steam_ifrunning_deckui(, cmd):
+def steam_ifrunning_deckui(cmd):
     # Get the currently running Steam PID.
     steampid_path = handycon.HOME_PATH + '/.steam/steam.pid'
     try:
