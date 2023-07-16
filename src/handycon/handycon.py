@@ -119,11 +119,11 @@ class HandheldController:
             sys.exit(exit_code)
 
     async def emit_events(self, events: list):
-        devices.emit_events(events)
+        await devices.emit_events(events)
 
 
     async def emit_now(self, seed_event, event_list, value):
-        devices.emit_now(seed_event, event_list, value)
+        await devices.emit_now(seed_event, event_list, value)
 
 
     # Gracefull shutdown.
