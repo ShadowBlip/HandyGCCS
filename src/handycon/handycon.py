@@ -130,7 +130,7 @@ class HandheldController:
 
 
     async def do_rumble(self, button=0, interval=10, length=1000, delay=0):
-        await devices.do_rumble(button, interval, length, delay)a
+        await devices.do_rumble(button, interval, length, delay)
 
 
     # Gracefull shutdown.
