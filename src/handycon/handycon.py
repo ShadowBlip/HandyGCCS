@@ -118,6 +118,14 @@ class HandheldController:
             self.loop.stop()
             sys.exit(exit_code)
 
+    async def emit_events(events: list):
+        devices.emit_events(events)
+
+
+    async def emit_now(seed_event, event_list, value):
+        devices.emit_now(seed_event, event_list, value)
+
+
     # Gracefull shutdown.
     async def exit(self):
         self.logger.info("Receved exit signal. Restoring devices.")

@@ -39,7 +39,7 @@ async def process_event(seed_event, active_keys):
 
     # Automatically pass default keycodes we dont intend to replace.
     if seed_event.code in [e.KEY_VOLUMEDOWN, e.KEY_VOLUMEUP]:
-        await handycon.devices.emit_events([seed_event])
+        await handycon.emit_events([seed_event])
 
     # This device class uses the same active_keys events with different values for AYA SPACE, LC, and RC.
     if active_keys == [29, 125]:
@@ -47,36 +47,36 @@ async def process_event(seed_event, active_keys):
         # LC | Default: Screenshot / Launch Chimera
         if button_on == 102 and handycon.event_queue == []:
             handycon.event_queue.append(button1)
-            await handycon.devices.emit_now(seed_event, button1, 1)
+            await handycon.emit_now(seed_event, button1, 1)
         # RC | Default: OSK
         elif button_on == 103 and handycon.event_queue == []:
             handycon.event_queue.append(button4)
-            await handycon.devices.emit_now(seed_event, button4, 1)
+            await handycon.emit_now(seed_event, button4, 1)
         # AYA Space | Default: MODE
         elif button_on == 104 and handycon.event_queue == []:
             handycon.event_queue.append(button5)
-            await handycon.devices.emit_now(seed_event, button5, 1)
+            await handycon.emit_now(seed_event, button5, 1)
 
     elif active_keys == [] and seed_event.code in [97, 125] and button_on == 0 and handycon.event_queue != []:
         await sleep(handycon.BUTTON_DELAY)
         if button1 in handycon.event_queue:
             handycon.event_queue.remove(button1)
-            await handycon.devices.emit_now(seed_event, button1, 0)
+            await handycon.emit_now(seed_event, button1, 0)
         if button4 in handycon.event_queue:
             handycon.event_queue.remove(button4)
-            await handycon.devices.emit_now(seed_event, button4, 0)
+            await handycon.emit_now(seed_event, button4, 0)
         if button5 in handycon.event_queue:
             handycon.event_queue.remove(button5)
-            await handycon.devices.emit_now(seed_event, button5, 0)
+            await handycon.emit_now(seed_event, button5, 0)
 
     # Small button | Default: QAM
     if active_keys == [32, 125] and button_on == 1 and button2 not in handycon.event_queue:
         handycon.event_queue.append(button2)
-        await handycon.devices.emit_now(seed_event, button2, 1)
+        await handycon.emit_now(seed_event, button2, 1)
     elif active_keys == [] and seed_event.code in [32, 125] and button_on == 0 and button2 in handycon.event_queue:
         await sleep(handycon.BUTTON_DELAY)
         handycon.event_queue.remove(button2)
-        await handycon.devices.emit_now(seed_event, button2, 0)
+        await handycon.emit_now(seed_event, button2, 0)
 
     # Handle L_META from power button
     elif active_keys == [] and seed_event.code == 125 and button_on == 0 and handycon.event_queue == [] and handycon.shutdown == True:
