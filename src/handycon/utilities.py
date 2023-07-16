@@ -17,6 +17,12 @@ from .constants import *
 from time import sleep
 
 
+handycon = None
+
+def set_handycon(handheld_controller):
+    handycon = handheld_controller
+
+
 # Capture the username and home path of the user who has been logged in the longest.
 def get_user():
     handycon.logger.debug("Identifying user.")

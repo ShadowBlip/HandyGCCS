@@ -31,6 +31,11 @@ from pathlib import Path
 from shutil import move
 from time import sleep
 
+handycon = None
+
+def set_handycon(handheld_controller):
+    handycon = handheld_controller
+
 
 def get_controller():
     handycon.logger.debug(f"Attempting to grab {handycon.GAMEPAD_NAME}.")
@@ -51,7 +56,7 @@ def get_controller():
             if handycon.CAPTURE_CONTROLLER:
                 handycon.controller_device.grab()
                 handycon.controller_event = Path(handycon.controller_path).name
-                move(.controller_path, str(HIDE_PATH / handycon.controller_event))
+                move(handycon.controller_path, str(HIDE_PATH / handycon.controller_event))
             break
 
     # Sometimes the service loads before all input devices have full initialized. Try a few times.
@@ -107,7 +112,7 @@ def get_keyboard_2():
                 if handycon.CAPTURE_KEYBOARD:
                     handycon.keyboard_2_device.grab()
                     handycon.keyboard_2_event = Path(.keyboard_2_path).name
-                    move(.keyboard_2_path, str(HIDE_PATH / handycon.keyboard_2_event))
+                    move(handycon.keyboard_2_path, str(HIDE_PATH / handycon.keyboard_2_event))
                 break
 
         # Sometimes the service loads before all input devices have full initialized. Try a few times.

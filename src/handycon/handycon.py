@@ -12,8 +12,8 @@ import warnings
 
 ## Local modules
 from .constants import *
-from .devices import *
-from .utilities import *
+import devices
+import utilities
 
 ## Partial imports
 from pathlib import Path
@@ -78,25 +78,27 @@ class HandheldController:
     
     def __init__(self):
         self.running = True
+        devices.set_handycon(self)
+        utilities.set_handycon(self)
         self.logger.info("Starting Handhend Game Console Controller Service...") 
-        get_user()
+        utilities.get_user()
         self.HAS_CHIMERA_LAUNCHER=os.path.isfile(CHIMERA_LAUNCHER_PATH)
-        id_system()
+        utilities.id_system()
         Path(HIDE_PATH).mkdir(parents=True, exist_ok=True)
-        get_config()
-        make_controller()
+        utilities.get_config()
+        devices.make_controller()
     
         # Run asyncio loop to capture all events.
         self.loop = asyncio.get_event_loop()
     
         # Attach the event loop of each device to the asyncio loop.
-        asyncio.ensure_future(capture_controller_events())
-        asyncio.ensure_future(capture_ff_events())
-        asyncio.ensure_future(capture_keyboard_events())
+        asyncio.ensure_future(devices.capture_controller_events())
+        asyncio.ensure_future(devices.capture_ff_events())
+        asyncio.ensure_future(devices.capture_keyboard_events())
         if self.KEYBOARD_2_NAME != '' and self.KEYBOARD_2_ADDRESS != '':
-            asyncio.ensure_future(capture_keyboard_2_events())
+            asyncio.ensure_future(devices.capture_keyboard_2_events())
 
-        asyncio.ensure_future(capture_power_events())
+        asyncio.ensure_future(devices.capture_power_events())
         self.logger.info("Handheld Game Console Controller Service started.")
     
         # Establish signaling to handle gracefull shutdown.
@@ -126,19 +128,19 @@ class HandheldController:
                 self.controller_device.ungrab()
             except IOError as err:
                 pass
-            restore_device(self.controller_event, self.controller_path)
+            devices.restore_device(self.controller_event, self.controller_path)
         if self.keyboard_device:
             try:
                 self.keyboard_device.ungrab()
             except IOError as err:
                 pass
-            restore_device(self.keyboard_event, self.keyboard_path)
+            devices.restore_device(self.keyboard_event, self.keyboard_path)
         if self.keyboard_2_device:
             try:
                 self.keyboard_2_device.ungrab()
             except IOError as err:
                 pass
-            restore_device(self.keyboard_2_event, self.keyboard_2_path)
+            devices.restore_device(self.keyboard_2_event, self.keyboard_2_path)
         if self.power_device and self.CAPTURE_POWER:
             try:
                 self.power_device.ungrab()
