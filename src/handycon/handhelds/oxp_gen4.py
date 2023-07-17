@@ -2,6 +2,7 @@
 # This file is part of Handheld Game Console Controller System (HandyGCCS)
 # Copyright 2022-2023 Derek J. Clark <derekjohn.clark@gmail.com>
 
+import os
 import sys
 from evdev import InputDevice, InputEvent, UInput, ecodes as e, list_devices, ff
 
@@ -20,6 +21,10 @@ def init_handheld(handheld_controller):
     handycon.GAMEPAD_NAME = 'Microsoft X-Box 360 pad'
     handycon.KEYBOARD_ADDRESS = 'isa0060/serio0/input0'
     handycon.KEYBOARD_NAME = 'AT Translated Set 2 keyboard'
+    if os.path.exists('/sys/devices/platform/oxp-platform/tt_toggle'):
+        command = f'echo 1 > /sys/devices/platform/oxp-platform/tt_toggle'
+        run = os.popen(command, 'r', 1).read().strip()
+        handycon.logger.info(f'Turbo button takeover enabled')
 
 
 # Captures keyboard events and translates them to virtual device events.
@@ -52,10 +57,11 @@ async def process_event(seed_event, active_keys):
     elif active_keys == [] and seed_event.code in [99, 125] and button_on == 0 and button1 in handycon.event_queue:
         this_button = button1
 
-    # BUTTON 2 (Default: QAM) Long press orange
-    if active_keys == [34, 125] and button_on == 1 and button2 not in handycon.event_queue:
+    # BUTTON 2 (Default: QAM) Turbo Button
+    #if active_keys == [34, 125] and button_on == 1 and button2 not in handycon.event_queue:
+    if active_keys == [29, 56, 125] and button_on == 1 and button2 not in handycon.event_queue:
         handycon.event_queue.append(button2)
-    elif active_keys == [] and seed_event.code in [34, 125] and button_on == 0 and button2 in handycon.event_queue:
+    elif active_keys == [] and seed_event.code in [29, 56, 125] and button_on == 0 and button2 in handycon.event_queue:
         this_button = button2
         await handycon.do_rumble(0, 150, 1000, 0)
 
@@ -76,6 +82,12 @@ async def process_event(seed_event, active_keys):
         handycon.event_queue.append(button5)
     elif active_keys == [] and seed_event.code in [32, 125] and button_on == 0 and button5 in handycon.event_queue:
         this_button = button5
+
+    # BUTTON 6 (Default: Launch Chimera) Long press orange
+    if active_keys == [34, 125] and button_on == 1 and button6 not in handycon.event_queue:
+        handycon.event_queue.append(button6)
+    elif active_keys == [] and seed_event.code in [34, 125] and button_on == 0 and button6 in handycon.event_queue:
+        this_button = button6
 
     # Handle L_META from power button
     elif active_keys == [] and seed_event.code == 125 and button_on == 0 and  handycon.event_queue == [] and handycon.shutdown == True:

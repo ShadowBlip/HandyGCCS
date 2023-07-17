@@ -183,4 +183,3 @@ class HandheldController:
     
 def main():
     handycon = HandheldController()
-
