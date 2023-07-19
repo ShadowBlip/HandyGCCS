@@ -1,10 +1,13 @@
 #!/sbin/python3
-# HandyGCCS HandyCon
-# Copyright 2022 Derek J. Clark <derekjohn dot clark at gmail dot com>
-# List of constants for handycon.py
+# This file is part of Handheld Game Console Controller System (HandyGCCS)
+# Copyright 2022-2023 Derek J. Clark <derekjohn.clark@gmail.com>
 
 from evdev import AbsInfo, ecodes as e
+from pathlib import Path
 
+CHIMERA_LAUNCHER_PATH = Path('/usr/share/chimera/bin/chimera-web-launcher')
+CONFIG_DIR = "/etc/handygccs/"
+CONFIG_PATH = "/etc/handygccs/handygccs.conf"
 CONTROLLER_EVENTS = {
     e.EV_KEY: [
         e.KEY_ESC,
@@ -193,13 +196,39 @@ CONTROLLER_EVENTS = {
 DETECT_DELAY = 0.25
 EVENT_ALT_TAB = [[e.EV_KEY, e.KEY_LEFTALT], [e.EV_KEY, e.KEY_TAB]]
 EVENT_ESC = [[e.EV_MSC, e.MSC_SCAN], [e.EV_KEY, e.KEY_ESC]]
-EVENT_MODE = [[e.EV_KEY, e.BTN_MODE]]
 EVENT_KILL = [[e.EV_KEY, e.KEY_LEFTMETA], [e.EV_KEY, e.KEY_LEFTCTRL], [e.EV_KEY, e.KEY_ESC]]
+EVENT_MODE = [[e.EV_KEY, e.BTN_MODE]]
+EVENT_OPEN_CHIM = ["Open Chimera"]
 EVENT_OSK = [[e.EV_KEY, e.BTN_MODE], [e.EV_KEY, e.BTN_NORTH]]
 EVENT_OSK_DE = [[e.EV_KEY, e.KEY_LEFTMETA], [e.EV_KEY, e.KEY_LEFTCTRL], [e.EV_KEY, e.KEY_O]]
 EVENT_QAM = [[e.EV_KEY, e.BTN_MODE], [e.EV_KEY, e.BTN_SOUTH]]
 EVENT_SCR = [[e.EV_KEY, e.BTN_MODE], [e.EV_KEY, e.BTN_TR]]
+EVENT_TOGGLE_GYRO = ["Toggle Gyro"]
+EVENT_TOGGLE_MOUSE = ["Toggle Mouse Mode"]
+EVENT_TOGGLE_PERF = ["Toggle Performance"]
+EVENT_MAP = {
+        "ALT_TAB": EVENT_ALT_TAB,
+        "ESC": EVENT_ESC,
+        "KILL": EVENT_KILL,
+        "MODE": EVENT_MODE,
+        "OPEN_CHIMERA": EVENT_OPEN_CHIM,
+        "OSK": EVENT_OSK,
+        "QAM": EVENT_QAM,
+        "SCR": EVENT_SCR,
+        "TOGGLE_GYRO": EVENT_TOGGLE_GYRO,
+        "TOGGLE_MOUSE": EVENT_TOGGLE_MOUSE,
+        "TOGGLE_PERFORMANCE": EVENT_TOGGLE_PERF,
+    }
+POWER_ACTION_HIBERNATE = ["Hibernate"]
+POWER_ACTION_SHUTDOWN = ["Shutdown"]
+POWER_ACTION_SUSPEND = ["Suspend"]
+POWER_ACTION_MAP = {
+        "HIBERNATE": POWER_ACTION_HIBERNATE,
+        "SHUTDOWN":  POWER_ACTION_SHUTDOWN,
+        "SUSPEND":   POWER_ACTION_SUSPEND,
+    }
 FF_DELAY = 0.2
-HIDE_PATH = "/dev/input/.hidden/"
+HIDE_PATH = Path("/dev/input/.hidden/")
+HOME_PATH = Path('/home')
 JOY_MAX = 32767
 JOY_MIN = -32767
