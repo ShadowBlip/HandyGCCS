@@ -155,13 +155,13 @@ def id_system():
         gpd_gen1.init_handheld(handycon)
 
     elif system_id in (
-        "G1618-04", #WinMax2
+        "G1619-04", #WinMax2
         ):
         handycon.system_type = "GPD_GEN2"
         gpd_gen2.init_handheld(handycon)
 
     elif system_id in (
-        "G1619-04", #Win4
+        "G1618-04", #Win4
         ):
         handycon.system_type = "GPD_GEN3"
         gpd_gen3.init_handheld(handycon)
