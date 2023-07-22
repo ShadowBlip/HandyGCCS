@@ -67,7 +67,7 @@ async def process_event(seed_event, active_keys):
         await handycon.emit_now(seed_event, button4, 0)
 
     # BUTTON 5 (Default: MODE) Big button
-    if active_keys == [88, 97, 125] and button_on == 1 and button5 not in handycon.event_queue:
+    if active_keys == [97, 125, 187] and button_on == 1 and button5 not in handycon.event_queue:
         handycon.event_queue.append(button5)
         await handycon.emit_now(seed_event, button5, 1)
     elif active_keys == [] and seed_event.code in [97, 125, 187] and button_on == 0 and button5 in handycon.event_queue:
