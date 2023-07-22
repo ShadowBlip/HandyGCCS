@@ -41,43 +41,40 @@ async def process_event(seed_event, active_keys):
     if seed_event.code in [e.KEY_VOLUMEDOWN, e.KEY_VOLUMEUP]:
         await handycon.emit_events([seed_event])
 
-    # This device class uses the same active_keys events with different values for AYA SPACE, LC, and RC.
-    if active_keys == [29, 125]:
+    # BUTTON 1 (Default: Screenshot/Launch Chiumera) LC Button
+    if active_keys == [97, 125, 185] and button_on == 1 and button1 not in handycon.event_queue:
+        handycon.event_queue.append(button1)
+        await handycon.emit_now(seed_event, button1, 1)
+    elif active_keys == [] and seed_event.code in [97, 125, 185] and button_on == 0 and button1 in handycon.event_queue:
+        handycon.event_queue.remove(button1)
+        await handycon.emit_now(seed_event, button1, 0)
 
-        # LC | Default: Screenshot / Launch Chimera
-        if button_on == 102 and handycon.event_queue == []:
-            handycon.event_queue.append(button1)
-            await handycon.emit_now(seed_event, button1, 1)
-        # RC | Default: OSK
-        elif button_on == 103 and handycon.event_queue == []:
-            handycon.event_queue.append(button4)
-            await handycon.emit_now(seed_event, button4, 1)
-        # AYA Space | Default: MODE
-        elif button_on == 104 and handycon.event_queue == []:
-            handycon.event_queue.append(button5)
-            await handycon.emit_now(seed_event, button5, 1)
-
-    elif active_keys == [] and seed_event.code in [97, 125] and button_on == 0 and handycon.event_queue != []:
-        await sleep(handycon.BUTTON_DELAY)
-        if button1 in handycon.event_queue:
-            handycon.event_queue.remove(button1)
-            await handycon.emit_now(seed_event, button1, 0)
-        if button4 in handycon.event_queue:
-            handycon.event_queue.remove(button4)
-            await handycon.emit_now(seed_event, button4, 0)
-        if button5 in handycon.event_queue:
-            handycon.event_queue.remove(button5)
-            await handycon.emit_now(seed_event, button5, 0)
-
-    # Small button | Default: QAM
+    # BUTTON 2 (Default: QAM) Small Button
     if active_keys == [32, 125] and button_on == 1 and button2 not in handycon.event_queue:
         handycon.event_queue.append(button2)
         await handycon.emit_now(seed_event, button2, 1)
+        await handycon.do_rumble(0, 150, 1000, 0)
     elif active_keys == [] and seed_event.code in [32, 125] and button_on == 0 and button2 in handycon.event_queue:
-        await sleep(handycon.BUTTON_DELAY)
         handycon.event_queue.remove(button2)
         await handycon.emit_now(seed_event, button2, 0)
+
+    # BUTTON 4 (Default: OSK) RC Button
+    if active_keys == [97, 125, 186] and button_on == 1 and button4 not in handycon.event_queue:
+        handycon.event_queue.append(button4)
+        await handycon.emit_now(seed_event, button4, 1)
+    elif active_keys == [] and seed_event.code in [97, 125, 186] and button_on == 0 and button4 in handycon.event_queue:
+        handycon.event_queue.remove(button4)
+        await handycon.emit_now(seed_event, button4, 0)
+
+    # BUTTON 5 (Default: MODE) Big button
+    if active_keys == [88, 97, 125] and button_on == 1 and button5 not in handycon.event_queue:
+        handycon.event_queue.append(button5)
+        await handycon.emit_now(seed_event, button5, 1)
+    elif active_keys == [] and seed_event.code in [97, 125, 187] and button_on == 0 and button5 in handycon.event_queue:
+        handycon.event_queue.remove(button5)
+        await handycon.emit_now(seed_event, button5, 0)
 
     # Handle L_META from power button
     elif active_keys == [] and seed_event.code == 125 and button_on == 0 and handycon.event_queue == [] and handycon.shutdown == True:
         handycon.shutdown = False
+
