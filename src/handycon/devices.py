@@ -461,13 +461,19 @@ async def capture_ff_events():
 
 
 def restore_device(event, path):
-    global handycon
-
     # Both devices threads will attempt this, so ignore if they have been moved.
     try:
         move(str(HIDE_PATH / event), path)
     except FileNotFoundError:
         pass
+
+
+def restore_hidden():
+    hidden_events = os.listdir(HIDE_PATH)
+    if len(hidden_events) == 0:
+        return
+    for hidden_event in hidden_events:
+        move(str(HIDE_PATH / hidden_event), "/dev/input/" + hidden_event)
 
 
 # Emits passed or generated events to the virtual controller.

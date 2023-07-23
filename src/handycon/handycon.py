@@ -78,6 +78,11 @@ class HandheldController:
     thermal_mode = "0"
     
     def __init__(self):
+        if utilities.is_process_running("opengamepadui"):
+            self.logger.warn("Detected an OpenGamepadUI Process. Input management not possible. Exiting.")
+            exit()
+        Path(HIDE_PATH).mkdir(parents=True, exist_ok=True)
+        devices.restore_hidden() 
         self.running = True
         devices.set_handycon(self)
         utilities.set_handycon(self)
@@ -85,7 +90,6 @@ class HandheldController:
         utilities.get_user()
         self.HAS_CHIMERA_LAUNCHER=os.path.isfile(CHIMERA_LAUNCHER_PATH)
         utilities.id_system()
-        Path(HIDE_PATH).mkdir(parents=True, exist_ok=True)
         utilities.get_config()
         devices.make_controller()
     

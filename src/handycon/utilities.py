@@ -303,7 +303,7 @@ def steam_ifrunning_deckui(cmd):
             steam_cmd = f.read()
     except Exception as err:
         handycon.logger.error(f"{err} | Error getting steam cmdline.")
-        return False
+        return False 
 
     # Use this andline to determine if Steam is running in DeckUI mode.
     # e.g. "steam://shortpowerpress" only works in DeckUI.
@@ -326,3 +326,14 @@ def launch_chimera():
     if not handycon.HAS_CHIMERA_LAUNCHER:
         return
     subprocess.run([ "su", handycon.USER, "-c", CHIMERA_LAUNCHER_PATH ])
+
+
+def is_process_running(name) -> bool:
+    read_proc = os.popen("ps -Af").read()
+    proc_count = tmp.count(name)
+    if proc_count > 0:
+        handycon.logger.debug(f'Process {name} is running.')
+        return true
+    handycon.logger.debug(f'Process {name} isi NOT running.')
+    return false
+
