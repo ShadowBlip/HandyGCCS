@@ -473,6 +473,7 @@ def restore_hidden():
     if len(hidden_events) == 0:
         return
     for hidden_event in hidden_events:
+        handycon.logger.debug(f'Restoring {hidden_event}')
         move(str(HIDE_PATH / hidden_event), "/dev/input/" + hidden_event)
 
 

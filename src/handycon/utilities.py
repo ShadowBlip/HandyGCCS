@@ -330,10 +330,10 @@ def launch_chimera():
 
 def is_process_running(name) -> bool:
     read_proc = os.popen("ps -Af").read()
-    proc_count = tmp.count(name)
+    proc_count = read_proc.count(name)
     if proc_count > 0:
         handycon.logger.debug(f'Process {name} is running.')
-        return true
-    handycon.logger.debug(f'Process {name} isi NOT running.')
-    return false
+        return True
+    handycon.logger.debug(f'Process {name} is NOT running.')
+    return False
 

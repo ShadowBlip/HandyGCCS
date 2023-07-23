@@ -27,7 +27,7 @@ class HandheldController:
                         level=logging.DEBUG
                         )
     logger= logging.getLogger(__name__)
-    
+
     # Session Variables
     config = None
     button_map = {}
@@ -38,7 +38,7 @@ class HandheldController:
     power_action = "Suspend"
     running = False
     shutdown = False
-    
+
     # Handheld Config
     BUTTON_DELAY = 0.00
     CAPTURE_CONTROLLER = False
@@ -52,19 +52,19 @@ class HandheldController:
     KEYBOARD_2_NAME = ''
     POWER_BUTTON_PRIMARY = "LNXPWRBN/button/input0"
     POWER_BUTTON_SECONDARY = "PNP0C0C/button/input0"
-    
+
     # Enviroment Variables
     HAS_CHIMERA_LAUNCHER = False
     USER = None
     HOME_PATH = None
-    
+
     # UInput Devices
     controller_device = None
     keyboard_device = None
     keyboard_2_device = None
     power_device = None
     power_device_2 = None
-    
+
     # Paths
     controller_event = None
     controller_path = None
@@ -72,30 +72,30 @@ class HandheldController:
     keyboard_path = None
     keyboard_2_event = None
     keyboard_2_path = None
-    
+
     # Performance settings
     performance_mode = "--power-saving"
     thermal_mode = "0"
-    
+
     def __init__(self):
+        self.running = True
+        devices.set_handycon(self)
+        utilities.set_handycon(self)
+        self.logger.info("Starting Handhend Game Console Controller Service...")
         if utilities.is_process_running("opengamepadui"):
             self.logger.warn("Detected an OpenGamepadUI Process. Input management not possible. Exiting.")
             exit()
         Path(HIDE_PATH).mkdir(parents=True, exist_ok=True)
         devices.restore_hidden() 
-        self.running = True
-        devices.set_handycon(self)
-        utilities.set_handycon(self)
-        self.logger.info("Starting Handhend Game Console Controller Service...") 
         utilities.get_user()
         self.HAS_CHIMERA_LAUNCHER=os.path.isfile(CHIMERA_LAUNCHER_PATH)
         utilities.id_system()
         utilities.get_config()
         devices.make_controller()
-    
+
         # Run asyncio loop to capture all events.
         self.loop = asyncio.get_event_loop()
-    
+
         # Attach the event loop of each device to the asyncio loop.
         asyncio.ensure_future(devices.capture_controller_events())
         asyncio.ensure_future(devices.capture_ff_events())
@@ -105,11 +105,11 @@ class HandheldController:
 
         asyncio.ensure_future(devices.capture_power_events())
         self.logger.info("Handheld Game Console Controller Service started.")
-    
+
         # Establish signaling to handle gracefull shutdown.
         for s in (signal.SIGHUP, signal.SIGTERM, signal.SIGINT, signal.SIGQUIT):
             self.loop.add_signal_handler(s, lambda s=s: asyncio.create_task(self.exit()))
-    
+
         try:
             self.loop.run_forever()
             exit_code = 0
@@ -143,7 +143,7 @@ class HandheldController:
     async def exit(self):
         self.logger.info("Receved exit signal. Restoring devices.")
         self.running = False
-    
+
         if self.controller_device:
             try:
                 self.controller_device.ungrab()
@@ -173,7 +173,7 @@ class HandheldController:
             except IOError as err:
                 pass
         self.logger.info("Devices restored.")
-    
+
         # Kill all tasks. They are infinite loops so we will wait forver.
         for task in [t for t in asyncio.all_tasks() if t is not asyncio.current_task()]:
             task.cancel()
@@ -183,7 +183,7 @@ class HandheldController:
                 pass
         self.loop.stop()
         self.logger.info("Handheld Game Console Controller Service stopped.")
-    
-    
+
+
 def main():
     handycon = HandheldController()
