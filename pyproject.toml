@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "handycon"
+version = "2.0.0"
+authors = [
+    { name="Derek J. Clark", email="derekjohn.clark@gmail.com" },
+]
+description = " Python module that provides full controller support for handheld consoles.  "
+readme = "README.md"
+requires-python = ">=3.10"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+    "Operating System :: POSIX :: Linux",
+]
+dependencies = []
+
+[project.urls]
+"Homepage" = "https://github.com/ShadowBlip/HandyGCCS"
+"Bug Tracker" = "https://github.com/ShadowBlip/HandyGCCS/issues"
+
+[project.scripts]
+handycon = "handycon.handycon:main"

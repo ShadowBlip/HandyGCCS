@@ -1,2 +1,6 @@
 __pycache__
 capture_file.txt
+build
+dist
+handycon.egg-info
+
