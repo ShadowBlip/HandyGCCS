@@ -144,6 +144,12 @@ def id_system():
         ):
         handycon.system_type = "AYA_GEN6"
         aya_gen6.init_handheld(handycon)
+    
+    elif system_id in (
+        "AIR 1S",
+        ):
+        handycon.system_type = "AYA_GEN7"
+        aya_gen6.init_handheld(handycon)
 
     ## Ayn Devices
     elif system_id in (
