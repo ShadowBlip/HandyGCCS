@@ -14,6 +14,7 @@ import sys
 import handycon.handhelds.ally_gen1 as ally_gen1
 import handycon.handhelds.anb_gen1 as anb_gen1
 import handycon.handhelds.aok_gen1 as aok_gen1
+import handycon.handhelds.aok_gen2 as aok_gen2
 import handycon.handhelds.aya_gen1 as aya_gen1
 import handycon.handhelds.aya_gen2 as aya_gen2
 import handycon.handhelds.aya_gen3 as aya_gen3
@@ -77,10 +78,15 @@ def id_system():
     ## AOKZOE Devices
     elif system_id in (
         "AOKZOE A1 AR07",
-        "AOKZOE A1 Pro",
         ):
         handycon.system_type = "AOK_GEN1"
-        oxp_gen4.init_handheld(handycon)
+        aok_gen1.init_handheld(handycon)
+
+    elif system_id in (
+        "AOKZOE A1 Pro",
+        ):
+        handycon.system_type = "AOK_GEN2"
+        aok_gen2.init_handheld(handycon)
 
 
     ## ASUS Devices
