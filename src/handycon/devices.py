@@ -10,6 +10,7 @@ import os
 import handycon.handhelds.ally_gen1 as ally_gen1
 import handycon.handhelds.anb_gen1 as anb_gen1
 import handycon.handhelds.aok_gen1 as aok_gen1
+import handycon.handhelds.aok_gen2 as aok_gen2
 import handycon.handhelds.aya_gen1 as aya_gen1
 import handycon.handhelds.aya_gen2 as aya_gen2
 import handycon.handhelds.aya_gen3 as aya_gen3
@@ -238,6 +239,8 @@ async def capture_keyboard_events():
                             await anb_gen1.process_event(seed_event, active_keys)
                         case "AOK_GEN1":
                             await aok_gen1.process_event(seed_event, active_keys)
+                        case "AOK_GEN2":
+                            await aok_gen2.process_event(seed_event, active_keys)
                         case "AYA_GEN1":
                             await aya_gen1.process_event(seed_event, active_keys)
                         case "AYA_GEN2":
