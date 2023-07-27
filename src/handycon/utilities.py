@@ -21,6 +21,7 @@ import handycon.handhelds.aya_gen3 as aya_gen3
 import handycon.handhelds.aya_gen4 as aya_gen4
 import handycon.handhelds.aya_gen5 as aya_gen5
 import handycon.handhelds.aya_gen6 as aya_gen6
+import handycon.handhelds.aya_gen7 as aya_gen7
 import handycon.handhelds.ayn_gen1 as ayn_gen1
 import handycon.handhelds.gpd_gen1 as gpd_gen1
 import handycon.handhelds.gpd_gen2 as gpd_gen2
@@ -149,7 +150,7 @@ def id_system():
         "AIR 1S",
         ):
         handycon.system_type = "AYA_GEN7"
-        aya_gen6.init_handheld(handycon)
+        aya_gen7.init_handheld(handycon)
 
     ## Ayn Devices
     elif system_id in (
