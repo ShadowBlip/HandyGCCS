@@ -37,7 +37,7 @@ async def process_event(seed_event, active_keys):
     button_on = seed_event.value
 
     # Automatically pass default keycodes we dont intend to replace.
-    if seed_event.code in [e.KEY_VOLUMEDOWN, e.KEY_VOLUMEUP]:
+    if seed_event.code in [e.KEY_VOLUMEDOWN, e.KEY_VOLUMEUP, e.KEY_MUTE]:
         await handycon.emit_events([seed_event])
 
     # Handle missed keys. 
