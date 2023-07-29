@@ -1,6 +1,7 @@
 #!/bin/bash
-rm -rf build dist src/handycon.egg-info
-sudo rm -rf /usr/lib/python3*/site-packages/handycon*
-sudo rm /usr/bin/handycon  
+./remove.sh
 python -m build --wheel --no-isolation
 sudo python -m installer dist/*.whl
+sudo cp -r usr/ /
+sudo systemd-hwdb update
+sudo udevadm control -R
