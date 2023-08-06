@@ -39,20 +39,15 @@ async def process_event(seed_event, active_keys):
 
     # BUTTON 2 (Default: QAM) Small Button
     if active_keys in [[40, 133], [32, 125]] and button_on == 1 and button2 not in handycon.event_queue:
-        handycon.event_queue.append(button2)
-        await handycon.emit_now(seed_event, button2, 1)
-        await handycon.do_rumble(0, 150, 1000, 0)
+        await handycon.handle_key_down(seed_event, button2)
     elif active_keys == [] and seed_event.code in [32, 40, 125, 133] and button_on == 0 and button2 in handycon.event_queue:
-        handycon.event_queue.remove(button2)
-        await handycon.emit_now(seed_event, button2, 0)
+        await handycon.handle_key_up(seed_event, button2)
 
     # BUTTON 5 (Default: MODE) Big button
     if active_keys in [[96, 105, 133], [88, 97, 125]] and button_on == 1 and button5 not in handycon.event_queue:
-        handycon.event_queue.append(button5)
-        await handycon.emit_now(seed_event, button5, 1)
+        await handycon.handle_key_down(seed_event, button5)
     elif active == [] and seed_event.code in [88, 96, 97, 105, 125, 133] and button_on == 0 and button5 in handycon.event_queue:
-        handycon.event_queue.remove(button5)
-        await handycon.emit_now(seed_event, button5, 1)
+        await handycon.handle_key_up(seed_event, button5)
 
     # Handle L_META from power button
     elif active_keys == [] and seed_event.code == 125 and button_on == 0 and handycon.event_queue == [] and handycon.shutdown == True:

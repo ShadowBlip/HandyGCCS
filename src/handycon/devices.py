@@ -546,6 +546,31 @@ async def emit_now(seed_event, event_list, value):
         await emit_events(events)
 
 
+async def handle_key_down(seed_event, queued_event):
+    handycon.event_queue.append(queued_event)
+    if queued_event in INSTANT_EVENTS:
+        await handycon.emit_now(seed_event, queued_event, 1)
+
+
+async def handle_key_up(seed_event, queued_event):
+    if queued_event in INSTANT_EVENTS:
+        handycon.event_queue.remove(queued_event)
+        await handycon.emit_now(seed_event, queued_event, 0)
+    elif queued_event in QUEUED_EVENTS:
+        # Create list of events to fire.
+        # Handle new button presses.
+        if not handycon.last_button:
+            handycon.event_queue.remove(queued_event)
+            handycon.last_button = queued_event
+            await handycon.emit_now(seed_event, queued_event, 1)
+            return
+
+        # Clean up old button presses.
+        if handycon.last_button:
+            await handycon.emit_now(seed_event, handycon.last_button, 0)
+            handycon.last_button = None
+
+
 async def toggle_performance():
     global handycon
 

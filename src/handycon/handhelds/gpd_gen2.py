@@ -39,19 +39,15 @@ async def process_event(seed_event, active_keys):
 
     # BUTTON 1 (Default: Screenshot)
     if active_keys == [11] and button_on == 1 and button1 not in handycon.event_queue:
-        handycon.event_queue.append(button1)
-        await handycon.emit_now(seed_event, button1, 1)
+        await handycon.handle_key_down(seed_event, button1)
     elif active_keys == [] and seed_event.code in [29, 56, 111] and button_on == 0 and button1 in handycon.event_queue:
-        handycon.event_queue.remove(button1)
-        await handycon.emit_now(seed_event, button1, 0)
+        await handycon.handle_key_up(seed_event, button1)
 
     # BUTTON 2 (Default: QAM)
     if active_keys == [10] and button_on == 1 and button2 not in handycon.event_queue:
-        handycon.event_queue.append(button2)
-        await handycon.emit_now(seed_event, button2, 1)
+        await handycon.handle_key_down(seed_event, button2)
     elif active_keys == [] and seed_event.code in [1] and button_on == 0 and button2 in handycon.event_queue:
-        handycon.event_queue.remove(button2)
-        await handycon.emit_now(seed_event, button2, 0)
+        await handycon.handle_key_up(seed_event, button2)
 
     # Handle L_META from power button
     elif active_keys == [] and seed_event.code == 125 and button_on == 0 and  handycon.event_queue == [] and handycon.shutdown == True:

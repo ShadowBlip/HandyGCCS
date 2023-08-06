@@ -139,6 +139,12 @@ class HandheldController:
     async def do_rumble(self, button=0, interval=10, length=1000, delay=0):
         await devices.do_rumble(button, interval, length, delay)
 
+    async def handle_key_up(self, seed_event, queued_event):
+        await devices.handle_key_up(seed_event, queued_event)
+
+    async def handle_key_down(self, seed_event, queued_event):
+        await devices.handle_key_down(seed_event, queued_event)
+
     # Gracefull shutdown.
     async def exit(self):
         self.logger.info("Receved exit signal. Restoring devices.")
