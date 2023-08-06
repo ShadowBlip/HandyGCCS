@@ -45,3 +45,6 @@ async def process_event(seed_event, active_keys):
         await handycon.handle_key_down(seed_event, button2)
     elif active_keys == [] and seed_event.code in [20, 29, 42, 56] and button_on == 0 and button2 in handycon.event_queue:
         await handycon.handle_key_up(seed_event, button2)
+
+    if handycon.last_button:
+        await handycon.handle_key_up(seed_event, handycon.last_button)
