@@ -42,9 +42,9 @@ async def process_event(seed_event, active_keys):
         await handycon.emit_events([seed_event])
 
     # BUTTON 1 (Default: Screenshot/Launch Chiumera) LC Button
-    if active_keys == [97, 125, 185] and button_on == 1 and button1 not in handycon.event_queue:
+    if active_keys == [29, 125, 185] and button_on == 1 and button1 not in handycon.event_queue:
         await handycon.handle_key_down(seed_event, button1)
-    elif active_keys == [] and seed_event.code in [97, 125, 185] and button_on == 0 and button1 in handycon.event_queue:
+    elif active_keys == [] and seed_event.code in [29, 125, 185] and button_on == 0 and button1 in handycon.event_queue:
         await handycon.handle_key_up(seed_event, button1)
 
     # BUTTON 2 (Default: QAM) Small Button
@@ -54,15 +54,15 @@ async def process_event(seed_event, active_keys):
         await handycon.handle_key_up(seed_event, button2)
 
     # BUTTON 4 (Default: OSK) RC Button
-    if active_keys == [97, 125, 186] and button_on == 1 and button4 not in handycon.event_queue:
+    if active_keys == [29, 125, 186] and button_on == 1 and button4 not in handycon.event_queue:
         await handycon.handle_key_down(seed_event, button4)
-    elif active_keys == [] and seed_event.code in [97, 125, 186] and button_on == 0 and button4 in handycon.event_queue:
+    elif active_keys == [] and seed_event.code in [29, 125, 186] and button_on == 0 and button4 in handycon.event_queue:
         await handycon.handle_key_up(seed_event, button4)
 
     # BUTTON 5 (Default: MODE) Big button
-    if active_keys == [97, 125, 187] and button_on == 1 and button5 not in handycon.event_queue:
+    if active_keys == [29, 125, 187] and button_on == 1 and button5 not in handycon.event_queue:
         await handycon.handle_key_down(seed_event, button5)
-    elif active_keys == [] and seed_event.code in [97, 125, 187] and button_on == 0 and button5 in handycon.event_queue:
+    elif active_keys == [] and seed_event.code in [29, 125, 187] and button_on == 0 and button5 in handycon.event_queue:
         await handycon.handle_key_up(seed_event, button5)
 
     # Handle L_META from power button
