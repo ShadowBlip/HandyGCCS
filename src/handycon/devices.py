@@ -338,7 +338,7 @@ async def capture_controller_events():
                         continue
 
                     # Output the event.
-                    await emit_events([event])
+                    emit_event(event)
             except Exception as err:
                 handycon.logger.error(f"{err} | Error reading events from {handycon.controller_device.name}.")
                 restore_device(handycon.controller_event, handycon.controller_path)
@@ -416,7 +416,7 @@ async def capture_ff_events():
     async for event in handycon.ui_device.async_read_loop():
         if handycon.controller_device is None:
             # Slow down the loop so we don't waste millions of cycles and overheat our controller.
-            await asyncio.sleep(.5)
+            await asyncio.sleep(FF_DELAY)
             continue
 
         if event.type == e.EV_FF:
@@ -487,15 +487,20 @@ def restore_hidden():
 # This shouldn't be called directly for custom events, only to pass realtime events.
 # Use emit_now and the device's event_queue.
 async def emit_events(events: list):
-    global handycon
 
     for event in events:
-        handycon.logger.debug(f"Emitting event: {event}")
-        handycon.ui_device.write_event(event)
-        handycon.ui_device.syn()
+        emit_event(event)
         # Pause between multiple events, but not after the last one in the list.
         if event != events[len(events)-1]:
             await asyncio.sleep(handycon.BUTTON_DELAY)
+
+
+# Emit a single event. Skips some logic checks for optimization.
+def emit_event(event):
+    global handycon
+    handycon.logger.debug(f"Emitting event: {event}")
+    handycon.ui_device.write_event(event)
+    handycon.ui_device.syn()
 
 
 # Generates events from an event list. Can be called directly or when looping through
@@ -542,8 +547,11 @@ async def emit_now(seed_event, event_list, value):
             new_event = InputEvent(seed_event.sec, seed_event.usec, button_event[0], button_event[1], value)
             events.append(new_event)
 
-    if events != []:
+    size = len(events)
+    if size > 1:
         await emit_events(events)
+    elif size == 1:
+        emit_event[0]
 
 
 async def handle_key_down(seed_event, queued_event):

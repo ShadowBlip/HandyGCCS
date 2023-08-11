@@ -24,7 +24,7 @@ class HandheldController:
     # Logging
     logging.basicConfig(format="[%(asctime)s | %(filename)s:%(lineno)s:%(funcName)s] %(message)s",
                         datefmt="%y%m%d_%H:%M:%S",
-                        level=logging.DEBUG
+                        level=logging.INFO
                         )
     logger= logging.getLogger(__name__)
 
@@ -129,6 +129,9 @@ class HandheldController:
 
     def launch_chimera(self):
         utilities.launch_chimera()
+
+    def emit_event(self, event):
+        await devices.emit_events(events)
 
     async def emit_events(self, events: list):
         await devices.emit_events(events)
