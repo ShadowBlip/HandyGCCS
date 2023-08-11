@@ -416,7 +416,7 @@ async def capture_ff_events():
     async for event in handycon.ui_device.async_read_loop():
         if handycon.controller_device is None:
             # Slow down the loop so we don't waste millions of cycles and overheat our controller.
-            await asyncio.sleep(FF_DELAY)
+            await asyncio.sleep(DETECT_DELAY)
             continue
 
         if event.type == e.EV_FF:
