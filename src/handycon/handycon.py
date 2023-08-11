@@ -131,7 +131,7 @@ class HandheldController:
         utilities.launch_chimera()
 
     def emit_event(self, event):
-        await devices.emit_events(events)
+        devices.emit_events(events)
 
     async def emit_events(self, events: list):
         await devices.emit_events(events)
