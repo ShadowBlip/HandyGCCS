@@ -3,7 +3,7 @@ Description=Handheld Game Console Controller Service
 After=graphical-session.target
 
 [Service]
-ExecStart=/usr/bin/handycon
+ExecStart=/usr/bin/nice --15 /usr/bin/handycon
 
 [Install]
 WantedBy=multi-user.target
