@@ -271,7 +271,7 @@ async def capture_keyboard_events():
                         case "OXP_GEN3":
                             await oxp_gen3.process_event(seed_event, active_keys)
                         case "OXP_GEN4":
-                            await oxp_gen3.process_event(seed_event, active_keys)
+                            await oxp_gen4.process_event(seed_event, active_keys)
 
             except Exception as err:
                 handycon.logger.error(f"{err} | Error reading events from {handycon.keyboard_device.name}")
