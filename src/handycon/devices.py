@@ -551,7 +551,7 @@ async def emit_now(seed_event, event_list, value):
     if size > 1:
         await emit_events(events)
     elif size == 1:
-        emit_event[0]
+        emit_event(event_list[0])
 
 
 async def handle_key_down(seed_event, queued_event):
