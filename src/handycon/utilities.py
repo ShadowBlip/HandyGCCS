@@ -178,7 +178,7 @@ def id_system():
         handycon.system_type = "GPD_GEN3"
         gpd_gen3.init_handheld(handycon)
 
-## ONEXPLAYER and AOKZOE devices.
+    ## ONEXPLAYER and AOKZOE devices.
     # BIOS have inlete DMI data and most models report as "ONE XPLAYER" or "ONEXPLAYER".
     elif system_id in (
         "ONE XPLAYER",
@@ -196,7 +196,7 @@ def id_system():
             oxp_gen2.init_handheld(handycon)
 
     ## GEN 3
-    if system_id in (
+    elif system_id in (
         "ONEXPLAYER mini A07",
         ):
         handycon.system_type = "OXP_GEN3"
