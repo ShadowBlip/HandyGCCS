@@ -185,30 +185,29 @@ def id_system():
         "ONEXPLAYER",
         ):
 
-        ## GEN 3
-        if system_id in (
-            "ONEXPLAYER mini A07",
-            ):
-            handycon.system_type = "OXP_GEN3"
-            oxp_gen3.init_handheld(handycon)
-
-        ## GEN 4
-        elif system_id in (
-            "ONEXPLAYER Mini Pro",
-            ):
-            handycon.system_type = "OXP_GEN4"
-            oxp_gen4.init_handheld(handycon)
-
+        ## GEN 1
+        if cpu_vendor == "GenuineIntel":
+            handycon.system_type = "OXP_GEN1"
+            oxp_gen1.init_handheld(handycon)
+        
+        ## GEN 2
         else:
-            ## GEN 1
-            if cpu_vendor == "GenuineIntel":
-                handycon.system_type = "OXP_GEN1"
-                oxp_gen1.init_handheld(handycon)
+            handycon.system_type = "OXP_GEN2"
+            oxp_gen2.init_handheld(handycon)
 
-            ## GEN 2
-            else:
-                handycon.system_type = "OXP_GEN2"
-                oxp_gen2.init_handheld(handycon)
+    ## GEN 3
+    if system_id in (
+        "ONEXPLAYER mini A07",
+        ):
+        handycon.system_type = "OXP_GEN3"
+        oxp_gen3.init_handheld(handycon)
+    
+    ## GEN 4
+    elif system_id in (
+        "ONEXPLAYER Mini Pro",
+        ):
+        handycon.system_type = "OXP_GEN4"
+        oxp_gen4.init_handheld(handycon)
 
     # Block devices that aren't supported as this could cause issues.
     else:
