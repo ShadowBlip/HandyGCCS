@@ -8,6 +8,7 @@ import logging
 import os
 import signal
 import sys
+import traceback
 import warnings
 
 ## Local modules
@@ -118,6 +119,7 @@ class HandheldController:
             exit_code = 1
         except Exception as err:
             self.logger.error(f"{err} | Hit exception condition.")
+            self.logger.error(traceback.format_exc())
             exit_code = 2
         finally:
             self.loop.stop()
@@ -157,29 +159,34 @@ class HandheldController:
             try:
                 self.controller_device.ungrab()
             except IOError as err:
+            self.logger.error(traceback.format_exc())
                 pass
             devices.restore_device(self.controller_event, self.controller_path)
         if self.keyboard_device:
             try:
                 self.keyboard_device.ungrab()
             except IOError as err:
+            self.logger.error(traceback.format_exc())
                 pass
             devices.restore_device(self.keyboard_event, self.keyboard_path)
         if self.keyboard_2_device:
             try:
                 self.keyboard_2_device.ungrab()
             except IOError as err:
+            self.logger.error(traceback.format_exc())
                 pass
             devices.restore_device(self.keyboard_2_event, self.keyboard_2_path)
         if self.power_device and self.CAPTURE_POWER:
             try:
                 self.power_device.ungrab()
             except IOError as err:
+            self.logger.error(traceback.format_exc())
                 pass
         if self.power_device_2 and self.CAPTURE_POWER:
             try:
                 self.power_device_2.ungrab()
             except IOError as err:
+            self.logger.error(traceback.format_exc())
                 pass
         self.logger.info("Devices restored.")
 

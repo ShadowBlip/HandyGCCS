@@ -9,6 +9,7 @@ import os
 import re
 import subprocess
 import sys
+import traceback
 
 ## Local modules
 import handycon.handhelds.ally_gen1 as ally_gen1
@@ -308,6 +309,7 @@ def steam_ifrunning_deckui(cmd):
             pid = f.read().strip()
     except Exception as err:
         handycon.logger.error(f"{err} | Error getting steam PID.")
+        handycon.logger.error(traceback.format_exc())
         return False
 
     # Get the andline for the Steam process by checking /proc.
@@ -321,6 +323,7 @@ def steam_ifrunning_deckui(cmd):
             steam_cmd = f.read()
     except Exception as err:
         handycon.logger.error(f"{err} | Error getting steam cmdline.")
+        handycon.logger.error(traceback.format_exc())
         return False 
 
     # Use this andline to determine if Steam is running in DeckUI mode.
@@ -335,6 +338,7 @@ def steam_ifrunning_deckui(cmd):
         return result.returncode == 0
     except Exception as err:
         handycon.logger.error(f"{err} | Error sending and to Steam.")
+        handycon.logger.error(traceback.format_exc())
         return False
 
 

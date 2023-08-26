@@ -5,6 +5,7 @@
 ## Python Modules
 import asyncio
 import os
+import traceback
 
 # Local modules
 import handycon.handhelds.ally_gen1 as ally_gen1
@@ -51,6 +52,7 @@ def get_controller():
 
     except Exception as err:
         handycon.logger.error("Error when scanning event devices. Restarting scan.")
+        handycon.logger.error(traceback.format_exc())
         sleep(DETECT_DELAY)
         return False
 
@@ -104,6 +106,7 @@ def get_keyboard():
     # Some funky stuff happens sometimes when booting. Give it another shot.
     except Exception as err:
         handycon.logger.error("Error when scanning event devices. Restarting scan.")
+        handycon.logger.error(traceback.format_exc())
         sleep(DETECT_DELAY)
         return False
 
@@ -137,6 +140,7 @@ def get_keyboard_2():
     # Some funky stuff happens sometimes when booting. Give it another shot.
     except Exception as err:
         handycon.logger.error("Error when scanning event devices. Restarting scan.")
+        handycon.logger.error(traceback.format_exc())
         sleep(DETECT_DELAY)
         return False
 
@@ -151,6 +155,7 @@ def get_powerkey():
     # Some funky stuff happens sometimes when booting. Give it another shot.
     except Exception as err:
         handycon.logger.error("Error when scanning event devices. Restarting scan.")
+        handycon.logger.error(traceback.format_exc())
         sleep(DETECT_DELAY)
         return False
 
@@ -275,6 +280,7 @@ async def capture_keyboard_events():
 
             except Exception as err:
                 handycon.logger.error(f"{err} | Error reading events from {handycon.keyboard_device.name}")
+                handycon.logger.error(traceback.format_exc())
                 restore_device(handycon.keyboard_event, handycon.keyboard_path)
                 handycon.keyboard_device = None
                 handycon.keyboard_event = None
@@ -315,6 +321,7 @@ async def capture_keyboard_2_events():
 
             except Exception as err:
                 handycon.logger.error(f"{err} | Error reading events from {handycon.keyboard_2_device.name}")
+                handycon.logger.error(traceback.format_exc())
                 restore_device(handycon.keyboard_2_event, handycon.keyboard_2_path)
                 handycon.keyboard_2_device = None
                 handycon.keyboard_2_event = None
@@ -341,6 +348,7 @@ async def capture_controller_events():
                     emit_event(event)
             except Exception as err:
                 handycon.logger.error(f"{err} | Error reading events from {handycon.controller_device.name}.")
+                handycon.logger.error(traceback.format_exc())
                 restore_device(handycon.controller_event, handycon.controller_path)
                 handycon.controller_device = None
                 handycon.controller_event = None
@@ -366,6 +374,7 @@ async def capture_power_events():
 
             except Exception as err:
                 handycon.logger.error(f"{err} | Error reading events from power device.")
+                handycon.logger.error(traceback.format_exc())
                 handycon.power_device = None
 
         elif handycon.power_device_2 and not handycon.power_device:
@@ -378,6 +387,7 @@ async def capture_power_events():
 
             except Exception as err:
                 handycon.logger.error(f"{err} | Error reading events from power device.")
+                handycon.logger.error(traceback.format_exc())
                 handycon.power_device_2 = None
 
         else:
@@ -448,6 +458,7 @@ async def capture_ff_events():
                 upload.retval = 0
             except IOError as err:
                 handycon.logger.error(f"{err} | Error uploading effect {effect.id}.")
+                handycon.logger.error(traceback.format_exc())
                 upload.retval = -1
             
             handycon.ui_device.end_upload(upload)
@@ -461,6 +472,7 @@ async def capture_ff_events():
                 erase.retval = 0
             except IOError as err:
                 handycon.logger.error(f"{err} | Error erasing effect {erase.effect_id}.")
+                handycon.logger.error(traceback.format_exc())
                 erase.retval = -1
 
             handycon.ui_device.end_erase(erase)
