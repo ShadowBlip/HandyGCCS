@@ -8,6 +8,7 @@ import logging
 import os
 import signal
 import sys
+import traceback
 import warnings
 
 ## Local modules
@@ -118,6 +119,7 @@ class HandheldController:
             exit_code = 1
         except Exception as err:
             self.logger.error(f"{err} | Hit exception condition.")
+            self.logger.error(traceback.format_exc())
             exit_code = 2
         finally:
             self.loop.stop()
@@ -189,7 +191,7 @@ class HandheldController:
             try:
                 await task
             except asyncio.CancelledError:
-                pass
+                self.logger.error(traceback.format_exc())
         self.loop.stop()
         self.logger.info("Handheld Game Console Controller Service stopped.")
 
