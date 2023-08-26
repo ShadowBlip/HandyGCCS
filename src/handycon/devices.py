@@ -45,8 +45,8 @@ def set_handycon(handheld_controller):
 def get_controller():
     global handycon
 
-    handycon.logger.debug(f"Attempting to grab {handycon.GAMEPAD_NAME}.")
     # Identify system input event devices.
+    handycon.logger.debug(f"Attempting to grab {handycon.GAMEPAD_NAME}.")
     try:
         devices_original = [InputDevice(path) for path in list_devices()]
 
@@ -80,35 +80,35 @@ def get_controller():
 def get_keyboard():
     global handycon
 
+    # Identify system input event devices.
     handycon.logger.debug(f"Attempting to grab {handycon.KEYBOARD_NAME}.")
     try:
-        # Grab the built-in devices. This will give us exclusive acces to the devices and their capabilities.
-        for device in [InputDevice(path) for path in list_devices()]:
-            handycon.logger.debug(f"{device.name}, {device.phys}")
-            if device.name == handycon.KEYBOARD_NAME and device.phys == handycon.KEYBOARD_ADDRESS:
-                handycon.keyboard_path = device.path
-                handycon.keyboard_device = InputDevice(handycon.keyboard_path)
-                if handycon.CAPTURE_KEYBOARD:
-                    handycon.keyboard_device.grab()
-                    handycon.keyboard_event = Path(handycon.keyboard_path).name
-                    move(handycon.keyboard_path, str(HIDE_PATH / handycon.keyboard_event))
-                break
-
-        # Sometimes the service loads before all input devices have full initialized. Try a few times.
-        if not handycon.keyboard_device:
-            handycon.logger.warn("Keyboard device not yet found. Restarting scan.")
-            sleep(DETECT_DELAY)
-            return False
-        else:
-            handycon.logger.info(f"Found {handycon.keyboard_device.name}. Capturing input data.")
-            return True
-
-    # Some funky stuff happens sometimes when booting. Give it another shot.
+        devices_original = [InputDevice(path) for path in list_devices()]
     except Exception as err:
         handycon.logger.error("Error when scanning event devices. Restarting scan.")
         handycon.logger.error(traceback.format_exc())
         sleep(DETECT_DELAY)
         return False
+    # Grab the built-in devices. This will give us exclusive acces to the devices and their capabilities.
+    for device in devices_original:
+        handycon.logger.debug(f"{device.name}, {device.phys}")
+        if device.name == handycon.KEYBOARD_NAME and device.phys == handycon.KEYBOARD_ADDRESS:
+            handycon.keyboard_path = device.path
+            handycon.keyboard_device = InputDevice(handycon.keyboard_path)
+            if handycon.CAPTURE_KEYBOARD:
+                handycon.keyboard_device.grab()
+                handycon.keyboard_event = Path(handycon.keyboard_path).name
+                move(handycon.keyboard_path, str(HIDE_PATH / handycon.keyboard_event))
+            break
+
+    # Sometimes the service loads before all input devices have full initialized. Try a few times.
+    if not handycon.keyboard_device:
+        handycon.logger.warn("Keyboard device not yet found. Restarting scan.")
+        sleep(DETECT_DELAY)
+        return False
+    else:
+        handycon.logger.info(f"Found {handycon.keyboard_device.name}. Capturing input data.")
+        return True
 
 
 def get_keyboard_2():
@@ -116,33 +116,33 @@ def get_keyboard_2():
 
     handycon.logger.debug(f"Attempting to grab {handycon.KEYBOARD_2_NAME}.")
     try:
-        # Grab the built-in devices. This will give us exclusive acces to the devices and their capabilities.
-        for device in [InputDevice(path) for path in list_devices()]:
-            handycon.logger.debug(f"{device.name}, {device.phys}")
-            if device.name == handycon.KEYBOARD_2_NAME and device.phys == handycon.KEYBOARD_2_ADDRESS:
-                handycon.keyboard_2_path = device.path
-                handycon.keyboard_2_device = InputDevice(handycon.keyboard_2_path)
-                if handycon.CAPTURE_KEYBOARD:
-                    handycon.keyboard_2_device.grab()
-                    handycon.keyboard_2_event = Path(handycon.keyboard_2_path).name
-                    move(handycon.keyboard_2_path, str(HIDE_PATH / handycon.keyboard_2_event))
-                break
-
-        # Sometimes the service loads before all input devices have full initialized. Try a few times.
-        if not handycon.keyboard_2_device:
-            handycon.logger.warn("Keyboard device 2 not yet found. Restarting scan.")
-            sleep(DETECT_DELAY)
-            return False
-        else:
-            handycon.logger.info(f"Found {handycon.keyboard_2_device.name}. Capturing input data.")
-            return True
-
-    # Some funky stuff happens sometimes when booting. Give it another shot.
+        devices_original = [InputDevice(path) for path in list_devices()]
     except Exception as err:
         handycon.logger.error("Error when scanning event devices. Restarting scan.")
         handycon.logger.error(traceback.format_exc())
         sleep(DETECT_DELAY)
         return False
+
+    # Grab the built-in devices. This will give us exclusive acces to the devices and their capabilities.
+    for device in devices_original:
+        handycon.logger.debug(f"{device.name}, {device.phys}")
+        if device.name == handycon.KEYBOARD_2_NAME and device.phys == handycon.KEYBOARD_2_ADDRESS:
+            handycon.keyboard_2_path = device.path
+            handycon.keyboard_2_device = InputDevice(handycon.keyboard_2_path)
+            if handycon.CAPTURE_KEYBOARD:
+                handycon.keyboard_2_device.grab()
+                handycon.keyboard_2_event = Path(handycon.keyboard_2_path).name
+                move(handycon.keyboard_2_path, str(HIDE_PATH / handycon.keyboard_2_event))
+            break
+
+    # Sometimes the service loads before all input devices have full initialized. Try a few times.
+    if not handycon.keyboard_2_device:
+        handycon.logger.warn("Keyboard device 2 not yet found. Restarting scan.")
+        sleep(DETECT_DELAY)
+        return False
+    else:
+        handycon.logger.info(f"Found {handycon.keyboard_2_device.name}. Capturing input data.")
+        return True
 
 
 def get_powerkey():
