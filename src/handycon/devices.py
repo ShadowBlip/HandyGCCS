@@ -282,7 +282,6 @@ async def capture_keyboard_events():
                 handycon.logger.error(f"{err} | Error reading events from {handycon.keyboard_device.name}")
                 handycon.logger.error(traceback.format_exc())
                 remove_device(HIDE_PATH, handycon.keyboard_event)
-                #restore_device(handycon.keyboard_event, handycon.keyboard_path)
                 handycon.keyboard_device = None
                 handycon.keyboard_event = None
                 handycon.keyboard_path = None
@@ -324,7 +323,6 @@ async def capture_keyboard_2_events():
                 handycon.logger.error(f"{err} | Error reading events from {handycon.keyboard_2_device.name}")
                 handycon.logger.error(traceback.format_exc())
                 remove_device(HIDE_PATH, handycon.keyboard_2_event)
-                #restore_device(handycon.keyboard_2_event, handycon.keyboard_2_path)
                 handycon.keyboard_2_device = None
                 handycon.keyboard_2_event = None
                 handycon.keyboard_2_path = None
@@ -351,7 +349,7 @@ async def capture_controller_events():
             except Exception as err:
                 handycon.logger.error(f"{err} | Error reading events from {handycon.controller_device.name}.")
                 handycon.logger.error(traceback.format_exc())
-                restore_device(handycon.controller_event, handycon.controller_path)
+                remove_device(HIDE_PATH, handycon.controller_event)
                 handycon.controller_device = None
                 handycon.controller_event = None
                 handycon.controller_path = None
