@@ -281,7 +281,8 @@ async def capture_keyboard_events():
             except Exception as err:
                 handycon.logger.error(f"{err} | Error reading events from {handycon.keyboard_device.name}")
                 handycon.logger.error(traceback.format_exc())
-                restore_device(handycon.keyboard_event, handycon.keyboard_path)
+                remove_device(HIDE_PATH, handycon.keyboard_event)
+                #restore_device(handycon.keyboard_event, handycon.keyboard_path)
                 handycon.keyboard_device = None
                 handycon.keyboard_event = None
                 handycon.keyboard_path = None
@@ -322,7 +323,8 @@ async def capture_keyboard_2_events():
             except Exception as err:
                 handycon.logger.error(f"{err} | Error reading events from {handycon.keyboard_2_device.name}")
                 handycon.logger.error(traceback.format_exc())
-                restore_device(handycon.keyboard_2_event, handycon.keyboard_2_path)
+                remove_device(HIDE_PATH, handycon.keyboard_2_event)
+                #restore_device(handycon.keyboard_2_event, handycon.keyboard_2_path)
                 handycon.keyboard_2_device = None
                 handycon.keyboard_2_event = None
                 handycon.keyboard_2_path = None
@@ -494,6 +496,12 @@ def restore_hidden():
         handycon.logger.debug(f'Restoring {hidden_event}')
         move(str(HIDE_PATH / hidden_event), "/dev/input/" + hidden_event)
 
+
+def remove_device(path, event):
+    try:
+        os.remove(str(path / event))
+    except FileNotFoundError:
+        pass
 
 # Emits passed or generated events to the virtual controller.
 # This shouldn't be called directly for custom events, only to pass realtime events.
