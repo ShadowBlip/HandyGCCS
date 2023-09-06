@@ -18,7 +18,7 @@ def init_handheld(handheld_controller):
     handycon.CAPTURE_POWER = True
     handycon.GAMEPAD_ADDRESS = 'usb-0000:73:00.3-4.1/input0'
     handycon.GAMEPAD_NAME = 'Microsoft X-Box 360 pad'
-    handycon.KEYBOARD_ADDRESS = 'usb-0000:73:00.3-4.2/input0'
+    handycon.KEYBOARD_ADDRESS = 'usb-0000:73:00.3-4.2/input1'
     handycon.KEYBOARD_NAME = '  Mouse for Windows'
 
 async def process_event(seed_event, active_keys):
