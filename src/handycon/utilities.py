@@ -24,6 +24,7 @@ import handycon.handhelds.aya_gen5 as aya_gen5
 import handycon.handhelds.aya_gen6 as aya_gen6
 import handycon.handhelds.aya_gen7 as aya_gen7
 import handycon.handhelds.ayn_gen1 as ayn_gen1
+import handycon.handhelds.ayn_gen2 as ayn_gen2
 import handycon.handhelds.gpd_gen1 as gpd_gen1
 import handycon.handhelds.gpd_gen2 as gpd_gen2
 import handycon.handhelds.gpd_gen3 as gpd_gen3
@@ -158,6 +159,12 @@ def id_system():
         ):
         handycon.system_type = "AYN_GEN1"
         ayn_gen1.init_handheld(handycon)
+
+    elif system_id in (
+            "Loki Zero",
+        ):
+        handycon.system_type = "AYN_GEN2"
+        ayn_gen2.init_handheld(handycon)
 
     ## GPD Devices.
     # Have 2 buttons with 3 modes (left, right, both)
