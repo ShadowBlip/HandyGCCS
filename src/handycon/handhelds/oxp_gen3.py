@@ -35,6 +35,7 @@ async def process_event(seed_event, active_keys):
     button3 = handycon.button_map["button3"]  # Default ESC
     button4 = handycon.button_map["button4"]  # Default OSK
     button5 = handycon.button_map["button5"]  # Default MODE
+    button6 = handycon.button_map["button6"]  # Default Launch Chimera
 
     ## Loop variables
     events = []
@@ -56,7 +57,6 @@ async def process_event(seed_event, active_keys):
         this_button = button1
 
     # BUTTON 2 (Default: QAM) Turbo Button
-    #if active_keys == [34, 125] and button_on == 1 and button2 not in handycon.event_queue:
     if active_keys == [29, 56, 125] and button_on == 1 and button2 not in handycon.event_queue:
         handycon.event_queue.append(button2)
     elif active_keys == [] and seed_event.code in [29, 56, 125] and button_on == 0 and button2 in handycon.event_queue:

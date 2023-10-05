@@ -20,15 +20,17 @@ Many of the handheld game consoles designed for windows have buttons on then in 
 ### ASUS
 - ROG Ally
 
-### Ayn
-- Loki Max
-
 ### Aya Neo
 - Founders Edition and 2021 Series
 - Next Series
 - Air Series
 - 2 Series
 - GEEK Series
+
+### Ayn
+- Loki Max
+- Loki Zero
+- Loki MiniPro
 
 ### GPD
 - GPD Win3
@@ -39,6 +41,7 @@ Many of the handheld game consoles designed for windows have buttons on then in 
 - OneXPlayer 1S
 - OneXPlayer Mini
 - OneXPlayer Mini Pro
+- OneXFly
 
 ## Installation
 

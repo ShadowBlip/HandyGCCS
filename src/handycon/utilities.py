@@ -33,6 +33,8 @@ import handycon.handhelds.oxp_gen1 as oxp_gen1
 import handycon.handhelds.oxp_gen2 as oxp_gen2
 import handycon.handhelds.oxp_gen3 as oxp_gen3
 import handycon.handhelds.oxp_gen4 as oxp_gen4
+#import handycon.handhelds.oxp_gen5 as oxp_gen5
+import handycon.handhelds.oxp_gen6 as oxp_gen6
 from .constants import *
 
 ## Partial imports
@@ -200,36 +202,51 @@ def id_system():
         "ONEXPLAYER",
         ):
 
-        ## GEN 1
+        # GEN 1
         if cpu_vendor == "GenuineIntel":
             handycon.system_type = "OXP_GEN1"
             oxp_gen1.init_handheld(handycon)
         
-        ## GEN 2
+        # GEN 2
         else:
             handycon.system_type = "OXP_GEN2"
             oxp_gen2.init_handheld(handycon)
 
-    ## GEN 3
+    # GEN 3
     elif system_id in (
         "ONEXPLAYER mini A07",
         ):
         handycon.system_type = "OXP_GEN3"
         oxp_gen3.init_handheld(handycon)
-    
-    ## GEN 4
+
+    # GEN 4
     elif system_id in (
         "ONEXPLAYER Mini Pro",
         ):
         handycon.system_type = "OXP_GEN4"
         oxp_gen4.init_handheld(handycon)
 
-    # Block devices that aren't supported as this could cause issues.
+    ## GEN 5
+    #elif system_id in (
+    #    "ONEXPLAYER 2",
+    #    "ONEXPLAYER 2 Pro",
+    #    ):
+    #    handycon.system_type = "OXP_GEN5"
+    #    oxp_gen5.init_handheld(handycon)
+
+    # GEN 6
+    elif system_id in (
+        "ONEXPLAYER F1",
+        ):
+        handycon.system_type = "OXP_GEN6"
+        oxp_gen6.init_handheld(handycon)
+
+    # Devices that aren't supported could cause issues, exit.
     else:
         handycon.logger.error(f"{system_id} is not currently supported by this tool. Open an issue on \
 ub at https://github.ShadowBlip/HandyGCCS if this is a bug. If possible, \
 se run the capture-system.py utility found on the GitHub repository and upload \
- file with your issue.")
+the file with your issue.")
         sys.exit(0)
     handycon.logger.info(f"Identified host system as {system_id} and configured defaults for {handycon.system_type}.")
 
