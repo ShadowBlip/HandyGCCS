@@ -29,7 +29,7 @@ import handycon.handhelds.oxp_gen1 as oxp_gen1
 import handycon.handhelds.oxp_gen2 as oxp_gen2
 import handycon.handhelds.oxp_gen3 as oxp_gen3
 import handycon.handhelds.oxp_gen4 as oxp_gen4
-#import handycon.handhelds.oxp_gen5 as oxp_gen5
+import handycon.handhelds.oxp_gen5 as oxp_gen5
 import handycon.handhelds.oxp_gen6 as oxp_gen6
 from .constants import *
 
@@ -285,8 +285,8 @@ async def capture_keyboard_events():
                             await oxp_gen3.process_event(seed_event, active_keys)
                         case "OXP_GEN4":
                             await oxp_gen4.process_event(seed_event, active_keys)
-                        #case "OXP_GEN5":
-                        #    await oxp_gen5.process_event(seed_event, active_keys)
+                        case "OXP_GEN5":
+                            await oxp_gen5.process_event(seed_event, active_keys)
                         case "OXP_GEN6":
                             await oxp_gen6.process_event(seed_event, active_keys)
 

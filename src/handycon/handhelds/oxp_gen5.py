@@ -17,7 +17,7 @@ def init_handheld(handheld_controller):
     handycon.CAPTURE_CONTROLLER = True
     handycon.CAPTURE_KEYBOARD = True
     handycon.CAPTURE_POWER = True
-    handycon.GAMEPAD_ADDRESS = ''
+    handycon.GAMEPAD_ADDRESS = 'usb-0000:64:00.3-4/input0'
     handycon.GAMEPAD_NAME = 'Microsoft X-Box 360 pad'
     handycon.KEYBOARD_ADDRESS = 'isa0060/serio0/input0'
     handycon.KEYBOARD_NAME = 'AT Translated Set 2 keyboard'
@@ -52,42 +52,12 @@ async def process_event(seed_event, active_keys):
     if active_keys == [] and handycon.event_queue != []:
         this_button = handycon.event_queue[0]
 
-    # BUTTON 1 Short press orange + turbo
-    if active_keys == [99, 125] and button_on == 1 and button1 not in handycon.event_queue:
-        handycon.event_queue.append(button1)
-    elif active_keys == [] and seed_event.code in [99, 125] and button_on == 0 and button1 in handycon.event_queue:
-        this_button = button1
-
     ## BUTTON 2 (Default: QAM) Turbo Button
-    if active_keys == [3, 97] and button_on == 1 and button2 not in handycon.event_queue:
+    if active_keys == [] and button_on == 1 and button2 not in handycon.event_queue:
         handycon.event_queue.append(button2)
-    elif active_keys == [] and seed_event.code in [3, 97] and button_on == 0 and button2 in handycon.event_queue:
+    elif active_keys == [] and seed_event.code in [] and button_on == 0 and button2 in handycon.event_queue:
         this_button = button2
         await handycon.do_rumble(0, 150, 1000, 0)
-
-    # BUTTON 3 (Default: ESC) Short press orange + KB
-    if active_keys == [97, 100, 111] and button_on == 1 and button3 not in handycon.event_queue:
-        handycon.event_queue.append(button3)
-    elif active_keys == [] and seed_event.code in [100, 111] and button_on == 0 and button3 in handycon.event_queue:
-        this_button = button3
-
-    # BUTTON 4 (Default: OSK) Short press KB
-    if active_keys == [24, 97, 125] and button_on == 1 and button4 not in handycon.event_queue:
-        handycon.event_queue.append(button4)
-    elif active_keys == [] and seed_event.code in [24, 97, 125] and button_on == 0 and button4 in handycon.event_queue:
-        this_button = button4
-
-    # BUTTON 5 (Default: MODE) Short press orange
-    if active_keys == [32, 125] and button_on == 1 and button5 not in handycon.event_queue:
-        handycon.event_queue.append(button5)
-    elif active_keys == [] and seed_event.code in [32, 125] and button_on == 0 and button5 in handycon.event_queue:
-        this_button = button5
-
-    # BUTTON 6 (Default: Launch Chimera) Long press orange
-    if active_keys == [34, 125] and button_on == 1 and button6 not in handycon.event_queue:
-        handycon.event_queue.append(button6)
-    elif active_keys == [] and seed_event.code in [34, 125] and button_on == 0 and button6 in handycon.event_queue:
-        this_button = button6
 
     # Handle L_META from power button
     elif active_keys == [] and seed_event.code == 125 and button_on == 0 and  handycon.event_queue == [] and handycon.shutdown == True:
