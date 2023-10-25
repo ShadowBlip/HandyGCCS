@@ -25,7 +25,7 @@ class HandheldController:
     # Logging
     logging.basicConfig(format="[%(asctime)s | %(filename)s:%(lineno)s:%(funcName)s] %(message)s",
                         datefmt="%y%m%d_%H:%M:%S",
-                        level=logging.INFO
+                        level=logging.DEBUG
                         )
     logger= logging.getLogger(__name__)
 

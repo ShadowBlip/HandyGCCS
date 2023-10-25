@@ -71,6 +71,8 @@ def id_system():
     global handycon
 
     system_id = open("/sys/devices/virtual/dmi/id/product_name", "r").read().strip()
+    handycon.logger.debug(f"Found System ID: {system_id}")
+
     cpu_vendor = get_cpu_vendor()
     handycon.logger.debug(f"Found CPU Vendor: {cpu_vendor}")
 
@@ -175,7 +177,7 @@ def id_system():
         handycon.system_type = "AYN_GEN3"
         ayn_gen3.init_handheld(handycon)
 
-    ## GPD Devices.
+    ## GPD Devices
     # Have 2 buttons with 3 modes (left, right, both)
     elif system_id in (
         "G1618-03", #Win3
@@ -195,8 +197,8 @@ def id_system():
         handycon.system_type = "GPD_GEN3"
         gpd_gen3.init_handheld(handycon)
 
-    ## ONEXPLAYER and AOKZOE devices.
-    # BIOS have inlete DMI data and most models report as "ONE XPLAYER" or "ONEXPLAYER".
+    ## ONEXPLAYER Devices
+    # Older BIOS have incomlete DMI data and most models report as "ONE XPLAYER" or "ONEXPLAYER".
     elif system_id in (
         "ONE XPLAYER",
         "ONEXPLAYER",
