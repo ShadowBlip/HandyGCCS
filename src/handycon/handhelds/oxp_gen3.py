@@ -24,6 +24,8 @@ def init_handheld(handheld_controller):
         command = f'echo 1 > /sys/devices/platform/oxp-platform/tt_toggle'
         run = os.popen(command, 'r', 1).read().strip()
         handycon.logger.info(f'Turbo button takeover enabled')
+    else:
+        handycon.logger.warn(f'Turbo takeover failed. Ensure you have the latest oxp-sensors driver installed.')
 
 
 # Captures keyboard events and translates them to virtual device events.
