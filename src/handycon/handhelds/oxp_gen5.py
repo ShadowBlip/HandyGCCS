@@ -34,6 +34,8 @@ async def process_event(seed_event, active_keys):
     global handycon
 
     # Button map shortcuts for easy reference.
+    button0 = EVENT_MAP["VOLUP"]
+    button1 = EVENT_MAP["VOLDOWN"]
     button2 = handycon.button_map["button2"]  # Default QAM
 
     ## Loop variables
@@ -49,14 +51,27 @@ async def process_event(seed_event, active_keys):
     if active_keys == [] and handycon.event_queue != []:
         this_button = handycon.event_queue[0]
 
+    # Push volume keys for X1/X2 if they are not in volume mode.
+    ## BUTTON 0 (VOLUP): X1
+    if active_keys == [32, 125] and button_on == 1 and button0 not in handycon.event_queue:
+        handycon.event_queue.append(button0)
+    elif active_keys == [] and seed_event.code in [32] and button_on == 0 and button0 in handycon.event_queue:
+        this_button = button0
+
+    ## BUTTON 1 (VOLDOWN): X2
+    if active_keys == [24, 29, 125] and button_on == 1 and button1 not in handycon.event_queue:
+        handycon.event_queue.append(button1)
+    elif active_keys == [] and seed_event.code in [24, 29] and button_on == 0 and button1 in handycon.event_queue:
+        this_button = button1
+
     ## BUTTON 2 (Default: QAM) Turbo Button
     if active_keys == [29, 56, 125] and button_on == 1 and button2 not in handycon.event_queue:
         handycon.event_queue.append(button2)
-    elif active_keys == [] and seed_event.code in [] and button_on == 0 and button2 in handycon.event_queue:
+    elif active_keys == [] and seed_event.code in [29, 56] and button_on == 0 and button2 in handycon.event_queue:
         this_button = button2
 
     # Handle L_META from power button
-    elif active_keys == [29, 56, 125] and seed_event.code == 125 and button_on == 0 and  handycon.event_queue == [] and handycon.shutdown == True:
+    elif active_keys == [] and seed_event.code == 125 and button_on == 0 and handycon.event_queue == [] and handycon.shutdown == True:
         handycon.shutdown = False
 
     # Create list of events to fire.
