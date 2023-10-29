@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
 # This file is part of Handheld Game Console Controller System (HandyGCCS)
 # Copyright 2022-2023 Derek J. Clark <derekjohn.clark@gmail.com>
-## Placeholder for OXP 2/2 Pro devices. Not implemented.
+
 import os
-import sys
 from evdev import InputDevice, InputEvent, UInput, ecodes as e, list_devices, ff
 
 from .. import constants as cons
@@ -34,8 +33,8 @@ async def process_event(seed_event, active_keys):
     global handycon
 
     # Button map shortcuts for easy reference.
-    button0 = EVENT_MAP["VOLUP"]
-    button1 = EVENT_MAP["VOLDOWN"]
+    button0 = cons.EVENT_MAP["VOLUP"]
+    button1 = cons.EVENT_MAP["VOLDOWN"]
     button2 = handycon.button_map["button2"]  # Default QAM
 
     ## Loop variables
