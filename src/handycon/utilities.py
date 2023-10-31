@@ -35,6 +35,7 @@ import handycon.handhelds.oxp_gen3 as oxp_gen3
 import handycon.handhelds.oxp_gen4 as oxp_gen4
 import handycon.handhelds.oxp_gen5 as oxp_gen5
 import handycon.handhelds.oxp_gen6 as oxp_gen6
+import handycon.handhelds.oxp_gen7 as oxp_gen7
 from .constants import *
 
 ## Partial imports
@@ -231,18 +232,24 @@ def id_system():
     # GEN 5
     elif system_id in (
         "ONEXPLAYER 2 ARP23",
-        "ONEXPLAYER 2 PRO ARP23P",
-        "ONEXPLAYER 2 PRO ARP23P EVA-01",
         ):
         handycon.system_type = "OXP_GEN5"
         oxp_gen5.init_handheld(handycon)
 
     # GEN 6
     elif system_id in (
-        "ONEXPLAYER F1",
+        "ONEXPLAYER 2 PRO ARP23P",
+        "ONEXPLAYER 2 PRO ARP23P EVA-01",
         ):
         handycon.system_type = "OXP_GEN6"
         oxp_gen6.init_handheld(handycon)
+
+    # GEN 7
+    elif system_id in (
+        "ONEXPLAYER F1",
+        ):
+        handycon.system_type = "OXP_GEN7"
+        oxp_gen7.init_handheld(handycon)
 
     # Devices that aren't supported could cause issues, exit.
     else:
