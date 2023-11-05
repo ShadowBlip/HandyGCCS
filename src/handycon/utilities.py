@@ -176,8 +176,9 @@ def id_system():
         handycon.system_type = "AYN_GEN3"
         ayn_gen3.init_handheld(handycon)
 
+    ## Lenovo Devices
     elif system_id in (
-            "83E1", # Lenovo Legion Go
+            "83E1", #Legion Go
         ):
         handycon.system_type = "GO_GEN1"
         go_gen1.init_handheld(handycon)
