@@ -22,6 +22,7 @@ import handycon.handhelds.aya_gen7 as aya_gen7
 import handycon.handhelds.ayn_gen1 as ayn_gen1
 import handycon.handhelds.ayn_gen2 as ayn_gen2
 import handycon.handhelds.ayn_gen3 as ayn_gen3
+import handycon.handhelds.go_gen1 as go_gen1
 import handycon.handhelds.gpd_gen1 as gpd_gen1
 import handycon.handhelds.gpd_gen2 as gpd_gen2
 import handycon.handhelds.gpd_gen3 as gpd_gen3
@@ -29,8 +30,9 @@ import handycon.handhelds.oxp_gen1 as oxp_gen1
 import handycon.handhelds.oxp_gen2 as oxp_gen2
 import handycon.handhelds.oxp_gen3 as oxp_gen3
 import handycon.handhelds.oxp_gen4 as oxp_gen4
-#import handycon.handhelds.oxp_gen5 as oxp_gen5
+import handycon.handhelds.oxp_gen5 as oxp_gen5
 import handycon.handhelds.oxp_gen6 as oxp_gen6
+import handycon.handhelds.oxp_gen7 as oxp_gen7
 from .constants import *
 
 ## Partial imports
@@ -271,6 +273,8 @@ async def capture_keyboard_events():
                             await ayn_gen2.process_event(seed_event, active_keys)
                         case "AYN_GEN3":
                             await ayn_gen3.process_event(seed_event, active_keys)
+                        case "GO_GEN1":
+                            await go_gen1.process_event(seed_event, active_keys)
                         case "GPD_GEN1":
                             await gpd_gen1.process_event(seed_event, active_keys)
                         case "GPD_GEN2":
@@ -285,10 +289,12 @@ async def capture_keyboard_events():
                             await oxp_gen3.process_event(seed_event, active_keys)
                         case "OXP_GEN4":
                             await oxp_gen4.process_event(seed_event, active_keys)
-                        #case "OXP_GEN5":
-                        #    await oxp_gen5.process_event(seed_event, active_keys)
+                        case "OXP_GEN5":
+                            await oxp_gen5.process_event(seed_event, active_keys)
                         case "OXP_GEN6":
                             await oxp_gen6.process_event(seed_event, active_keys)
+                        case "OXP_GEN7":
+                            await oxp_gen7.process_event(seed_event, active_keys)
 
             except Exception as err:
                 handycon.logger.error(f"{err} | Error reading events from {handycon.keyboard_device.name}")

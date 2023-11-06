@@ -14,8 +14,7 @@ Many of the handheld game consoles designed for windows have buttons on then in 
 - Win600
 
 ### AOKZOE
-- AOKZOE A1 AR07
-- AOKZOE A1 Pro
+- AOKZOE A1/Pro
  
 ### ASUS
 - ROG Ally
@@ -23,9 +22,9 @@ Many of the handheld game consoles designed for windows have buttons on then in 
 ### Aya Neo
 - Founders Edition and 2021 Series
 - Next Series
-- Air Series
-- 2 Series
-- GEEK Series
+- Air/Pro/Plus
+- 2/2S
+- GEEK/1S
 
 ### Ayn
 - Loki Max
@@ -37,10 +36,13 @@ Many of the handheld game consoles designed for windows have buttons on then in 
 - GPD WinMax2
 - GPD Win4
 
+### Lenovo
+- Legion Go
+
 ### OneNetBook
 - OneXPlayer 1S
-- OneXPlayer Mini
-- OneXPlayer Mini Pro
+- OneXPlayer Mini/Pro
+- OneXPlayer 2/Pro
 - OneXFly
 
 ## Installation
@@ -56,7 +58,7 @@ sudo systemctl enable --now handycon
 ```
 git clone https://github.com/ShadowBlip/HandyGCCS.git
 cd HandyGCCS
-sudo ./build
+sudo ./build.sh
 sudo systemctl enable --now handycon
 ```
 

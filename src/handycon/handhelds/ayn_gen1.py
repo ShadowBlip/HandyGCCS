@@ -9,8 +9,6 @@
 import sys
 from evdev import InputDevice, InputEvent, UInput, ecodes as e, list_devices, ff
 
-from .. import constants as cons
-
 handycon = None
 
 def init_handheld(handheld_controller):
