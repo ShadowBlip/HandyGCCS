@@ -26,6 +26,7 @@ import handycon.handhelds.aya_gen7 as aya_gen7
 import handycon.handhelds.ayn_gen1 as ayn_gen1
 import handycon.handhelds.ayn_gen2 as ayn_gen2
 import handycon.handhelds.ayn_gen3 as ayn_gen3
+import handycon.handhelds.go_gen1 as go_gen1
 import handycon.handhelds.gpd_gen1 as gpd_gen1
 import handycon.handhelds.gpd_gen2 as gpd_gen2
 import handycon.handhelds.gpd_gen3 as gpd_gen3
@@ -177,6 +178,13 @@ def id_system():
         ):
         handycon.system_type = "AYN_GEN3"
         ayn_gen3.init_handheld(handycon)
+
+    ## Lenovo Devices
+    elif system_id in (
+            "83E1", #Legion Go
+        ):
+        handycon.system_type = "GO_GEN1"
+        go_gen1.init_handheld(handycon)
 
     ## GPD Devices
     # Have 2 buttons with 3 modes (left, right, both)

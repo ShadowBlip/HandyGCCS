@@ -36,6 +36,9 @@ Many of the handheld game consoles designed for windows have buttons on then in 
 - GPD WinMax2
 - GPD Win4
 
+### Lenovo
+- Legion Go
+
 ### OneNetBook
 - OneXPlayer 1S
 - OneXPlayer Mini/Pro
