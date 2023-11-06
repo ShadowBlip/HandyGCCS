@@ -2,10 +2,8 @@
 # This file is part of Handheld Game Console Controller System (HandyGCCS)
 # Copyright 2022-2023 Derek J. Clark <derekjohn.clark@gmail.com>
 
-import sys
 from evdev import InputDevice, InputEvent, UInput, ecodes as e, list_devices, ff
 
-from .. import constants as cons
 handycon = None
 
 def init_handheld(handheld_controller):

@@ -34,8 +34,9 @@ import handycon.handhelds.oxp_gen1 as oxp_gen1
 import handycon.handhelds.oxp_gen2 as oxp_gen2
 import handycon.handhelds.oxp_gen3 as oxp_gen3
 import handycon.handhelds.oxp_gen4 as oxp_gen4
-#import handycon.handhelds.oxp_gen5 as oxp_gen5
+import handycon.handhelds.oxp_gen5 as oxp_gen5
 import handycon.handhelds.oxp_gen6 as oxp_gen6
+import handycon.handhelds.oxp_gen7 as oxp_gen7
 from .constants import *
 
 ## Partial imports
@@ -72,6 +73,8 @@ def id_system():
     global handycon
 
     system_id = open("/sys/devices/virtual/dmi/id/product_name", "r").read().strip()
+    handycon.logger.debug(f"Found System ID: {system_id}")
+
     cpu_vendor = get_cpu_vendor()
     handycon.logger.debug(f"Found CPU Vendor: {cpu_vendor}")
 
@@ -183,7 +186,7 @@ def id_system():
         handycon.system_type = "GO_GEN1"
         go_gen1.init_handheld(handycon)
 
-    ## GPD Devices.
+    ## GPD Devices
     # Have 2 buttons with 3 modes (left, right, both)
     elif system_id in (
         "G1618-03", #Win3
@@ -203,8 +206,8 @@ def id_system():
         handycon.system_type = "GPD_GEN3"
         gpd_gen3.init_handheld(handycon)
 
-    ## ONEXPLAYER and AOKZOE devices.
-    # BIOS have inlete DMI data and most models report as "ONE XPLAYER" or "ONEXPLAYER".
+    ## ONEXPLAYER Devices
+    # Older BIOS have incomlete DMI data and most models report as "ONE XPLAYER" or "ONEXPLAYER".
     elif system_id in (
         "ONE XPLAYER",
         "ONEXPLAYER",
@@ -234,20 +237,27 @@ def id_system():
         handycon.system_type = "OXP_GEN4"
         oxp_gen4.init_handheld(handycon)
 
-    ## GEN 5
-    #elif system_id in (
-    #    "ONEXPLAYER 2",
-    #    "ONEXPLAYER 2 Pro",
-    #    ):
-    #    handycon.system_type = "OXP_GEN5"
-    #    oxp_gen5.init_handheld(handycon)
+    # GEN 5
+    elif system_id in (
+        "ONEXPLAYER 2 ARP23",
+        ):
+        handycon.system_type = "OXP_GEN5"
+        oxp_gen5.init_handheld(handycon)
 
     # GEN 6
     elif system_id in (
-        "ONEXPLAYER F1",
+        "ONEXPLAYER 2 PRO ARP23P",
+        "ONEXPLAYER 2 PRO ARP23P EVA-01",
         ):
         handycon.system_type = "OXP_GEN6"
         oxp_gen6.init_handheld(handycon)
+
+    # GEN 7
+    elif system_id in (
+        "ONEXPLAYER F1",
+        ):
+        handycon.system_type = "OXP_GEN7"
+        oxp_gen7.init_handheld(handycon)
 
     # Devices that aren't supported could cause issues, exit.
     else:
