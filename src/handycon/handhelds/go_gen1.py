@@ -39,17 +39,18 @@ async def process_event(seed_event, active_keys):
     elif active_keys == [] and seed_event.code in [29, 56, 111] and button_on == 0 and button2 in handycon.event_queue:
         await handycon.handle_key_up(seed_event, button2)
 
-    # Legion + x = keyboard
-    if active_keys == [99] and button_on == 1 and button4 not in handycon.event_queue:
+    # Legion + B = OSK
+    if active_keys == [24, 29, 125] and button_on == 1 and button4 not in handycon.event_queue:
         await handycon.handle_key_down(seed_event, button4)
-    elif active_keys == [] and seed_event.code in [99] and button_on == 0 and button4 in handycon.event_queue:
+    elif active_keys == [] and seed_event.code in [24, 29, 125] and button_on == 0 and button4 in handycon.event_queue:
         await handycon.handle_key_up(seed_event, button4)
 
-    # Legion + B = MODE
-    if active_keys == [24, 29, 125] and button_on == 1 and button5 not in handycon.event_queue:
+    # Legion + x = MODE 
+    if active_keys == [99] and button_on == 1 and button5 not in handycon.event_queue:
         await handycon.handle_key_down(seed_event, button5)
-    elif active_keys == [] and seed_event.code in [24, 29, 125] and button_on == 0 and button5 in handycon.event_queue:
+    elif active_keys == [] and seed_event.code in [99] and button_on == 0 and button5 in handycon.event_queue:
         await handycon.handle_key_up(seed_event, button5)
+
 
     if handycon.last_button:
         await handycon.handle_key_up(seed_event, handycon.last_button)
