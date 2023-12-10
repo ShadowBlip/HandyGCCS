@@ -23,7 +23,7 @@ import handycon.handhelds.aya_gen4 as aya_gen4
 import handycon.handhelds.aya_gen5 as aya_gen5
 import handycon.handhelds.aya_gen6 as aya_gen6
 import handycon.handhelds.aya_gen7 as aya_gen7
-import handycon.handhelds.aya_kun as aya_kun
+import handycon.handhelds.aya_gen8 as aya_gen8
 import handycon.handhelds.ayn_gen1 as ayn_gen1
 import handycon.handhelds.ayn_gen2 as ayn_gen2
 import handycon.handhelds.ayn_gen3 as ayn_gen3
@@ -164,8 +164,8 @@ def id_system():
     elif system_id in (
         "KUN",
         ):
-        handycon.system_type = "AYA_KUN"
-        aya_kun.init_handheld(handycon)
+        handycon.system_type = "AYA_GEN8"
+        aya_gen8.init_handheld(handycon)
 
     ## Ayn Devices
     elif system_id in (
