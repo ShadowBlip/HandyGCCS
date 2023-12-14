@@ -26,8 +26,8 @@ async def process_event(seed_event, active_keys):
     # Button map shortcuts for easy reference.
     button1 = handycon.button_map["button1"]  # Default Screenshot
     button2 = handycon.button_map["button2"]  # Default QAM
-    button3 = handycon.button_map["button3"]  # Default ESC
     button4 = handycon.button_map["button4"]  # Default OSK
+    button5 = handycon.button_map["button5"]  # Default MODE
     button6 = handycon.button_map["button6"]  # Default Launch Chimera
 
     ## Loop variables
@@ -44,16 +44,10 @@ async def process_event(seed_event, active_keys):
         await handycon.handle_key_up(seed_event, button1)
 
     # BUTTON 2: T Button
-    if active_keys == [97, 125, 188] and button_on == 1 and button2 not in handycon.event_queue:
+    if active_keys == [32, 125] and button_on == 1 and button2 not in handycon.event_queue:
         await handycon.handle_key_down(seed_event, button2)
-    elif active_keys == [] and seed_event.code in [97, 125, 188] and button_on == 0 and button2 in handycon.event_queue:
+    elif active_keys == [] and seed_event.code in [32, 125] and button_on == 0 and button2 in handycon.event_queue:
         await handycon.handle_key_up(seed_event, button2)
-
-    # BUTTON 3: = Button
-    if active_keys == [32, 125] and button_on == 1 and button3 not in handycon.event_queue:
-        await handycon.handle_key_down(seed_event, button3)
-    elif active_keys == [] and seed_event.code in [32, 125] and button_on == 0 and button3 in handycon.event_queue:
-        await handycon.handle_key_up(seed_event, button3)
 
     # BUTTON 4: RC Button
     if active_keys == [97, 125, 186] and button_on == 1 and button4 not in handycon.event_queue:
@@ -61,10 +55,16 @@ async def process_event(seed_event, active_keys):
     elif active_keys == [] and seed_event.code in [97, 125, 186] and button_on == 0 and button4 in handycon.event_queue:
         await handycon.handle_key_up(seed_event, button4)
 
-    # BUTTON 6: AYA button
-    if active_keys == [97, 125, 187] and button_on == 1 and button6 not in handycon.event_queue:
+    # BUTTON 5: AYAspace 
+    if active_keys == [97, 125, 187] and button_on == 1 and button5 not in handycon.event_queue:
+        await handycon.handle_key_down(seed_event, button5)
+    elif active_keys == [] and seed_event.code in [97, 125, 187] and button_on == 0 and button5 in handycon.event_queue:
+        await handycon.handle_key_up(seed_event, button5)
+
+    # BUTTON 6: T Button
+    if active_keys == [97, 125, 188] and button_on == 1 and button6 not in handycon.event_queue:
         await handycon.handle_key_down(seed_event, button6)
-    elif active_keys == [] and seed_event.code in [97, 125, 187] and button_on == 0 and button6 in handycon.event_queue:
+    elif active_keys == [] and seed_event.code in [97, 125, 188] and button_on == 0 and button6 in handycon.event_queue:
         await handycon.handle_key_up(seed_event, button6)
 
     # Handle L_META from power button
