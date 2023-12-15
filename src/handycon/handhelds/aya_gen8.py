@@ -43,7 +43,7 @@ async def process_event(seed_event, active_keys):
     elif active_keys == [] and seed_event.code in [97, 125, 185] and button_on == 0 and button1 in handycon.event_queue:
         await handycon.handle_key_up(seed_event, button1)
 
-    # BUTTON 2: T Button
+    # BUTTON 2: AYA small Button
     if active_keys == [32, 125] and button_on == 1 and button2 not in handycon.event_queue:
         await handycon.handle_key_down(seed_event, button2)
     elif active_keys == [] and seed_event.code in [32, 125] and button_on == 0 and button2 in handycon.event_queue:
