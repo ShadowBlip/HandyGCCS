@@ -8,15 +8,32 @@ handycon = None
 
 def init_handheld(handheld_controller):
     global handycon
+
+    devices = []
+    proc_dev_fd = open('/proc/bus/input/devices', 'r')
+    for line in proc_dev_fd:
+        devices.append(line)
+    proc_dev_fd.close()
+
     handycon = handheld_controller
     handycon.BUTTON_DELAY = 0.11
     handycon.CAPTURE_CONTROLLER = True
     handycon.CAPTURE_KEYBOARD = True
     handycon.CAPTURE_POWER = True
-    handycon.GAMEPAD_ADDRESS = 'usb-0000:64:00.3-3/input0'
+    # handycon.GAMEPAD_ADDRESS = 'usb-0000:64:00.3-3/input0'
     handycon.GAMEPAD_NAME = 'Microsoft X-Box 360 pad'
     handycon.KEYBOARD_ADDRESS = 'isa0060/serio0/input0'
     handycon.KEYBOARD_NAME = 'AT Translated Set 2 keyboard'
+
+    GAMEPAD_ADDRESS_LIST = [
+        'usb-0000:64:00.3-3/input0',
+        'usb-0000:c4:00.3-3/input0', # AYANEO Slide
+    ]
+
+    for line in devices:
+        for address in GAMEPAD_ADDRESS_LIST:
+            if address in line:
+                handycon.GAMEPAD_ADDRESS = address
 
 
 # Captures keyboard events and translates them to virtual device events.
