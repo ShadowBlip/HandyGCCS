@@ -20,13 +20,12 @@ def init_handheld(handheld_controller):
     handycon.CAPTURE_CONTROLLER = True
     handycon.CAPTURE_KEYBOARD = True
     handycon.CAPTURE_POWER = True
-    # handycon.GAMEPAD_ADDRESS = 'usb-0000:64:00.3-3/input0'
     handycon.GAMEPAD_NAME = 'Microsoft X-Box 360 pad'
     handycon.KEYBOARD_ADDRESS = 'isa0060/serio0/input0'
     handycon.KEYBOARD_NAME = 'AT Translated Set 2 keyboard'
 
     GAMEPAD_ADDRESS_LIST = [
-        'usb-0000:64:00.3-3/input0',
+        'usb-0000:64:00.3-3/input0', # AYANEO AIR Plus
         'usb-0000:c4:00.3-3/input0', # AYANEO Slide
     ]
 
@@ -34,6 +33,10 @@ def init_handheld(handheld_controller):
         for address in GAMEPAD_ADDRESS_LIST:
             if address in line:
                 handycon.GAMEPAD_ADDRESS = address
+    
+    if not handycon.GAMEPAD_ADDRESS:  
+        handycon.logger.warn("Unable to identify one or more input devices by address. Please submit a bug report with a copy of '/proc/bus/input/devices'")  
+        exit() 
 
 
 # Captures keyboard events and translates them to virtual device events.
