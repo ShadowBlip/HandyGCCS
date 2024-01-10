@@ -31,6 +31,7 @@ import handycon.handhelds.go_gen1 as go_gen1
 import handycon.handhelds.gpd_gen1 as gpd_gen1
 import handycon.handhelds.gpd_gen2 as gpd_gen2
 import handycon.handhelds.gpd_gen3 as gpd_gen3
+import handycon.handhelds.gpd_gen4 as gpd_gen4
 import handycon.handhelds.oxp_gen1 as oxp_gen1
 import handycon.handhelds.oxp_gen2 as oxp_gen2
 import handycon.handhelds.oxp_gen3 as oxp_gen3
@@ -213,6 +214,13 @@ def id_system():
         ):
         handycon.system_type = "GPD_GEN3"
         gpd_gen3.init_handheld(handycon)
+
+    elif system_id in (
+        "G1617-01", #WinMini
+        ):
+        handycon.system_type = "GPD_GEN4"
+        gpd_gen4.init_handheld(handycon)
+
 
     ## ONEXPLAYER Devices
     # Older BIOS have incomlete DMI data and most models report as "ONE XPLAYER" or "ONEXPLAYER".
