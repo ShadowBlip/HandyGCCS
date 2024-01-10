@@ -32,7 +32,7 @@ async def process_event(seed_event, active_keys):
     if seed_event.code in [e.KEY_VOLUMEDOWN, e.KEY_VOLUMEUP]:
         handycon.emit_event(seed_event)
 
-    # BUTTON 1 (Default: Toggle Gyro)
+    # BUTTON 1 (Default: Screenshot)
     if active_keys == [119] and button_on == 1 and button1 not in handycon.event_queue:
         await handycon.handle_key_down(seed_event, button1)
     elif active_keys == [] and seed_event.code in [119] and button_on == 0 and button1 in handycon.event_queue:
