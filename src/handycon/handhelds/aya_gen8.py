@@ -2,9 +2,10 @@
 # This file is part of Handheld Game Console Controller System (HandyGCCS)
 # Copyright 2022-2023 Derek J. Clark <derekjohn.clark@gmail.com>
 
-from evdev import InputDevice, InputEvent, UInput, ecodes as e, list_devices, ff
+from evdev import ecodes as e
 
 handycon = None
+
 
 def init_handheld(handheld_controller):
     global handycon
@@ -24,13 +25,13 @@ async def process_event(seed_event, active_keys):
     global handycon
 
     # Button map shortcuts for easy reference.
-    button1 = handycon.button_map["button1"]  # Default Screenshot
-    button2 = handycon.button_map["button2"]  # Default QAM
-    button4 = handycon.button_map["button4"]  # Default OSK
-    button5 = handycon.button_map["button5"]  # Default MODE
-    button6 = handycon.button_map["button6"]  # Default Launch Chimera
+    button1 = handycon.button_map["button1"]
+    button2 = handycon.button_map["button2"]
+    button4 = handycon.button_map["button4"]
+    button5 = handycon.button_map["button5"]
+    button6 = handycon.button_map["button6"]
 
-    ## Loop variables
+    # Loop variables
     button_on = seed_event.value
 
     # Automatically pass default keycodes we dont intend to replace.
@@ -55,7 +56,7 @@ async def process_event(seed_event, active_keys):
     elif active_keys == [] and seed_event.code in [97, 125, 186] and button_on == 0 and button4 in handycon.event_queue:
         await handycon.handle_key_up(seed_event, button4)
 
-    # BUTTON 5: AYAspace 
+    # BUTTON 5: AYAspace
     if active_keys == [97, 125, 187] and button_on == 1 and button5 not in handycon.event_queue:
         await handycon.handle_key_down(seed_event, button5)
     elif active_keys == [] and seed_event.code in [97, 125, 187] and button_on == 0 and button5 in handycon.event_queue:

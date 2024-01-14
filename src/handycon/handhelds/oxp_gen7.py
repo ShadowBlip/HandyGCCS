@@ -3,9 +3,10 @@
 # Copyright 2022-2023 Derek J. Clark <derekjohn.clark@gmail.com>
 
 import os
-from evdev import InputDevice, InputEvent, UInput, ecodes as e, list_devices, ff
+from evdev import ecodes as e
 
 handycon = None
+
 
 def init_handheld(handheld_controller):
     global handycon
@@ -20,10 +21,11 @@ def init_handheld(handheld_controller):
     handycon.KEYBOARD_NAME = 'AT Translated Set 2 keyboard'
     if os.path.exists('/sys/devices/platform/oxp-platform/tt_toggle'):
         command = f'echo 1 > /sys/devices/platform/oxp-platform/tt_toggle'
-        run = os.popen(command, 'r', 1).read().strip()
+        os.popen(command, 'r', 1).read().strip()
         handycon.logger.info(f'Turbo button takeover enabled')
     else:
-        handycon.logger.warn(f'Turbo takeover failed. Ensure you have the latest oxp-sensors driver installed.')
+        handycon.logger.warn(
+            f'Turbo takeover failed. Ensure you have the latest oxp-sensors driver installed.')
 
 
 # Captures keyboard events and translates them to virtual device events.
@@ -31,15 +33,14 @@ async def process_event(seed_event, active_keys):
     global handycon
 
     # Button map shortcuts for easy reference.
-    button1 = handycon.button_map["button1"]  # Default Screenshot
-    button2 = handycon.button_map["button2"]  # Default QAM
-    button3 = handycon.button_map["button3"]  # Default ESC
-    button4 = handycon.button_map["button4"]  # Default OSK
-    button5 = handycon.button_map["button5"]  # Default MODE
-    button6 = handycon.button_map["button6"]  # Default Launch Chimera
+    button1 = handycon.button_map["button1"]
+    button2 = handycon.button_map["button2"]
+    button3 = handycon.button_map["button3"]
+    button4 = handycon.button_map["button4"]
+    button5 = handycon.button_map["button5"]
+    button6 = handycon.button_map["button6"]
 
-    ## Loop variables
-    events = []
+    # Loop variables
     this_button = None
     button_on = seed_event.value
 
@@ -47,7 +48,7 @@ async def process_event(seed_event, active_keys):
     if seed_event.code in [e.KEY_VOLUMEDOWN, e.KEY_VOLUMEUP]:
         handycon.emit_event(seed_event)
 
-    # Handle missed keys. 
+    # Handle missed keys.
     if active_keys == [] and handycon.event_queue != []:
         this_button = handycon.event_queue[0]
 
@@ -57,7 +58,7 @@ async def process_event(seed_event, active_keys):
     elif active_keys == [] and seed_event.code in [99] and button_on == 0 and button1 in handycon.event_queue:
         this_button = button1
 
-    ## BUTTON 2 (Default: QAM) Turbo Button
+    # BUTTON 2 (Default: QAM) Turbo Button
     if active_keys == [29, 56, 125] and button_on == 1 and button2 not in handycon.event_queue:
         handycon.event_queue.append(button2)
     elif active_keys == [] and seed_event.code in [29, 56] and button_on == 0 and button2 in handycon.event_queue:
@@ -88,7 +89,7 @@ async def process_event(seed_event, active_keys):
         this_button = button6
 
     # Handle L_META from power button
-    elif active_keys == [] and seed_event.code == 125 and button_on == 0 and  handycon.event_queue == [] and handycon.shutdown == True:
+    elif active_keys == [] and seed_event.code == 125 and button_on == 0 and handycon.event_queue == [] and handycon.shutdown == True:
         handycon.shutdown = False
 
     # Create list of events to fire.
