@@ -2,12 +2,8 @@
 # This file is part of Handheld Game Console Controller System (HandyGCCS)
 # Copyright 2022-2023 Derek J. Clark <derekjohn.clark@gmail.com>
 
-import sys
-from evdev import InputDevice, InputEvent, UInput, ecodes as e, list_devices, ff
-
-from .. import constants as cons
-
 handycon = None
+
 
 def init_handheld(handheld_controller):
     global handycon
@@ -61,24 +57,24 @@ async def process_event(seed_event, active_keys):
     global handycon
 
     # Button map shortcuts for easy reference.
-    button1 = handycon.button_map["button1"]  # Default Screenshot
-    button2 = handycon.button_map["button2"]  # Default QAM
-    button3 = handycon.button_map["button3"]  # Default ESC 
-    button4 = handycon.button_map["button4"]  # Default OSK
-    button5 = handycon.button_map["button5"]  # Default MODE
-    button6 = handycon.button_map["button6"] 
-    button7 = handycon.button_map["button7"] 
-    button8 = handycon.button_map["button8"] 
-    button9 = handycon.button_map["button9"] 
-    button10 = handycon.button_map["button10"] 
-    button11 = handycon.button_map["button11"] 
-    button12 = handycon.button_map["button12"] 
+    button1 = handycon.button_map["button1"]
+    button2 = handycon.button_map["button2"]
+    button3 = handycon.button_map["button3"]
+    button4 = handycon.button_map["button4"]
+    button5 = handycon.button_map["button5"]
+    button6 = handycon.button_map["button6"]
+    button7 = handycon.button_map["button7"]
+    button8 = handycon.button_map["button8"]
+    button9 = handycon.button_map["button9"]
+    button10 = handycon.button_map["button10"]
+    button11 = handycon.button_map["button11"]
+    button12 = handycon.button_map["button12"]
 
-    ## Loop variables
+    # Loop variables
     button_on = seed_event.value
     this_button = None
 
-    # Handle missed keys. 
+    # Handle missed keys.
     if active_keys == [] and handycon.event_queue != []:
         this_button = handycon.event_queue[0]
 

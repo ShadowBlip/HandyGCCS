@@ -2,9 +2,10 @@
 # This file is part of Handheld Game Console Controller System (HandyGCCS)
 # Copyright 2022-2023 Derek J. Clark <derekjohn.clark@gmail.com>
 
-from evdev import InputDevice, InputEvent, UInput, ecodes as e, list_devices, ff
+from evdev import ecodes as e
 
 handycon = None
+
 
 def init_handheld(handheld_controller):
     global handycon
@@ -24,10 +25,10 @@ async def process_event(seed_event, active_keys):
     global handycon
 
     # Button map shortcuts for easy reference.
-    button1 = handycon.button_map["button1"]  # Default Screenshot
-    button2 = handycon.button_map["button2"]  # Default QAM
+    button1 = handycon.button_map["button1"]
+    button2 = handycon.button_map["button2"]
 
-    ## Loop variables
+    # Loop variables
     button_on = seed_event.value
 
     # Automatically pass default keycodes we dont intend to replace.
@@ -47,7 +48,7 @@ async def process_event(seed_event, active_keys):
         await handycon.handle_key_up(seed_event, button2)
 
     # Handle L_META from power button
-    elif active_keys == [] and seed_event.code == 125 and button_on == 0 and  handycon.event_queue == [] and handycon.shutdown == True:
+    elif active_keys == [] and seed_event.code == 125 and button_on == 0 and handycon.event_queue == [] and handycon.shutdown == True:
         handycon.shutdown = False
 
     if handycon.last_button:

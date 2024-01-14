@@ -2,9 +2,10 @@
 # This file is part of Handheld Game Console Controller System (HandyGCCS)
 # Copyright 2022-2023 Derek J. Clark <derekjohn.clark@gmail.com>
 
-from evdev import InputDevice, InputEvent, UInput, ecodes as e, list_devices, ff
+from evdev import ecodes as e
 
 handycon = None
+
 
 def init_handheld(handheld_controller):
     global handycon
@@ -23,14 +24,13 @@ def init_handheld(handheld_controller):
 async def process_event(seed_event, active_keys):
     global handycon
     # Button map shortcuts for easy reference.
-    button1 = handycon.button_map["button1"]  # Default Screenshot
-    button2 = handycon.button_map["button2"]  # Default QAM
-    button3 = handycon.button_map["button3"]  # Default ESC
-    button4 = handycon.button_map["button4"]  # Default OSK
-    button5 = handycon.button_map["button5"]  # Default MODE
+    button1 = handycon.button_map["button1"]
+    button2 = handycon.button_map["button2"]
+    button3 = handycon.button_map["button3"]
+    button4 = handycon.button_map["button4"]
+    button5 = handycon.button_map["button5"]
 
-    ## Loop variables
-    events = []
+    # Loop variables
     this_button = None
     button_on = seed_event.value
 
@@ -38,7 +38,7 @@ async def process_event(seed_event, active_keys):
     if seed_event.code in [e.KEY_VOLUMEDOWN, e.KEY_VOLUMEUP]:
         handycon.emit_event(seed_event)
 
-    # Handle missed keys. 
+    # Handle missed keys.
     if active_keys == [] and handycon.event_queue != []:
         this_button = handycon.event_queue[0]
 
@@ -73,7 +73,7 @@ async def process_event(seed_event, active_keys):
         this_button = button5
 
     # Handle L_META from power button
-    elif active_keys == [] and seed_event.code == 125 and button_on == 0 and  handycon.event_queue == [] and handycon.shutdown == True:
+    elif active_keys == [] and seed_event.code == 125 and button_on == 0 and handycon.event_queue == [] and handycon.shutdown == True:
         handycon.shutdown = False
 
     # Create list of events to fire.

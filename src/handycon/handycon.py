@@ -11,28 +11,30 @@ import sys
 import traceback
 import warnings
 
-## Local modules
+# Local modules
 from .constants import *
 from . import devices
 from . import utilities
 
-## Partial imports
+# Partial imports
 from pathlib import Path
 
 
 warnings.filterwarnings("ignore", category=DeprecationWarning)
+
+
 class HandheldController:
     # Logging
     logging.basicConfig(format="[%(asctime)s | %(filename)s:%(lineno)s:%(funcName)s] %(message)s",
                         datefmt="%y%m%d_%H:%M:%S",
                         level=logging.INFO
                         )
-    logger= logging.getLogger(__name__)
+    logger = logging.getLogger(__name__)
 
     # Session Variables
     config = None
     button_map = {}
-    event_queue = [] # Stores inng button presses to block spam
+    event_queue = []  # Stores inng button presses to block spam
     last_button = None
     last_x_val = 0
     last_y_val = 0
@@ -82,14 +84,16 @@ class HandheldController:
         self.running = True
         devices.set_handycon(self)
         utilities.set_handycon(self)
-        self.logger.info("Starting Handhend Game Console Controller Service...")
+        self.logger.info(
+            "Starting Handhend Game Console Controller Service...")
         if utilities.is_process_running("opengamepadui"):
-            self.logger.warn("Detected an OpenGamepadUI Process. Input management not possible. Exiting.")
+            self.logger.warn(
+                "Detected an OpenGamepadUI Process. Input management not possible. Exiting.")
             exit()
         Path(HIDE_PATH).mkdir(parents=True, exist_ok=True)
-        devices.restore_hidden() 
+        devices.restore_hidden()
         utilities.get_user()
-        self.HAS_CHIMERA_LAUNCHER=os.path.isfile(CHIMERA_LAUNCHER_PATH)
+        self.HAS_CHIMERA_LAUNCHER = os.path.isfile(CHIMERA_LAUNCHER_PATH)
         utilities.id_system()
         utilities.get_config()
         devices.make_controller()
@@ -109,7 +113,8 @@ class HandheldController:
 
         # Establish signaling to handle gracefull shutdown.
         for s in (signal.SIGHUP, signal.SIGTERM, signal.SIGINT, signal.SIGQUIT):
-            self.loop.add_signal_handler(s, lambda s=s: asyncio.create_task(self.exit()))
+            self.loop.add_signal_handler(
+                s, lambda s=s: asyncio.create_task(self.exit()))
 
         try:
             self.loop.run_forever()

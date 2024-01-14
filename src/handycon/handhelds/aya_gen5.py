@@ -2,9 +2,10 @@
 # This file is part of Handheld Game Console Controller System (HandyGCCS)
 # Copyright 2022-2023 Derek J. Clark <derekjohn.clark@gmail.com>
 
-from evdev import InputDevice, InputEvent, UInput, ecodes as e, list_devices, ff
+from evdev import ecodes as e
 
 handycon = None
+
 
 def init_handheld(handheld_controller):
     global handycon
@@ -25,18 +26,19 @@ def init_handheld(handheld_controller):
     handycon.KEYBOARD_NAME = 'AT Translated Set 2 keyboard'
 
     GAMEPAD_ADDRESS_LIST = [
-        'usb-0000:64:00.3-3/input0', # AYANEO AIR Plus
-        'usb-0000:c4:00.3-3/input0', # AYANEO Slide
+        'usb-0000:64:00.3-3/input0',  # AYANEO AIR Plus
+        'usb-0000:c4:00.3-3/input0',  # AYANEO Slide
     ]
 
     for line in devices:
         for address in GAMEPAD_ADDRESS_LIST:
             if address in line:
                 handycon.GAMEPAD_ADDRESS = address
-    
-    if not handycon.GAMEPAD_ADDRESS:  
-        handycon.logger.warn("Unable to identify one or more input devices by address. Please submit a bug report with a copy of '/proc/bus/input/devices'")  
-        exit() 
+
+    if not handycon.GAMEPAD_ADDRESS:
+        handycon.logger.warn(
+            "Unable to identify one or more input devices by address. Please submit a bug report with a copy of '/proc/bus/input/devices'")
+        exit()
 
 
 # Captures keyboard events and translates them to virtual device events.
@@ -44,13 +46,12 @@ async def process_event(seed_event, active_keys):
     global handycon
 
     # Button map shortcuts for easy reference.
-    button1 = handycon.button_map["button1"]  # Default Screenshot
-    button2 = handycon.button_map["button2"]  # Default QAM
-    button3 = handycon.button_map["button3"]  # Default ESC
-    button4 = handycon.button_map["button4"]  # Default OSK
-    button5 = handycon.button_map["button5"]  # Default MODE
+    button1 = handycon.button_map["button1"]
+    button2 = handycon.button_map["button2"]
+    button4 = handycon.button_map["button4"]
+    button5 = handycon.button_map["button5"]
 
-    ## Loop variables
+    # Loop variables
     button_on = seed_event.value
 
     # Automatically pass default keycodes we dont intend to replace.
