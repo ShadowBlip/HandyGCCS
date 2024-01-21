@@ -2,6 +2,7 @@
 # This file is part of Handheld Game Console Controller System (HandyGCCS)
 # Copyright 2022-2023 Derek J. Clark <derekjohn.clark@gmail.com>
 
+import time
 from evdev import ecodes as e
 
 handycon = None
@@ -9,7 +10,7 @@ handycon = None
 
 def init_handheld(handheld_controller):
     global handycon
-
+    time.sleep(2) # Devices like the air plus boot too fast for the fd to be fully populated making the devices not be found.
     devices = []
     proc_dev_fd = open('/proc/bus/input/devices', 'r')
     for line in proc_dev_fd:
