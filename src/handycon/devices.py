@@ -20,6 +20,7 @@ import handycon.handhelds.aya_gen5 as aya_gen5
 import handycon.handhelds.aya_gen6 as aya_gen6
 import handycon.handhelds.aya_gen7 as aya_gen7
 import handycon.handhelds.aya_gen8 as aya_gen8
+import handycon.handhelds.aya_gen9 as aya_gen9
 import handycon.handhelds.ayn_gen1 as ayn_gen1
 import handycon.handhelds.ayn_gen2 as ayn_gen2
 import handycon.handhelds.ayn_gen3 as ayn_gen3
@@ -290,6 +291,8 @@ async def capture_keyboard_events():
                             await aya_gen7.process_event(seed_event, active_keys)
                         case "AYA_GEN8":
                             await aya_gen8.process_event(seed_event, active_keys)
+                        case "AYA_GEN9":
+                            await aya_gen9.process_event(seed_event, active_keys)
                         case "AYN_GEN1":
                             await ayn_gen1.process_event(seed_event, active_keys)
                         case "AYN_GEN2":
