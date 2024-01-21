@@ -1,8 +1,12 @@
 [Unit]
 Description=Handheld Game Console Controller Service
 After=graphical-session.target
+StartLimitIntervalSec=500
+StartLimitBurst=5
 
 [Service]
+Restart=on-failure
+RestartSec=5s
 ExecStart=/usr/bin/nice --15 /usr/bin/handycon
 
 [Install]
