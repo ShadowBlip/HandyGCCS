@@ -23,6 +23,7 @@ import handycon.handhelds.aya_gen5 as aya_gen5
 import handycon.handhelds.aya_gen6 as aya_gen6
 import handycon.handhelds.aya_gen7 as aya_gen7
 import handycon.handhelds.aya_gen8 as aya_gen8
+import handycon.handhelds.aya_gen9 as aya_gen9
 import handycon.handhelds.ayn_gen1 as ayn_gen1
 import handycon.handhelds.ayn_gen2 as ayn_gen2
 import handycon.handhelds.ayn_gen3 as ayn_gen3
@@ -159,7 +160,6 @@ def id_system():
 
     elif system_id in (
         "AIR Plus",
-        "SLIDE",
     ):
         if cpu_vendor == "GenuineIntel":
             handycon.system_type = "AYA_GEN7"
@@ -181,6 +181,12 @@ def id_system():
     ):
         handycon.system_type = "AYA_GEN8"
         aya_gen8.init_handheld(handycon)
+
+    elif system_id in (
+        "SLIDE",
+    ):
+        handycon.system_type = "AYA_GEN9"
+        aya_gen9.init_handheld(handycon)
 
     # Ayn Devices
     elif system_id in (
