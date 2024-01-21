@@ -85,7 +85,7 @@ class HandheldController:
         devices.set_handycon(self)
         utilities.set_handycon(self)
         self.logger.info(
-            "Starting Handhend Game Console Controller Service...")
+            "Starting Handheld Game Console Controller Service...")
         if utilities.is_process_running("opengamepadui"):
             self.logger.warn(
                 "Detected an OpenGamepadUI Process. Input management not possible. Exiting.")

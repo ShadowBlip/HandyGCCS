@@ -78,10 +78,21 @@ def id_system():
 
     system_id = open(
         "/sys/devices/virtual/dmi/id/product_name", "r").read().strip()
-    handycon.logger.debug(f"Found System ID: {system_id}")
+    handycon.logger.info(f"Found System ID: {system_id}")
 
     cpu_vendor = get_cpu_vendor()
-    handycon.logger.debug(f"Found CPU Vendor: {cpu_vendor}")
+    handycon.logger.info(f"Found CPU Vendor: {cpu_vendor}")
+
+    # Verify all system hardweare has initialized.
+    handycon.logger.info("Identifying system hardware.")
+    timeout = 0
+    while not os.path.exists('/proc/bus/input/devices'):
+        sleep(1)
+        timeout += 1
+        if timeout == 30:
+            handycon.logger.error(
+                "Unable to read input devices after 30 seconds. Exiting.")
+            sys.exit(0)
 
     # ANBERNIC Devices
     if system_id in (
