@@ -474,6 +474,9 @@ def handle_power_action():
             if not is_deckui:
                 os.system('systemctl poweroff')
 
+        case "Suspend then hibernate":
+            os.system('systemctl suspend-then-hibernate')
+
 # Handle FF event uploads
 
 
@@ -614,7 +617,7 @@ async def emit_now(seed_event, event_list, value):
             case "Toggle Performance":
                 handycon.logger.debug("Toggle Performance")
                 await toggle_performance()
-            case "Hibernate", "Suspend", "Shutdown":
+            case "Hibernate", "Suspend", "Shutdown", "Suspend then hibernate":
                 handycon.logger.error(
                     f"Power mode {event_list[0]} set to button action. Check your configuration file.")
             case _:
