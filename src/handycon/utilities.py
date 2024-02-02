@@ -117,6 +117,7 @@ def id_system():
 
     # ASUS Devices
     elif system_id in (
+        "ROG Ally RC71L",
         "ROG Ally RC71L_RC71L",
     ):
         handycon.system_type = "ALY_GEN1"
@@ -322,7 +323,7 @@ def get_config():
     if os.path.exists(CONFIG_PATH):
         handycon.logger.info(f"Loading existing config: {CONFIG_PATH}")
         handycon.config.read(CONFIG_PATH)
-        if "power_button" not in handycon.config["Button Map"]:
+        if "version" not in handycon.config or float(handycon.config["version"]) < 1.2:
             handycon.logger.info(
                 "Config file out of date. Generating new config.")
             set_default_config()
@@ -346,9 +347,6 @@ def map_config():
         "button7": EVENT_MAP[handycon.config["Button Map"]["button7"]],
         "button8": EVENT_MAP[handycon.config["Button Map"]["button8"]],
         "button9": EVENT_MAP[handycon.config["Button Map"]["button9"]],
-        "button10": EVENT_MAP[handycon.config["Button Map"]["button10"]],
-        "button11": EVENT_MAP[handycon.config["Button Map"]["button11"]],
-        "button12": EVENT_MAP[handycon.config["Button Map"]["button12"]],
     }
     handycon.power_action = POWER_ACTION_MAP[handycon.config["Button Map"]
                                              ["power_button"]][0]
@@ -358,6 +356,7 @@ def map_config():
 def set_default_config():
     global handycon
     handycon.config["Button Map"] = {
+        "version": "1.2",
         "button1": "SCR",
         "button2": "QAM",
         "button3": "ESC",
@@ -365,11 +364,8 @@ def set_default_config():
         "button5": "MODE",
         "button6": "OPEN_CHIMERA",
         "button7": "TOGGLE_PERFORMANCE",
-        "button8": "MODE",
-        "button9": "TOGGLE_MOUSE",
-        "button10": "ALT_TAB",
-        "button11": "KILL",
-        "button12": "TOGGLE_GYRO",
+        "button8": "THUMBL",
+        "button9": "THUMBR",
         "power_button": "SUSPEND",
     }
 
