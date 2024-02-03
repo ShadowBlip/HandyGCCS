@@ -68,8 +68,8 @@ async def process_event(seed_event, active_keys):
     button4 = handycon.button_map["button4"]    # Default: OSK
     button5 = handycon.button_map["button5"]    # Default: BTN_MODE
     button7 = handycon.button_map["button7"]    # Default: Toggle Performance
-    button8 = handycon.button_map["button8"]  # Default: BTN_HAPPY_TRIGGER1
-    button9 = handycon.button_map["button9"]  # Default: BTN_HAPPY_TRIGGER2
+    button8 = handycon.button_map["button8"]    # Default: BTN_THUMBL
+    button9 = handycon.button_map["button9"]    # Default: BTN_THUMBR
 
     # Loop variables
     button_on = seed_event.value

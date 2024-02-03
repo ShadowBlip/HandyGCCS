@@ -165,8 +165,6 @@ CONTROLLER_EVENTS = {
         e.BTN_MODE,
         e.BTN_THUMBL,
         e.BTN_THUMBR,
-        e.BTN_GEAR_DOWN,
-        e.BTN_GEAR_UP,
         e.BTN_TRIGGER_HAPPY1,
         e.BTN_TRIGGER_HAPPY2,
     ],
