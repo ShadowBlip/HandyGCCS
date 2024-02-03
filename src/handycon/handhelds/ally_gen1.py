@@ -2,6 +2,8 @@
 # This file is part of Handheld Game Console Controller System (HandyGCCS)
 # Copyright 2022-2023 Derek J. Clark <derekjohn.clark@gmail.com>
 
+from time import sleep
+
 handycon = None
 
 
@@ -52,8 +54,12 @@ def init_handheld(handheld_controller):
             "Unable to identify one or more input devices by address. Please submit a bug report with a copy of '/proc/bus/input/devices'")
         exit()
 
+    # asus_hid needs tiem to initialize and set the gamepad mode or everything breaks. Wait for 10s to let that happen.
+    sleep(10)
 
 # Captures keyboard events and translates them to virtual device events.
+
+
 async def process_event(seed_event, active_keys):
     global handycon
 
