@@ -24,6 +24,7 @@ import handycon.handhelds.aya_gen6 as aya_gen6
 import handycon.handhelds.aya_gen7 as aya_gen7
 import handycon.handhelds.aya_gen8 as aya_gen8
 import handycon.handhelds.aya_gen9 as aya_gen9
+import handycon.handhelds.aya_gen10 as aya_gen10
 import handycon.handhelds.ayn_gen1 as ayn_gen1
 import handycon.handhelds.ayn_gen2 as ayn_gen2
 import handycon.handhelds.ayn_gen3 as ayn_gen3
@@ -83,6 +84,10 @@ def id_system():
 
     cpu_vendor = get_cpu_vendor()
     handycon.logger.info(f"Found CPU Vendor: {cpu_vendor}")
+
+    board_name = open(
+        "/sys/devices/virtual/dmi/id/board_name", "r").read().strip()
+    handycon.logger.info(f"Found Board Name: {board_name}")
 
     # Verify all system hardweare has initialized.
     handycon.logger.info("Identifying system hardware.")
@@ -166,8 +171,12 @@ def id_system():
             handycon.system_type = "AYA_GEN7"
             aya_gen7.init_handheld(handycon)
         else:
-            handycon.system_type = "AYA_GEN5"
-            aya_gen5.init_handheld(handycon)
+            if board_name == "AB05-Mendocino":
+                handycon.system_type = "AYA_GEN10"
+                aya_gen10.init_handheld(handycon)
+            else:
+                handycon.system_type = "AYA_GEN5"
+                aya_gen5.init_handheld(handycon)
 
     elif system_id in (
         "AYANEO 2S",
