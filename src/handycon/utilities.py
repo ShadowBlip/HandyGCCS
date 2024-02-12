@@ -130,22 +130,23 @@ def id_system():
 
     # Aya Neo Devices
     elif system_id in (
-        "AYA NEO FOUNDER",
         "AYA NEO 2021",
-        "AYANEO 2021",
-        "AYANEO 2021 Pro",
+        "AYA NEO FOUNDER",
         "AYANEO 2021 Pro Retro Power",
+        "AYANEO 2021 Pro",
+        "AYANEO 2021",
     ):
         handycon.system_type = "AYA_GEN1"
         aya_gen1.init_handheld(handycon)
 
     elif system_id in (
-        "NEXT",
-        "NEXT Pro",
-        "NEXT Advance",
-        "AYANEO NEXT",
-        "AYANEO NEXT Pro",
         "AYANEO NEXT Advance",
+        "AYANEO NEXT Pro",
+        "AYANEO NEXT",
+        "NEXT Advance",
+        "NEXT Lite",
+        "NEXT Pro",
+        "NEXT",
     ):
         handycon.system_type = "AYA_GEN2"
         aya_gen2.init_handheld(handycon)
