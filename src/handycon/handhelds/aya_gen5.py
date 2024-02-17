@@ -26,6 +26,7 @@ def init_handheld(handheld_controller):
     handycon.KEYBOARD_ADDRESS = 'isa0060/serio0/input0'
     handycon.KEYBOARD_NAME = 'AT Translated Set 2 keyboard'
 
+
 # Captures keyboard events and translates them to virtual device events.
 async def process_event(seed_event, active_keys):
     global handycon
@@ -66,10 +67,6 @@ async def process_event(seed_event, active_keys):
         await handycon.handle_key_down(seed_event, button5)
     elif active_keys == [] and seed_event.code in [29, 125, 187] and button_on == 0 and button5 in handycon.event_queue:
         await handycon.handle_key_up(seed_event, button5)
-
-    # Handle L_META from power button
-    elif active_keys == [] and seed_event.code == 125 and button_on == 0 and handycon.event_queue == [] and handycon.shutdown == True:
-        handycon.shutdown = False
 
     if handycon.last_button:
         await handycon.handle_key_up(seed_event, handycon.last_button)

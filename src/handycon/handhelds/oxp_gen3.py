@@ -89,10 +89,6 @@ async def process_event(seed_event, active_keys):
     elif active_keys == [] and seed_event.code in [34] and button_on == 0 and button6 in handycon.event_queue:
         this_button = button6
 
-    # Handle L_META from power button
-    elif active_keys == [] and seed_event.code == 125 and button_on == 0 and handycon.event_queue == [] and handycon.shutdown == True:
-        handycon.shutdown = False
-
     # Create list of events to fire.
     # Handle new button presses.
     if this_button and not handycon.last_button:

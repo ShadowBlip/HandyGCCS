@@ -7,6 +7,7 @@ from evdev import ecodes as e
 
 handycon = None
 
+
 def init_handheld(handheld_controller):
     global handycon
     handycon = handheld_controller
@@ -44,7 +45,7 @@ async def process_event(seed_event, active_keys):
     if seed_event.code in [e.KEY_VOLUMEDOWN, e.KEY_VOLUMEUP]:
         handycon.emit_event(seed_event)
 
-    # Handle missed keys. 
+    # Handle missed keys.
     if active_keys == [] and handycon.event_queue != []:
         this_button = handycon.event_queue[0]
 
@@ -55,7 +56,7 @@ async def process_event(seed_event, active_keys):
         this_button = button1
 
     # BUTTON 2 (Default: QAM) Turbo Button
-    #if active_keys == [34, 125] and button_on == 1 and button2 not in handycon.event_queue:
+    # if active_keys == [34, 125] and button_on == 1 and button2 not in handycon.event_queue:
     if active_keys == [29, 56, 125] and button_on == 1 and button2 not in handycon.event_queue:
         handycon.event_queue.append(button2)
     elif active_keys == [] and seed_event.code in [29, 56, 125] and button_on == 0 and button2 in handycon.event_queue:
@@ -85,10 +86,6 @@ async def process_event(seed_event, active_keys):
         handycon.event_queue.append(button6)
     elif active_keys == [] and seed_event.code in [34, 125] and button_on == 0 and button6 in handycon.event_queue:
         this_button = button6
-
-    # Handle L_META from power button
-    elif active_keys == [] and seed_event.code == 125 and button_on == 0 and handycon.event_queue == [] and handycon.shutdown == True:
-        handycon.shutdown = False
 
     # Create list of events to fire.
     # Handle new button presses.

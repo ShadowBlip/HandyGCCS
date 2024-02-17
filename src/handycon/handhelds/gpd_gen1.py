@@ -47,9 +47,5 @@ async def process_event(seed_event, active_keys):
     elif active_keys == [] and seed_event.code in [1] and button_on == 0 and button2 in handycon.event_queue:
         await handycon.handle_key_up(seed_event, button2)
 
-    # Handle L_META from power button
-    elif active_keys == [] and seed_event.code == 125 and button_on == 0 and handycon.event_queue == [] and handycon.shutdown == True:
-        handycon.shutdown = False
-
     if handycon.last_button:
         await handycon.handle_key_up(seed_event, handycon.last_button)
