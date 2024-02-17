@@ -40,7 +40,6 @@ class HandheldController:
     last_y_val = 0
     power_action = "Suspend"
     running = False
-    shutdown = False
 
     # Handheld Config
     BUTTON_DELAY = 0.00
