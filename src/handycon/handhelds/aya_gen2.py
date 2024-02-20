@@ -38,7 +38,8 @@ async def process_event(seed_event, active_keys):
     # BUTTON 2 (Default: QAM) Small Button Short Press
     if active_keys in [[40, 133], [32, 125]] and button_on == 1 and button2 not in handycon.event_queue:
         await handycon.handle_key_down(seed_event, button2)
-    elif active_keys == [] and seed_event.code in [32, 40, 125, 133] and button_on == 0 and button2 in handycon.event_queue:
+    # We need to account for long press as well or the button will get stuck on and everything will break.
+    elif active_keys == [] and seed_event.code in [32, 40, 97, 100, 111, 125, 133] and button_on == 0 and button2 in handycon.event_queue:
         await handycon.handle_key_up(seed_event, button2)
 
     # BUTTON 4 (Default: OSK) Small button Long Press
