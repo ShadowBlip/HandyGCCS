@@ -181,6 +181,8 @@ def id_system():
 
     elif system_id in (
         "AYANEO 2S",
+        "AYANEO FLIP KB",
+        "AYANEO FLIP DS",
         "GEEK 1S",
         "AIR 1S",
         "AIR 1S Limited",
