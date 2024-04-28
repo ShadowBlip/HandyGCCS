@@ -25,10 +25,11 @@ warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 class HandheldController:
     # Logging
-    logging.basicConfig(format="[%(asctime)s | %(filename)s:%(lineno)s:%(funcName)s] %(message)s",
-                        datefmt="%y%m%d_%H:%M:%S",
-                        level=logging.INFO
-                        )
+    logging.basicConfig(
+        format="[%(asctime)s | %(filename)s:%(lineno)s:%(funcName)s] %(message)s",
+        datefmt="%y%m%d_%H:%M:%S",
+        level=logging.INFO,
+    )
     logger = logging.getLogger(__name__)
 
     # Session Variables
@@ -46,12 +47,12 @@ class HandheldController:
     CAPTURE_CONTROLLER = False
     CAPTURE_KEYBOARD = False
     CAPTURE_POWER = False
-    GAMEPAD_ADDRESS = ''
-    GAMEPAD_NAME = ''
-    KEYBOARD_ADDRESS = ''
-    KEYBOARD_NAME = ''
-    KEYBOARD_2_ADDRESS = ''
-    KEYBOARD_2_NAME = ''
+    GAMEPAD_ADDRESS = ""
+    GAMEPAD_NAME = ""
+    KEYBOARD_ADDRESS = ""
+    KEYBOARD_NAME = ""
+    KEYBOARD_2_ADDRESS = ""
+    KEYBOARD_2_NAME = ""
     POWER_BUTTON_PRIMARY = "LNXPWRBN/button/input0"
     POWER_BUTTON_SECONDARY = "PNP0C0C/button/input0"
 
@@ -83,11 +84,11 @@ class HandheldController:
         self.running = True
         devices.set_handycon(self)
         utilities.set_handycon(self)
-        self.logger.info(
-            "Starting Handheld Game Console Controller Service...")
+        self.logger.info("Starting Handheld Game Console Controller Service...")
         if utilities.is_process_running("opengamepadui"):
             self.logger.warn(
-                "Detected an OpenGamepadUI Process. Input management not possible. Exiting.")
+                "Detected an OpenGamepadUI Process. Input management not possible. Exiting."
+            )
             exit()
         Path(HIDE_PATH).mkdir(parents=True, exist_ok=True)
         devices.restore_hidden()
@@ -104,7 +105,7 @@ class HandheldController:
         asyncio.ensure_future(devices.capture_controller_events())
         asyncio.ensure_future(devices.capture_ff_events())
         asyncio.ensure_future(devices.capture_keyboard_events())
-        if self.KEYBOARD_2_NAME != '' and self.KEYBOARD_2_ADDRESS != '':
+        if self.KEYBOARD_2_NAME != "" and self.KEYBOARD_2_ADDRESS != "":
             asyncio.ensure_future(devices.capture_keyboard_2_events())
 
         asyncio.ensure_future(devices.capture_power_events())
@@ -113,7 +114,8 @@ class HandheldController:
         # Establish signaling to handle gracefull shutdown.
         for s in (signal.SIGHUP, signal.SIGTERM, signal.SIGINT, signal.SIGQUIT):
             self.loop.add_signal_handler(
-                s, lambda s=s: asyncio.create_task(self.exit()))
+                s, lambda s=s: asyncio.create_task(self.exit())
+            )
 
         try:
             self.loop.run_forever()

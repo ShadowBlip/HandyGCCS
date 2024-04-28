@@ -62,33 +62,36 @@ def get_controller():
         devices_original = [InputDevice(path) for path in list_devices()]
 
     except Exception as err:
-        handycon.logger.error(
-            "Error when scanning event devices. Restarting scan.")
+        handycon.logger.error("Error when scanning event devices. Restarting scan.")
         handycon.logger.error(traceback.format_exc())
         sleep(DETECT_DELAY)
         return False
 
     # Grab the built-in devices. This will give us exclusive acces to the devices and their capabilities.
     for device in devices_original:
-        if device.name == handycon.GAMEPAD_NAME and device.phys == handycon.GAMEPAD_ADDRESS:
+        if (
+            device.name == handycon.GAMEPAD_NAME
+            and device.phys == handycon.GAMEPAD_ADDRESS
+        ):
             handycon.controller_path = device.path
             handycon.controller_device = InputDevice(handycon.controller_path)
             if handycon.CAPTURE_CONTROLLER:
                 handycon.controller_device.grab()
                 handycon.controller_event = Path(handycon.controller_path).name
-                move(handycon.controller_path, str(
-                    HIDE_PATH / handycon.controller_event))
+                move(
+                    handycon.controller_path, str(HIDE_PATH / handycon.controller_event)
+                )
             break
 
     # Sometimes the service loads before all input devices have full initialized. Try a few times.
     if not handycon.controller_device:
-        handycon.logger.warn(
-            "Controller device not yet found. Restarting scan.")
+        handycon.logger.warn("Controller device not yet found. Restarting scan.")
         sleep(DETECT_DELAY)
         return False
     else:
         handycon.logger.info(
-            f"Found {handycon.controller_device.name}. Capturing input data.")
+            f"Found {handycon.controller_device.name}. Capturing input data."
+        )
         return True
 
 
@@ -100,22 +103,23 @@ def get_keyboard():
     try:
         devices_original = [InputDevice(path) for path in list_devices()]
     except Exception as err:
-        handycon.logger.error(
-            "Error when scanning event devices. Restarting scan.")
+        handycon.logger.error("Error when scanning event devices. Restarting scan.")
         handycon.logger.error(traceback.format_exc())
         sleep(DETECT_DELAY)
         return False
     # Grab the built-in devices. This will give us exclusive acces to the devices and their capabilities.
     for device in devices_original:
         handycon.logger.debug(f"{device.name}, {device.phys}")
-        if device.name == handycon.KEYBOARD_NAME and device.phys == handycon.KEYBOARD_ADDRESS:
+        if (
+            device.name == handycon.KEYBOARD_NAME
+            and device.phys == handycon.KEYBOARD_ADDRESS
+        ):
             handycon.keyboard_path = device.path
             handycon.keyboard_device = InputDevice(handycon.keyboard_path)
             if handycon.CAPTURE_KEYBOARD:
                 handycon.keyboard_device.grab()
                 handycon.keyboard_event = Path(handycon.keyboard_path).name
-                move(handycon.keyboard_path, str(
-                    HIDE_PATH / handycon.keyboard_event))
+                move(handycon.keyboard_path, str(HIDE_PATH / handycon.keyboard_event))
             break
 
     # Sometimes the service loads before all input devices have full initialized. Try a few times.
@@ -125,7 +129,8 @@ def get_keyboard():
         return False
     else:
         handycon.logger.info(
-            f"Found {handycon.keyboard_device.name}. Capturing input data.")
+            f"Found {handycon.keyboard_device.name}. Capturing input data."
+        )
         return True
 
 
@@ -136,8 +141,7 @@ def get_keyboard_2():
     try:
         devices_original = [InputDevice(path) for path in list_devices()]
     except Exception as err:
-        handycon.logger.error(
-            "Error when scanning event devices. Restarting scan.")
+        handycon.logger.error("Error when scanning event devices. Restarting scan.")
         handycon.logger.error(traceback.format_exc())
         sleep(DETECT_DELAY)
         return False
@@ -145,25 +149,29 @@ def get_keyboard_2():
     # Grab the built-in devices. This will give us exclusive acces to the devices and their capabilities.
     for device in devices_original:
         handycon.logger.debug(f"{device.name}, {device.phys}")
-        if device.name == handycon.KEYBOARD_2_NAME and device.phys == handycon.KEYBOARD_2_ADDRESS:
+        if (
+            device.name == handycon.KEYBOARD_2_NAME
+            and device.phys == handycon.KEYBOARD_2_ADDRESS
+        ):
             handycon.keyboard_2_path = device.path
             handycon.keyboard_2_device = InputDevice(handycon.keyboard_2_path)
             if handycon.CAPTURE_KEYBOARD:
                 handycon.keyboard_2_device.grab()
                 handycon.keyboard_2_event = Path(handycon.keyboard_2_path).name
-                move(handycon.keyboard_2_path, str(
-                    HIDE_PATH / handycon.keyboard_2_event))
+                move(
+                    handycon.keyboard_2_path, str(HIDE_PATH / handycon.keyboard_2_event)
+                )
             break
 
     # Sometimes the service loads before all input devices have full initialized. Try a few times.
     if not handycon.keyboard_2_device:
-        handycon.logger.warn(
-            "Keyboard device 2 not yet found. Restarting scan.")
+        handycon.logger.warn("Keyboard device 2 not yet found. Restarting scan.")
         sleep(DETECT_DELAY)
         return False
     else:
         handycon.logger.info(
-            f"Found {handycon.keyboard_2_device.name}. Capturing input data.")
+            f"Found {handycon.keyboard_2_device.name}. Capturing input data."
+        )
         return True
 
 
@@ -176,29 +184,35 @@ def get_powerkey():
         devices_original = [InputDevice(path) for path in list_devices()]
     # Some funky stuff happens sometimes when booting. Give it another shot.
     except Exception as err:
-        handycon.logger.error(
-            "Error when scanning event devices. Restarting scan.")
+        handycon.logger.error("Error when scanning event devices. Restarting scan.")
         handycon.logger.error(traceback.format_exc())
         sleep(DETECT_DELAY)
         return False
 
     # Grab the built-in devices. This will give us exclusive acces to the devices and their capabilities.
     for device in devices_original:
-
         # Power Button
-        if device.name == 'Power Button' and device.phys == handycon.POWER_BUTTON_PRIMARY and not handycon.power_device:
+        if (
+            device.name == "Power Button"
+            and device.phys == handycon.POWER_BUTTON_PRIMARY
+            and not handycon.power_device
+        ):
             handycon.power_device = device
-            handycon.logger.debug(
-                f"found power device {handycon.power_device.phys}")
+            handycon.logger.debug(f"found power device {handycon.power_device.phys}")
             if handycon.CAPTURE_POWER:
                 handycon.power_device.grab()
 
         # Some devices have an extra power input device corresponding to the same
         # physical button that needs to be grabbed.
-        if device.name == 'Power Button' and device.phys == handycon.POWER_BUTTON_SECONDARY and not handycon.power_device_2:
+        if (
+            device.name == "Power Button"
+            and device.phys == handycon.POWER_BUTTON_SECONDARY
+            and not handycon.power_device_2
+        ):
             handycon.power_device_2 = device
             handycon.logger.debug(
-                f"found alternate power device {handycon.power_device_2.phys}")
+                f"found alternate power device {handycon.power_device_2.phys}"
+            )
             if handycon.CAPTURE_POWER:
                 handycon.power_device_2.grab()
 
@@ -209,10 +223,12 @@ def get_powerkey():
     else:
         if handycon.power_device:
             handycon.logger.info(
-                f"Found {handycon.power_device.name}. Capturing input data.")
+                f"Found {handycon.power_device.name}. Capturing input data."
+            )
         if handycon.power_device_2:
             handycon.logger.info(
-                f"Found {handycon.power_device_2.name}. Capturing input data.")
+                f"Found {handycon.power_device_2.name}. Capturing input data."
+            )
         return True
 
 
@@ -224,14 +240,14 @@ async def do_rumble(button=0, interval=10, length=1000, delay=0):
         return
 
     # Create the rumble effect.
-    rumble = ff.Rumble(strong_magnitude=0x0000, weak_magnitude=0xffff)
+    rumble = ff.Rumble(strong_magnitude=0x0000, weak_magnitude=0xFFFF)
     effect = ff.Effect(
         e.FF_RUMBLE,
         -1,
         0,
         ff.Trigger(button, interval),
         ff.Replay(length, delay),
-        ff.EffectType(ff_rumble_effect=rumble)
+        ff.EffectType(ff_rumble_effect=rumble),
     )
 
     # Upload and transmit the effect.
@@ -255,14 +271,14 @@ async def capture_keyboard_events():
 
                     # Debugging variables
                     handycon.logger.debug(
-                        f"Seed Value: {seed_event.value}, Seed Code: {seed_event.code}, Seed Type: {seed_event.type}.")
+                        f"Seed Value: {seed_event.value}, Seed Code: {seed_event.code}, Seed Type: {seed_event.type}."
+                    )
                     if active_keys != []:
                         handycon.logger.debug(f"Active Keys: {active_keys}")
                     else:
                         handycon.logger.debug("No active keys")
                     if handycon.event_queue != []:
-                        handycon.logger.debug(
-                            f"Queued events: {handycon.event_queue}")
+                        handycon.logger.debug(f"Queued events: {handycon.event_queue}")
                     else:
                         handycon.logger.debug("No active events.")
 
@@ -329,7 +345,8 @@ async def capture_keyboard_events():
 
             except Exception as err:
                 handycon.logger.error(
-                    f"{err} | Error reading events from {handycon.keyboard_device.name}")
+                    f"{err} | Error reading events from {handycon.keyboard_device.name}"
+                )
                 handycon.logger.error(traceback.format_exc())
                 remove_device(HIDE_PATH, handycon.keyboard_event)
                 handycon.keyboard_device = None
@@ -355,14 +372,14 @@ async def capture_keyboard_2_events():
 
                     # Debugging variables
                     handycon.logger.debug(
-                        f"Seed Value: {seed_event_2.value}, Seed Code: {seed_event_2.code}, Seed Type: {seed_event_2.type}.")
+                        f"Seed Value: {seed_event_2.value}, Seed Code: {seed_event_2.code}, Seed Type: {seed_event_2.type}."
+                    )
                     if active_keys_2 != []:
                         handycon.logger.debug(f"Active Keys: {active_keys_2}")
                     else:
                         handycon.logger.debug("No active keys")
                     if handycon.event_queue != []:
-                        handycon.logger.debug(
-                            f"Queued events: {handycon.event_queue}")
+                        handycon.logger.debug(f"Queued events: {handycon.event_queue}")
                     else:
                         handycon.logger.debug("No active events.")
 
@@ -373,7 +390,8 @@ async def capture_keyboard_2_events():
 
             except Exception as err:
                 handycon.logger.error(
-                    f"{err} | Error reading events from {handycon.keyboard_2_device.name}")
+                    f"{err} | Error reading events from {handycon.keyboard_2_device.name}"
+                )
                 handycon.logger.error(traceback.format_exc())
                 remove_device(HIDE_PATH, handycon.keyboard_2_event)
                 handycon.keyboard_2_device = None
@@ -401,7 +419,8 @@ async def capture_controller_events():
                     emit_event(event)
             except Exception as err:
                 handycon.logger.error(
-                    f"{err} | Error reading events from {handycon.controller_device.name}.")
+                    f"{err} | Error reading events from {handycon.controller_device.name}."
+                )
                 handycon.logger.error(traceback.format_exc())
                 remove_device(HIDE_PATH, handycon.controller_event)
                 handycon.controller_device = None
@@ -422,14 +441,16 @@ async def capture_power_events():
             try:
                 async for event in handycon.power_device.async_read_loop():
                     handycon.logger.debug(
-                        f"Got event: {event.type} | {event.code} | {event.value}")
+                        f"Got event: {event.type} | {event.code} | {event.value}"
+                    )
                     if event.type == e.EV_KEY and event.code == 116:  # KEY_POWER
                         if event.value == 0:
                             handle_power_action()
 
             except Exception as err:
                 handycon.logger.error(
-                    f"{err} | Error reading events from power device.")
+                    f"{err} | Error reading events from power device."
+                )
                 handycon.logger.error(traceback.format_exc())
                 handycon.power_device = None
 
@@ -437,14 +458,16 @@ async def capture_power_events():
             try:
                 async for event in handycon.power_device_2.async_read_loop():
                     handycon.logger.debug(
-                        f"Got event: {event.type} | {event.code} | {event.value}")
+                        f"Got event: {event.type} | {event.code} | {event.value}"
+                    )
                     if event.type == e.EV_KEY and event.code == 116:  # KEY_POWER
                         if event.value == 0:
                             handle_power_action()
 
             except Exception as err:
                 handycon.logger.error(
-                    f"{err} | Error reading events from power device.")
+                    f"{err} | Error reading events from power device."
+                )
                 handycon.logger.error(traceback.format_exc())
                 handycon.power_device_2 = None
 
@@ -460,25 +483,24 @@ def handle_power_action():
     match handycon.power_action:
         case "Suspend":
             # For DeckUI Sessions
-            is_deckui = handycon.steam_ifrunning_deckui(
-                "steam://shortpowerpress")
+            is_deckui = handycon.steam_ifrunning_deckui("steam://shortpowerpress")
 
             # For BPM and Desktop sessions
             if not is_deckui:
-                os.system('systemctl suspend')
+                os.system("systemctl suspend")
 
         case "Hibernate":
-            os.system('systemctl hibernate')
+            os.system("systemctl hibernate")
 
         case "Shutdown":
-            is_deckui = handycon.steam_ifrunning_deckui(
-                "steam://longpowerpress")
+            is_deckui = handycon.steam_ifrunning_deckui("steam://longpowerpress")
 
             if not is_deckui:
-                os.system('systemctl poweroff')
+                os.system("systemctl poweroff")
 
         case "Suspend then hibernate":
-            os.system('systemctl suspend-then-hibernate')
+            os.system("systemctl suspend-then-hibernate")
+
 
 # Handle FF event uploads
 
@@ -523,8 +545,7 @@ async def capture_ff_events():
 
                 upload.retval = 0
             except IOError as err:
-                handycon.logger.error(
-                    f"{err} | Error uploading effect {effect.id}.")
+                handycon.logger.error(f"{err} | Error uploading effect {effect.id}.")
                 handycon.logger.error(traceback.format_exc())
                 upload.retval = -1
 
@@ -539,7 +560,8 @@ async def capture_ff_events():
                 erase.retval = 0
             except IOError as err:
                 handycon.logger.error(
-                    f"{err} | Error erasing effect {erase.effect_id}.")
+                    f"{err} | Error erasing effect {erase.effect_id}."
+                )
                 handycon.logger.error(traceback.format_exc())
                 erase.retval = -1
 
@@ -559,7 +581,7 @@ def restore_hidden():
     if len(hidden_events) == 0:
         return
     for hidden_event in hidden_events:
-        handycon.logger.debug(f'Restoring {hidden_event}')
+        handycon.logger.debug(f"Restoring {hidden_event}")
         move(str(HIDE_PATH / hidden_event), "/dev/input/" + hidden_event)
 
 
@@ -569,17 +591,17 @@ def remove_device(path, event):
     except FileNotFoundError:
         pass
 
+
 # Emits passed or generated events to the virtual controller.
 # This shouldn't be called directly for custom events, only to pass realtime events.
 # Use emit_now and the device's event_queue.
 
 
 async def emit_events(events: list):
-
     for event in events:
         emit_event(event)
         # Pause between multiple events, but not after the last one in the list.
-        if event != events[len(events)-1]:
+        if event != events[len(events) - 1]:
             await asyncio.sleep(handycon.BUTTON_DELAY)
 
 
@@ -598,15 +620,15 @@ async def emit_now(seed_event, event_list, value):
 
     # Ignore malformed requests
     if not event_list:
-        handycon.logger.error(
-            "emit_now received malfirmed event_list. No action")
+        handycon.logger.error("emit_now received malfirmed event_list. No action")
         return
 
     # Handle string events
     if type(event_list[0]) is str:
         if value == 0:
             handycon.logger.debug(
-                "Received string event with value 0. KEY_UP event not required. Skipping")
+                "Received string event with value 0. KEY_UP event not required. Skipping"
+            )
             return
         match event_list[0]:
             case "Open Chimera":
@@ -615,30 +637,32 @@ async def emit_now(seed_event, event_list, value):
             case "Toggle Gyro":
                 handycon.logger.debug("Toggle Gyro is not currently enabled")
             case "Toggle Mouse Mode":
-                handycon.logger.debug(
-                    "Toggle Mouse Mode is not currently enabled")
+                handycon.logger.debug("Toggle Mouse Mode is not currently enabled")
             case "Toggle Performance":
                 handycon.logger.debug("Toggle Performance")
                 await toggle_performance()
             case "Hibernate", "Suspend", "Shutdown", "Suspend then hibernate":
                 handycon.logger.error(
-                    f"Power mode {event_list[0]} set to button action. Check your configuration file.")
+                    f"Power mode {event_list[0]} set to button action. Check your configuration file."
+                )
             case _:
                 handycon.logger.warn(f"{event_list[0]} not defined.")
         return
 
-    handycon.logger.debug(f'Event list: {event_list}')
+    handycon.logger.debug(f"Event list: {event_list}")
     events = []
 
     if value == 0:
         for button_event in reversed(event_list):
             new_event = InputEvent(
-                seed_event.sec, seed_event.usec, button_event[0], button_event[1], value)
+                seed_event.sec, seed_event.usec, button_event[0], button_event[1], value
+            )
             events.append(new_event)
     else:
         for button_event in event_list:
             new_event = InputEvent(
-                seed_event.sec, seed_event.usec, button_event[0], button_event[1], value)
+                seed_event.sec, seed_event.usec, button_event[0], button_event[1], value
+            )
             events.append(new_event)
 
     size = len(events)
@@ -689,8 +713,8 @@ async def toggle_performance():
         await asyncio.sleep(FF_DELAY)
         await do_rumble(0, 75, 1000, 0)
 
-    ryzenadj_command = f'ryzenadj {handycon.performance_mode}'
-    run = os.popen(ryzenadj_command, 'r', 1).read().strip()
+    ryzenadj_command = f"ryzenadj {handycon.performance_mode}"
+    run = os.popen(ryzenadj_command, "r", 1).read().strip()
     handycon.logger.debug(run)
 
     if handycon.system_type in ["ALY_GEN1"]:
@@ -699,9 +723,9 @@ async def toggle_performance():
         else:
             handycon.thermal_mode = "1"
 
-        command = f'echo {handycon.thermal_mode} > /sys/devices/platform/asus-nb-wmi/throttle_thermal_policy'
-        run = os.popen(command, 'r', 1).read().strip()
-        handycon.logger.debug(f'Thermal mode set to {handycon.thermal_mode}.')
+        command = f"echo {handycon.thermal_mode} > /sys/devices/platform/asus-nb-wmi/throttle_thermal_policy"
+        run = os.popen(command, "r", 1).read().strip()
+        handycon.logger.debug(f"Thermal mode set to {handycon.thermal_mode}.")
 
 
 def make_controller():
@@ -710,9 +734,9 @@ def make_controller():
     # Create the virtual controller.
     handycon.ui_device = UInput(
         CONTROLLER_EVENTS,
-        name='Handheld Controller',
+        name="Handheld Controller",
         bustype=0x3,
-        vendor=0x045e,
-        product=0x028e,
-        version=0x110
+        vendor=0x045E,
+        product=0x028E,
+        version=0x110,
     )

@@ -14,10 +14,10 @@ def init_handheld(handheld_controller):
     handycon.CAPTURE_CONTROLLER = True
     handycon.CAPTURE_KEYBOARD = True
     handycon.CAPTURE_POWER = True
-    handycon.GAMEPAD_ADDRESS = 'usb-0000:00:14.0-7/input0'
-    handycon.GAMEPAD_NAME = 'Microsoft X-Box 360 pad'
-    handycon.KEYBOARD_ADDRESS = 'usb-0000:00:14.0-5/input0'
-    handycon.KEYBOARD_NAME = '  Mouse for Windows'
+    handycon.GAMEPAD_ADDRESS = "usb-0000:00:14.0-7/input0"
+    handycon.GAMEPAD_NAME = "Microsoft X-Box 360 pad"
+    handycon.KEYBOARD_ADDRESS = "usb-0000:00:14.0-5/input0"
+    handycon.KEYBOARD_NAME = "  Mouse for Windows"
 
 
 # Captures keyboard events and translates them to virtual device events.
@@ -36,15 +36,29 @@ async def process_event(seed_event, active_keys):
         handycon.emit_event(seed_event)
 
     # BUTTON 1 (Default: Screenshot)
-    if active_keys == [29, 56, 111] and button_on == 1 and button1 not in handycon.event_queue:
+    if (
+        active_keys == [29, 56, 111]
+        and button_on == 1
+        and button1 not in handycon.event_queue
+    ):
         await handycon.handle_key_down(seed_event, button1)
-    elif active_keys == [] and seed_event.code in [29, 56, 111] and button_on == 0 and button1 in handycon.event_queue:
+    elif (
+        active_keys == []
+        and seed_event.code in [29, 56, 111]
+        and button_on == 0
+        and button1 in handycon.event_queue
+    ):
         await handycon.handle_key_up(seed_event, button1)
 
     # BUTTON 2 (Default: QAM)
     if active_keys == [1] and button_on == 1 and button2 not in handycon.event_queue:
         await handycon.handle_key_down(seed_event, button2)
-    elif active_keys == [] and seed_event.code in [1] and button_on == 0 and button2 in handycon.event_queue:
+    elif (
+        active_keys == []
+        and seed_event.code in [1]
+        and button_on == 0
+        and button2 in handycon.event_queue
+    ):
         await handycon.handle_key_up(seed_event, button2)
 
     if handycon.last_button:

@@ -14,10 +14,10 @@ def init_handheld(handheld_controller):
     handycon.CAPTURE_CONTROLLER = True
     handycon.CAPTURE_KEYBOARD = True
     handycon.CAPTURE_POWER = True
-    handycon.GAMEPAD_ADDRESS = 'usb-0000:02:00.3-5/input0'
-    handycon.GAMEPAD_NAME = 'Microsoft X-Box 360 pad'
-    handycon.KEYBOARD_ADDRESS = 'isa0060/serio0/input0'
-    handycon.KEYBOARD_NAME = 'AT Translated Set 2 keyboard'
+    handycon.GAMEPAD_ADDRESS = "usb-0000:02:00.3-5/input0"
+    handycon.GAMEPAD_NAME = "Microsoft X-Box 360 pad"
+    handycon.KEYBOARD_ADDRESS = "isa0060/serio0/input0"
+    handycon.KEYBOARD_NAME = "AT Translated Set 2 keyboard"
 
 
 # Captures keyboard events and translates them to virtual device events.
@@ -45,13 +45,22 @@ async def process_event(seed_event, active_keys):
         this_button = handycon.event_queue[0]
 
     # BUTTON 1 (BUTTON 4 ALT Mode) (Default: Screenshot) Long press KB
-    if active_keys == [24, 29, 125] and button_on == 2 and button1 not in handycon.event_queue:
+    if (
+        active_keys == [24, 29, 125]
+        and button_on == 2
+        and button1 not in handycon.event_queue
+    ):
         if button4 in handycon.event_queue:
             handycon.event_queue.remove(button4)
         if button5 in handycon.event_queue:
             handycon.event_queue.remove(button5)
         handycon.event_queue.append(button1)
-    elif active_keys == [] and seed_event.code in [24, 29, 125] and button_on == 0 and button1 in handycon.event_queue:
+    elif (
+        active_keys == []
+        and seed_event.code in [24, 29, 125]
+        and button_on == 0
+        and button1 in handycon.event_queue
+    ):
         this_button = button1
 
     # BUTTON 2 (Default: QAM) Home key.
@@ -59,7 +68,12 @@ async def process_event(seed_event, active_keys):
         if button5 in handycon.event_queue:
             handycon.event_queue.remove(button5)
         handycon.event_queue.append(button2)
-    elif active_keys == [] and seed_event.code in [125] and button_on == 0 and button2 in handycon.event_queue:
+    elif (
+        active_keys == []
+        and seed_event.code in [125]
+        and button_on == 0
+        and button2 in handycon.event_queue
+    ):
         this_button = button2
 
     # BUTTON 3, BUTTON 2 ALt mode (Defalt ESC)
@@ -68,21 +82,44 @@ async def process_event(seed_event, active_keys):
             handycon.event_queue.remove(button2)
         handycon.event_queue.append(button3)
         await handycon.do_rumble(0, 75, 1000, 0)
-    elif active_keys == [] and seed_event.code == 1 and button_on == 0 and button3 in handycon.event_queue:
+    elif (
+        active_keys == []
+        and seed_event.code == 1
+        and button_on == 0
+        and button3 in handycon.event_queue
+    ):
         this_button = button3
 
     # BUTTON 4 (Default: OSK) Short press KB
-    if active_keys == [24, 29, 125] and button_on == 1 and button4 not in handycon.event_queue:
+    if (
+        active_keys == [24, 29, 125]
+        and button_on == 1
+        and button4 not in handycon.event_queue
+    ):
         if button5 in handycon.event_queue:
             handycon.event_queue.remove(button5)
         handycon.event_queue.append(button4)
-    elif active_keys == [] and seed_event.code in [24, 29, 125] and button_on == 0 and button4 in handycon.event_queue:
+    elif (
+        active_keys == []
+        and seed_event.code in [24, 29, 125]
+        and button_on == 0
+        and button4 in handycon.event_queue
+    ):
         this_button = button4
 
     # BUTTON 5 (Default: GUIDE) Meta/Windows key.
-    if active_keys == [34, 125] and button_on == 1 and button5 not in handycon.event_queue:
+    if (
+        active_keys == [34, 125]
+        and button_on == 1
+        and button5 not in handycon.event_queue
+    ):
         handycon.event_queue.append(button5)
-    elif active_keys == [] and seed_event.code in [34, 125] and button_on == 0 and button5 in handycon.event_queue:
+    elif (
+        active_keys == []
+        and seed_event.code in [34, 125]
+        and button_on == 0
+        and button5 in handycon.event_queue
+    ):
         this_button = button5
 
     # Create list of events to fire.

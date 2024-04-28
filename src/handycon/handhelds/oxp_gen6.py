@@ -17,18 +17,19 @@ def init_handheld(handheld_controller):
     handycon.CAPTURE_CONTROLLER = True
     handycon.CAPTURE_KEYBOARD = True
     handycon.CAPTURE_POWER = True
-    handycon.GAMEPAD_ADDRESS = 'usb-0000:64:00.3-4/input0'
-    handycon.GAMEPAD_NAME = 'Microsoft X-Box 360 pad'
-    handycon.KEYBOARD_ADDRESS = 'isa0060/serio0/input0'
-    handycon.KEYBOARD_NAME = 'AT Translated Set 2 keyboard'
+    handycon.GAMEPAD_ADDRESS = "usb-0000:64:00.3-4/input0"
+    handycon.GAMEPAD_NAME = "Microsoft X-Box 360 pad"
+    handycon.KEYBOARD_ADDRESS = "isa0060/serio0/input0"
+    handycon.KEYBOARD_NAME = "AT Translated Set 2 keyboard"
 
-    if os.path.exists('/sys/devices/platform/oxp-platform/tt_toggle'):
-        command = f'echo 1 > /sys/devices/platform/oxp-platform/tt_toggle'
-        os.popen(command, 'r', 1).read().strip()
-        handycon.logger.info(f'Turbo button takeover enabled')
+    if os.path.exists("/sys/devices/platform/oxp-platform/tt_toggle"):
+        command = f"echo 1 > /sys/devices/platform/oxp-platform/tt_toggle"
+        os.popen(command, "r", 1).read().strip()
+        handycon.logger.info(f"Turbo button takeover enabled")
     else:
         handycon.logger.warn(
-            f'Turbo takeover failed. Ensure you have the latest oxp-sensors driver installed.')
+            f"Turbo takeover failed. Ensure you have the latest oxp-sensors driver installed."
+        )
 
 
 # Captures keyboard events and translates them to virtual device events.
@@ -55,21 +56,48 @@ async def process_event(seed_event, active_keys):
 
     # Push volume keys for X1/X2 if they are not in volume mode.
     # BUTTON 0 (VOLUP): X1
-    if active_keys == [32, 125] and button_on == 1 and button0 not in handycon.event_queue:
+    if (
+        active_keys == [32, 125]
+        and button_on == 1
+        and button0 not in handycon.event_queue
+    ):
         handycon.event_queue.append(button0)
-    elif active_keys == [] and seed_event.code in [32] and button_on == 0 and button0 in handycon.event_queue:
+    elif (
+        active_keys == []
+        and seed_event.code in [32]
+        and button_on == 0
+        and button0 in handycon.event_queue
+    ):
         this_button = button0
 
     # BUTTON 00 (VOLDOWN): X2
-    if active_keys == [24, 29, 125] and button_on == 1 and button00 not in handycon.event_queue:
+    if (
+        active_keys == [24, 29, 125]
+        and button_on == 1
+        and button00 not in handycon.event_queue
+    ):
         handycon.event_queue.append(button00)
-    elif active_keys == [] and seed_event.code in [24, 29] and button_on == 0 and button00 in handycon.event_queue:
+    elif (
+        active_keys == []
+        and seed_event.code in [24, 29]
+        and button_on == 0
+        and button00 in handycon.event_queue
+    ):
         this_button = button00
 
     # BUTTON 2 (Default: QAM) Turbo Button
-    if active_keys == [29, 56, 125] and button_on == 1 and button2 not in handycon.event_queue:
+    if (
+        active_keys == [29, 56, 125]
+        and button_on == 1
+        and button2 not in handycon.event_queue
+    ):
         handycon.event_queue.append(button2)
-    elif active_keys == [] and seed_event.code in [29, 56] and button_on == 0 and button2 in handycon.event_queue:
+    elif (
+        active_keys == []
+        and seed_event.code in [29, 56]
+        and button_on == 0
+        and button2 in handycon.event_queue
+    ):
         this_button = button2
 
     # Create list of events to fire.

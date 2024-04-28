@@ -14,10 +14,10 @@ def init_handheld(handheld_controller):
     handycon.CAPTURE_CONTROLLER = True
     handycon.CAPTURE_KEYBOARD = True
     handycon.CAPTURE_POWER = True
-    handycon.GAMEPAD_ADDRESS = 'usb-0000:00:14.0-9/input0'
-    handycon.GAMEPAD_NAME = 'OneXPlayer Gamepad'
-    handycon.KEYBOARD_ADDRESS = 'isa0060/serio0/input0'
-    handycon.KEYBOARD_NAME = 'AT Translated Set 2 keyboard'
+    handycon.GAMEPAD_ADDRESS = "usb-0000:00:14.0-9/input0"
+    handycon.GAMEPAD_NAME = "OneXPlayer Gamepad"
+    handycon.KEYBOARD_ADDRESS = "isa0060/serio0/input0"
+    handycon.KEYBOARD_NAME = "AT Translated Set 2 keyboard"
 
 
 async def process_event(seed_event, active_keys):
@@ -29,7 +29,7 @@ async def process_event(seed_event, active_keys):
     button3 = handycon.button_map["button3"]
     button4 = handycon.button_map["button4"]
 
-# Loop variables
+    # Loop variables
     this_button = None
     button_on = seed_event.value
 
@@ -42,27 +42,63 @@ async def process_event(seed_event, active_keys):
         this_button = handycon.event_queue[0]
 
     # BUTTON 1 (Possible dangerous fan activity!) Short press orange + |||||
-    if active_keys == [99, 125] and button_on == 1 and button1 not in handycon.event_queue:
+    if (
+        active_keys == [99, 125]
+        and button_on == 1
+        and button1 not in handycon.event_queue
+    ):
         handycon.event_queue.append(button1)
-    elif active_keys == [] and seed_event.code in [99] and button_on == 0 and button1 in handycon.event_queue:
+    elif (
+        active_keys == []
+        and seed_event.code in [99]
+        and button_on == 0
+        and button1 in handycon.event_queue
+    ):
         this_button - button1
 
     # BUTTON 2 (Default: QAM) Short press orange
-    if active_keys == [32, 125] and button_on == 1 and button2 not in handycon.event_queue:
+    if (
+        active_keys == [32, 125]
+        and button_on == 1
+        and button2 not in handycon.event_queue
+    ):
         handycon.event_queue.append(button2)
-    elif active_keys == [] and seed_event.code in [34] and button_on == 0 and button2 in handycon.event_queue:
+    elif (
+        active_keys == []
+        and seed_event.code in [34]
+        and button_on == 0
+        and button2 in handycon.event_queue
+    ):
         this_button = button2
 
     # BUTTON 3 (Default: ESC) Short press orange + KB
-    if active_keys == [97, 100, 111] and button_on == 1 and button3 not in handycon.event_queue:
+    if (
+        active_keys == [97, 100, 111]
+        and button_on == 1
+        and button3 not in handycon.event_queue
+    ):
         handycon.event_queue.append(button3)
-    elif active_keys == [] and seed_event.code in [100, 111] and button_on == 0 and button3 in handycon.event_queue:
+    elif (
+        active_keys == []
+        and seed_event.code in [100, 111]
+        and button_on == 0
+        and button3 in handycon.event_queue
+    ):
         this_button = button3
 
     # BUTTON 4 (Default: OSK) Short press KB
-    if active_keys == [24, 97, 125] and button_on == 1 and button4 not in handycon.event_queue:
+    if (
+        active_keys == [24, 97, 125]
+        and button_on == 1
+        and button4 not in handycon.event_queue
+    ):
         handycon.event_queue.append(button4)
-    elif active_keys == [] and seed_event.code in [24] and button_on == 0 and button4 in handycon.event_queue:
+    elif (
+        active_keys == []
+        and seed_event.code in [24]
+        and button_on == 0
+        and button4 in handycon.event_queue
+    ):
         this_button = button4
 
     # Create list of events to fire.

@@ -61,7 +61,12 @@ def get_user():
     cmd = "who | awk '{print $1}' | sort | head -1"
     while handycon.USER is None:
         USER_LIST = subprocess.Popen(
-            cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+            cmd,
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            shell=True,
+        )
         for get_first in USER_LIST.stdout:
             name = get_first.decode().strip()
             if name is not None:
@@ -92,31 +97,26 @@ def id_system():
     # Verify all system hardweare has initialized.
     handycon.logger.info("Identifying system hardware.")
     timeout = 0
-    while not os.path.exists('/proc/bus/input/devices'):
+    while not os.path.exists("/proc/bus/input/devices"):
         sleep(1)
         timeout += 1
         if timeout == 30:
             handycon.logger.error(
-                "Unable to read input devices after 30 seconds. Exiting.")
+                "Unable to read input devices after 30 seconds. Exiting."
+            )
             sys.exit(0)
 
     # ANBERNIC Devices
-    if system_id in (
-            "Win600",
-    ):
+    if system_id in ("Win600",):
         handycon.system_type = "ANB_GEN1"
         anb_gen1.init_handheld(handycon)
 
     # AOKZOE Devices
-    elif system_id in (
-        "AOKZOE A1 AR07",
-    ):
+    elif system_id in ("AOKZOE A1 AR07",):
         handycon.system_type = "AOK_GEN1"
         aok_gen1.init_handheld(handycon)
 
-    elif system_id in (
-        "AOKZOE A1 Pro",
-    ):
+    elif system_id in ("AOKZOE A1 Pro",):
         handycon.system_type = "AOK_GEN2"
         aok_gen2.init_handheld(handycon)
 
@@ -165,9 +165,7 @@ def id_system():
         handycon.system_type = "AYA_GEN4"
         aya_gen4.init_handheld(handycon)
 
-    elif system_id in (
-        "AIR Plus",
-    ):
+    elif system_id in ("AIR Plus",):
         if cpu_vendor == "GenuineIntel":
             handycon.system_type = "AYA_GEN7"
             aya_gen7.init_handheld(handycon)
@@ -181,8 +179,8 @@ def id_system():
 
     elif system_id in (
         "AYANEO 2S",
-        "AYANEO FLIP KB",
-        "AYANEO FLIP DS",
+        "FLIP KB",
+        "FLIP DS",
         "GEEK 1S",
         "AIR 1S",
         "AIR 1S Limited",
@@ -190,34 +188,24 @@ def id_system():
         handycon.system_type = "AYA_GEN6"
         aya_gen6.init_handheld(handycon)
 
-    elif system_id in (
-        "KUN",
-    ):
+    elif system_id in ("KUN",):
         handycon.system_type = "AYA_GEN8"
         aya_gen8.init_handheld(handycon)
 
-    elif system_id in (
-        "SLIDE",
-    ):
+    elif system_id in ("SLIDE",):
         handycon.system_type = "AYA_GEN9"
         aya_gen9.init_handheld(handycon)
 
     # Ayn Devices
-    elif system_id in (
-        "Loki Max",
-    ):
+    elif system_id in ("Loki Max",):
         handycon.system_type = "AYN_GEN1"
         ayn_gen1.init_handheld(handycon)
 
-    elif system_id in (
-        "Loki Zero",
-    ):
+    elif system_id in ("Loki Zero",):
         handycon.system_type = "AYN_GEN2"
         ayn_gen2.init_handheld(handycon)
 
-    elif system_id in (
-        "Loki MiniPro",
-    ):
+    elif system_id in ("Loki MiniPro",):
         handycon.system_type = "AYN_GEN3"
         ayn_gen3.init_handheld(handycon)
 
@@ -260,7 +248,6 @@ def id_system():
         "ONE XPLAYER",
         "ONEXPLAYER",
     ):
-
         # GEN 1
         if cpu_vendor == "GenuineIntel":
             handycon.system_type = "OXP_GEN1"
@@ -272,23 +259,17 @@ def id_system():
             oxp_gen2.init_handheld(handycon)
 
     # GEN 3
-    elif system_id in (
-        "ONEXPLAYER mini A07",
-    ):
+    elif system_id in ("ONEXPLAYER mini A07",):
         handycon.system_type = "OXP_GEN3"
         oxp_gen3.init_handheld(handycon)
 
     # GEN 4
-    elif system_id in (
-        "ONEXPLAYER Mini Pro",
-    ):
+    elif system_id in ("ONEXPLAYER Mini Pro",):
         handycon.system_type = "OXP_GEN4"
         oxp_gen4.init_handheld(handycon)
 
     # GEN 5
-    elif system_id in (
-        "ONEXPLAYER 2 ARP23",
-    ):
+    elif system_id in ("ONEXPLAYER 2 ARP23",):
         handycon.system_type = "OXP_GEN5"
         oxp_gen5.init_handheld(handycon)
 
@@ -301,9 +282,7 @@ def id_system():
         oxp_gen6.init_handheld(handycon)
 
     # GEN 7
-    elif system_id in (
-        "ONEXPLAYER F1",
-    ):
+    elif system_id in ("ONEXPLAYER F1",):
         handycon.system_type = "OXP_GEN7"
         oxp_gen7.init_handheld(handycon)
 
@@ -315,7 +294,8 @@ se run the capture-system.py utility found on the GitHub repository and upload \
 the file with your issue.")
         sys.exit(0)
     handycon.logger.info(
-        f"Identified host system as {system_id} and configured defaults for {handycon.system_type}.")
+        f"Identified host system as {system_id} and configured defaults for {handycon.system_type}."
+    )
 
 
 def get_cpu_vendor():
@@ -360,8 +340,9 @@ def map_config():
         "button8": EVENT_MAP[handycon.config["Button Map"]["button8"]],
         "button9": EVENT_MAP[handycon.config["Button Map"]["button9"]],
     }
-    handycon.power_action = POWER_ACTION_MAP[handycon.config["Button Map"]
-                                             ["power_button"]][0]
+    handycon.power_action = POWER_ACTION_MAP[
+        handycon.config["Button Map"]["power_button"]
+    ][0]
 
 
 # Sets the default configuration.
@@ -389,7 +370,7 @@ def write_config():
     if not os.path.exists(CONFIG_DIR):
         os.mkdir(CONFIG_DIR)
 
-    with open(CONFIG_PATH, 'w') as config_file:
+    with open(CONFIG_PATH, "w") as config_file:
         handycon.config.write(config_file)
         handycon.logger.info(f"Created new config: {CONFIG_PATH}")
 
@@ -398,7 +379,7 @@ def steam_ifrunning_deckui(cmd):
     global handycon
 
     # Get the currently running Steam PID.
-    steampid_path = handycon.HOME_PATH + '/.steam/steam.pid'
+    steampid_path = handycon.HOME_PATH + "/.steam/steam.pid"
     try:
         with open(steampid_path) as f:
             pid = f.read().strip()
@@ -427,10 +408,11 @@ def steam_ifrunning_deckui(cmd):
     if not is_deckui:
         return False
 
-    steam_path = handycon.HOME_PATH + '/.steam/root/ubuntu12_32/steam'
+    steam_path = handycon.HOME_PATH + "/.steam/root/ubuntu12_32/steam"
     try:
         result = subprocess.run(
-            ["su", handycon.USER, "-c", f"{steam_path} -ifrunning {cmd}"])
+            ["su", handycon.USER, "-c", f"{steam_path} -ifrunning {cmd}"]
+        )
         return result.returncode == 0
     except Exception as err:
         handycon.logger.error(f"{err} | Error sending and to Steam.")
@@ -450,7 +432,7 @@ def is_process_running(name) -> bool:
     read_proc = os.popen("ps -Af").read()
     proc_count = read_proc.count(name)
     if proc_count > 0:
-        handycon.logger.debug(f'Process {name} is running.')
+        handycon.logger.debug(f"Process {name} is running.")
         return True
-    handycon.logger.debug(f'Process {name} is NOT running.')
+    handycon.logger.debug(f"Process {name} is NOT running.")
     return False
