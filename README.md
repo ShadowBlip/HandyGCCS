@@ -1,4 +1,6 @@
 # HandyGCCS
+This project is archived and will no longer receive updates. All functionality has moved over to [InputPlumber](https://github.com/ShadowBlip/InputPlumber). 
+
 Handheld Game Console Controller Support (Handy Geeks) for Linux
 
 Designed to bring the full controller functionality to handheld game consoles including:
